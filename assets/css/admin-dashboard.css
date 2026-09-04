@@ -1,0 +1,86 @@
+/* =====================================================
+   Mini KiotViet Dashboard - CSS
+   ===================================================== */
+
+/* Period Select — override inline style */
+#mkv-dashboard-period {
+    appearance: none;
+    background-color: var(--mkv-surface);
+    border: 1px solid var(--mkv-border);
+    border-radius: 20px;
+    padding: 6px 32px 6px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--mkv-text-muted);
+    cursor: pointer;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    outline: none;
+    transition: all 0.18s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,.05);
+    font-family: 'Inter', sans-serif;
+}
+#mkv-dashboard-period:hover { border-color: #94a3b8; }
+#mkv-dashboard-period:focus {
+    border-color: var(--mkv-primary);
+    box-shadow: 0 0 0 3px rgba(0,114,188,0.12);
+}
+
+/* Dashboard Today Stats */
+.mkv-today-stats-grid { display: flex; }
+.mkv-dashboard-stat-col {
+    flex: 1;
+    text-align: center;
+    padding: 20px 12px;
+    border-right: 1px solid var(--mkv-border-light);
+    transition: background 0.15s;
+}
+.mkv-dashboard-stat-col:last-child { border-right: none; }
+.mkv-dashboard-stat-col:hover { background: #f8faff; }
+.mkv-dashboard-stat-label {
+    font-size: 12.5px;
+    color: var(--mkv-text-muted);
+    font-weight: 500;
+    margin-bottom: 10px;
+}
+.mkv-dashboard-stat-value {
+    font-size: 30px;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 6px;
+}
+.mkv-dashboard-stat-change {
+    font-size: 12px;
+    color: var(--mkv-text-muted);
+    min-height: 18px;
+}
+
+/* Dashboard layout */
+.mkv-dashboard-layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+.mkv-dashboard-main { flex: 1; min-width: 0; }
+.mkv-dashboard-sidebar { width: 340px; flex-shrink: 0; }
+
+/* Warning card accent */
+.mkv-card-warning-accent { border-left: 3px solid var(--mkv-yellow) !important; }
+.mkv-card-warning-title { color: var(--mkv-yellow) !important; }
+.mkv-card-warning-title i { color: var(--mkv-yellow) !important; }
+
+/* Responsive */
+@media screen and (max-width: 1100px) {
+    .mkv-dashboard-layout { flex-direction: column; }
+    .mkv-dashboard-sidebar { width: 100%; }
+}
+@media screen and (max-width: 600px) {
+    .mkv-today-stats-grid { flex-wrap: wrap; }
+    .mkv-dashboard-stat-col {
+        min-width: 50%;
+        border-right: none;
+        border-bottom: 1px solid var(--mkv-border-light);
+    }
+    .mkv-dashboard-stat-value { font-size: 22px; }
+}

@@ -1,0 +1,1018 @@
+/* =====================================================
+   WP Native Admin UI Overrides — Mini KiotViet v4
+   ===================================================== */
+
+/* 0. Hide WP footer & clean up */
+body.mkv-admin-page #wpfooter { display: none !important; }
+body.mkv-admin-page #wpbody-content { padding-bottom: 0 !important; }
+body.mkv-admin-page .wrap { margin: 0 !important; padding: 0 !important; }
+
+/* =====================================================
+   Products CPT List Table
+   ===================================================== */
+body.post-type-mkv_product .wrap,
+body.taxonomy-mkv_product_cat .wrap {
+    font-family: 'Inter', sans-serif !important;
+    padding: 20px !important;
+    margin: 0 !important;
+}
+
+/* =====================================================
+   CPT Standalone Header — sticky topbar & navbar
+   ===================================================== */
+body.post-type-mkv_product #wpcontent,
+body.taxonomy-mkv_product_cat #wpcontent {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+body.post-type-mkv_product #wpbody-content,
+body.taxonomy-mkv_product_cat #wpbody-content {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    float: left !important;
+    width: 100% !important;
+}
+
+body.post-type-mkv_product .mkv-app-layout,
+body.taxonomy-mkv_product_cat .mkv-app-layout {
+    height: auto !important;
+    overflow: visible !important;
+    display: block !important;
+    flex-direction: unset !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+}
+body.post-type-mkv_product .mkv-topbar,
+body.taxonomy-mkv_product_cat .mkv-topbar {
+    position: sticky !important;
+    top: 32px; /* WP admin bar height */
+    z-index: 1000;
+}
+body.post-type-mkv_product .mkv-main-header,
+body.taxonomy-mkv_product_cat .mkv-main-header {
+    position: sticky !important;
+    top: 84px; /* 32px admin bar + 52px topbar */
+    z-index: 999;
+}
+
+/* Content area background to match MKV theme */
+body.post-type-mkv_product #wpbody-content,
+body.taxonomy-mkv_product_cat #wpbody-content {
+    background: var(--mkv-bg) !important;
+    padding-bottom: 0 !important;
+}
+
+/* Hide WP elements that break layout or look out-of-place */
+body.post-type-mkv_product #screen-meta,
+body.post-type-mkv_product #screen-meta-links,
+body.post-type-mkv_product hr.wp-header-end,
+body.taxonomy-mkv_product_cat #screen-meta,
+body.taxonomy-mkv_product_cat #screen-meta-links,
+body.taxonomy-mkv_product_cat hr.wp-header-end {
+    display: none !important;
+}
+body.post-type-mkv_product #wpbody-content .page-title-action,
+body.post-type-mkv_product #wpbody-content .button-primary,
+body.taxonomy-mkv_product_cat #wpbody-content .button-primary {
+    background: var(--mkv-primary) !important;
+    border-color: var(--mkv-primary) !important;
+    color: #fff !important;
+    border-radius: var(--mkv-radius) !important;
+    padding: 5px 14px !important;
+    font-weight: 500;
+    font-size: 13px !important;
+    box-shadow: none !important;
+    transition: var(--mkv-transition);
+    text-shadow: none !important;
+}
+body.post-type-mkv_product #wpbody-content .page-title-action:hover,
+body.post-type-mkv_product #wpbody-content .button-primary:hover,
+body.taxonomy-mkv_product_cat #wpbody-content .button-primary:hover {
+    background: var(--mkv-primary-dark) !important;
+}
+body.post-type-mkv_product .wp-list-table {
+    border: none !important;
+    box-shadow: var(--mkv-shadow-sm) !important;
+    border-radius: var(--mkv-radius-lg) !important;
+    overflow: hidden;
+    background: var(--mkv-surface);
+    margin-top: 16px !important;
+    border-spacing: 0;
+}
+/* =====================================================
+   DEFEAT WP NATIVE STICKY SCRIPT BUGS
+   ===================================================== */
+/* Force static positioning on tables and toolbars — eliminates scroll jumping & white gaps */
+body.post-type-mkv_product .tablenav,
+body.post-type-mkv_product .tablenav.top,
+body.post-type-mkv_product .tablenav.is-position-fixed,
+body.taxonomy-mkv_product_cat .tablenav {
+    position: static !important;
+    top: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    right: auto !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    margin: 0 0 16px 0 !important;
+    padding: 12px 16px !important;
+    transform: none !important;
+}
+body.post-type-mkv_product .wp-list-table,
+body.post-type-mkv_product .wp-list-table thead,
+body.post-type-mkv_product .wp-list-table thead th,
+body.post-type-mkv_product .wp-list-table tfoot,
+body.taxonomy-mkv_product_cat .wp-list-table,
+body.taxonomy-mkv_product_cat .wp-list-table thead,
+body.taxonomy-mkv_product_cat .wp-list-table thead th {
+    position: static !important;
+    top: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    right: auto !important;
+    transform: none !important;
+}
+/* Hide any placeholders WP injects to compensate for sticky elements */
+body.post-type-mkv_product .is-placeholder,
+body.post-type-mkv_product .tablenav-pages.is-placeholder,
+body.taxonomy-mkv_product_cat .is-placeholder,
+body.post-type-mkv_product .sticky-placeholder,
+body.taxonomy-mkv_product_cat .sticky-placeholder {
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+}
+/* Ensure the body content isn't pushed down by JS */
+body.post-type-mkv_product #wpbody-content,
+body.taxonomy-mkv_product_cat #wpbody-content,
+body.post-type-mkv_product form#posts-filter,
+body.taxonomy-mkv_product_cat form#edittag {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+/* =====================================================
+   CPT Back Button (Product & Taxonomy Edit Screens)
+   ===================================================== */
+.mkv-cpt-back-bar {
+    margin-bottom: 12px;
+}
+.mkv-cpt-back-btn {
+    background: #ffffff !important;
+    border: 1px solid var(--mkv-border) !important;
+    color: var(--mkv-text-main) !important;
+    padding: 8px 18px !important;
+    border-radius: var(--mkv-radius-lg) !important;
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    box-shadow: var(--mkv-shadow-sm) !important;
+    transition: var(--mkv-transition) !important;
+}
+.mkv-cpt-back-btn:hover {
+    background: var(--mkv-primary-light) !important;
+    color: var(--mkv-primary) !important;
+    border-color: var(--mkv-primary) !important;
+    transform: translateX(-3px);
+}
+.mkv-cpt-back-btn i {
+    font-size: 16px;
+}
+
+/* ========== PRODUCT LIST (EDIT.PHP?POST_TYPE=MKV_PRODUCT) ========== */
+body.post-type-mkv_product .wrap {
+    margin: 20px 24px 40px 24px !important;
+    display: flow-root !important;
+}
+
+body.post-type-mkv_product .wrap > h1.wp-heading-inline {
+    font-size: 22px !important;
+    font-weight: 700 !important;
+    color: var(--mkv-text-main) !important;
+    margin: 0 0 16px 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+body.post-type-mkv_product .wrap .page-title-action {
+    background: var(--mkv-primary) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: var(--mkv-radius-lg) !important;
+    padding: 8px 18px !important;
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    box-shadow: 0 2px 6px rgba(0,82,204,0.25) !important;
+    top: 0 !important;
+    margin-left: 14px !important;
+    text-decoration: none !important;
+    transition: var(--mkv-transition) !important;
+}
+
+body.post-type-mkv_product .wrap .page-title-action:hover {
+    background: var(--mkv-primary-dark) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,82,204,0.35) !important;
+}
+
+body.post-type-mkv_product .wrap hr.wp-header-end {
+    display: block !important;
+    clear: both !important;
+    border: none !important;
+    margin: 0 0 14px 0 !important;
+    height: 0 !important;
+    visibility: hidden !important;
+}
+
+/* Subsubsub status filter badges - Completely eliminate WP raw pipe '|' */
+body.post-type-mkv_product .subsubsub {
+    font-size: 0 !important;
+    line-height: 0 !important;
+    color: transparent !important;
+    margin: 0 0 18px 0 !important;
+    padding: 0 !important;
+    float: none !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+body.post-type-mkv_product .subsubsub li {
+    font-size: 0 !important;
+    line-height: 0 !important;
+    color: transparent !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+body.post-type-mkv_product .subsubsub li::after,
+body.post-type-mkv_product .subsubsub li::before {
+    display: none !important;
+    content: "" !important;
+}
+body.post-type-mkv_product .subsubsub a {
+    font-size: 13px !important;
+    line-height: 1.5 !important;
+    color: var(--mkv-text-muted) !important;
+    padding: 6px 14px !important;
+    background: var(--mkv-surface) !important;
+    border: 1px solid var(--mkv-border) !important;
+    border-radius: 20px !important;
+    font-weight: 500 !important;
+    text-decoration: none !important;
+    transition: var(--mkv-transition) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+}
+body.post-type-mkv_product .subsubsub a:hover {
+    background: var(--mkv-border-light) !important;
+    color: var(--mkv-text-main) !important;
+    border-color: #cbd5e1 !important;
+}
+body.post-type-mkv_product .subsubsub a.current {
+    background: var(--mkv-primary-light) !important;
+    color: var(--mkv-primary) !important;
+    border-color: var(--mkv-primary) !important;
+    font-weight: 600 !important;
+}
+body.post-type-mkv_product .subsubsub a .count {
+    color: inherit !important;
+    font-size: 13px !important;
+}
+
+/* Unified Toolbar (.tablenav.top) */
+body.post-type-mkv_product .tablenav.top {
+    height: auto !important;
+    margin: 0 0 16px 0 !important;
+    padding: 12px 18px !important;
+    background: var(--mkv-surface) !important;
+    border: 1px solid var(--mkv-border) !important;
+    border-radius: var(--mkv-radius-lg) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    clear: both !important;
+    box-shadow: var(--mkv-shadow-sm) !important;
+}
+
+body.post-type-mkv_product .tablenav.bottom {
+    display: none !important;
+}
+
+/* Integrated Search Box inside Toolbar */
+body.post-type-mkv_product .search-box,
+body.post-type-mkv_product .tablenav.top .search-box {
+    margin: 0 12px 0 0 !important;
+    padding: 0 !important;
+    float: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+body.post-type-mkv_product .search-box input[type="search"],
+body.post-type-mkv_product .tablenav.top .search-box input[type="search"] {
+    width: 240px !important;
+    height: 38px !important;
+    border-radius: var(--mkv-radius) !important;
+    border: 1px solid var(--mkv-border) !important;
+    padding: 0 12px !important;
+    font-size: 13px !important;
+    color: var(--mkv-text-main) !important;
+    background: var(--mkv-surface) !important;
+    box-shadow: none !important;
+    transition: var(--mkv-transition) !important;
+}
+body.post-type-mkv_product .search-box input[type="search"]:focus,
+body.post-type-mkv_product .tablenav.top .search-box input[type="search"]:focus {
+    border-color: var(--mkv-primary) !important;
+    box-shadow: 0 0 0 3px rgba(0,82,204,0.15) !important;
+}
+
+/* Toolbar Filters & Action Elements */
+body.post-type-mkv_product .tablenav .actions {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    flex-wrap: wrap !important;
+}
+
+body.post-type-mkv_product .tablenav select {
+    height: 38px !important;
+    border-radius: var(--mkv-radius) !important;
+    border: 1px solid var(--mkv-border) !important;
+    padding: 0 12px !important;
+    font-size: 13px !important;
+    color: var(--mkv-text-main) !important;
+    background: var(--mkv-surface) !important;
+    box-shadow: none !important;
+    max-width: 200px !important;
+}
+
+body.post-type-mkv_product .tablenav .button,
+body.post-type-mkv_product .search-box .button {
+    height: 38px !important;
+    border-radius: var(--mkv-radius) !important;
+    border: 1px solid var(--mkv-border) !important;
+    padding: 0 14px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    background: var(--mkv-surface) !important;
+    color: var(--mkv-text-main) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    transition: var(--mkv-transition) !important;
+    box-shadow: none !important;
+    cursor: pointer !important;
+}
+
+body.post-type-mkv_product .tablenav .button:hover,
+body.post-type-mkv_product .search-box .button:hover {
+    background: var(--mkv-border-light) !important;
+    color: var(--mkv-primary) !important;
+    border-color: var(--mkv-primary) !important;
+}
+
+body.post-type-mkv_product .tablenav-pages {
+    margin: 0 0 0 auto !important; /* Push item counter to the right */
+    padding: 0 !important;
+    font-size: 13px !important;
+    color: var(--mkv-text-muted) !important;
+}
+
+/* ========== PRODUCT LIST TABLE STYLING ========== */
+body.post-type-mkv_product .wp-list-table {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    border: 1px solid var(--mkv-border) !important;
+    border-radius: var(--mkv-radius-lg) !important;
+    background: var(--mkv-surface) !important;
+    box-shadow: var(--mkv-shadow-sm) !important;
+    width: 100% !important;
+    table-layout: fixed !important;
+    overflow: hidden !important;
+    margin-top: 0 !important;
+}
+
+body.post-type-mkv_product .wp-list-table thead th,
+body.post-type-mkv_product .wp-list-table tfoot th {
+    background: #f8fafc !important;
+    border-bottom: 1px solid var(--mkv-border) !important;
+    color: var(--mkv-text-muted) !important;
+    font-weight: 600 !important;
+    font-size: 12px !important;
+    padding: 13px 12px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+    vertical-align: middle !important;
+    white-space: nowrap !important;
+}
+
+body.post-type-mkv_product .wp-list-table thead th a {
+    color: var(--mkv-text-muted) !important;
+}
+body.post-type-mkv_product .wp-list-table thead th a:hover {
+    color: var(--mkv-primary) !important;
+}
+
+body.post-type-mkv_product .wp-list-table tbody td {
+    padding: 12px 12px !important;
+    border-bottom: 1px solid var(--mkv-border-light) !important;
+    vertical-align: middle !important;
+    font-size: 13px !important;
+    color: var(--mkv-text-main) !important;
+}
+
+body.post-type-mkv_product .wp-list-table tbody tr:hover {
+    background-color: #f8faff !important;
+}
+
+body.post-type-mkv_product .wp-list-table tbody tr:last-child td {
+    border-bottom: none !important;
+}
+
+/* Rebalanced Column Proportions - Eliminates giant blank spaces */
+body.post-type-mkv_product .wp-list-table th.check-column,
+body.post-type-mkv_product .wp-list-table td.check-column {
+    width: 44px !important;
+    max-width: 44px !important;
+    padding: 12px 6px !important;
+    text-align: center !important;
+}
+
+body.post-type-mkv_product .wp-list-table th.column-mkv_image,
+body.post-type-mkv_product .wp-list-table td.column-mkv_image {
+    width: 58px !important;
+    max-width: 58px !important;
+    padding: 8px 4px !important;
+    text-align: center !important;
+}
+
+body.post-type-mkv_product .wp-list-table th.column-title,
+body.post-type-mkv_product .wp-list-table td.column-title {
+    width: 25% !important;
+    max-width: 320px !important;
+    text-align: left !important;
+}
+
+body.post-type-mkv_product .wp-list-table td.column-title strong {
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+}
+
+body.post-type-mkv_product .wp-list-table td.column-title a.row-title {
+    color: var(--mkv-text-main) !important;
+    transition: var(--mkv-transition) !important;
+}
+
+body.post-type-mkv_product .wp-list-table td.column-title a.row-title:hover {
+    color: var(--mkv-primary) !important;
+}
+
+body.post-type-mkv_product .wp-list-table th.column-mkv_sku,
+body.post-type-mkv_product .wp-list-table td.column-mkv_sku {
+    width: 12% !important;
+    max-width: 130px !important;
+    text-align: left !important;
+}
+
+body.post-type-mkv_product .wp-list-table th.column-taxonomy-mkv_product_cat,
+body.post-type-mkv_product .wp-list-table td.column-taxonomy-mkv_product_cat {
+    width: 17% !important;
+    text-align: left !important;
+}
+
+body.post-type-mkv_product .wp-list-table th.column-mkv_price_out,
+body.post-type-mkv_product .wp-list-table td.column-mkv_price_out {
+    width: 12% !important;
+    max-width: 130px !important;
+    text-align: right !important;
+}
+
+body.post-type-mkv_product .wp-list-table th.column-mkv_price_in,
+body.post-type-mkv_product .wp-list-table td.column-mkv_price_in {
+    width: 12% !important;
+    max-width: 125px !important;
+    text-align: right !important;
+}
+
+body.post-type-mkv_product .wp-list-table th.column-mkv_stock,
+body.post-type-mkv_product .wp-list-table td.column-mkv_stock {
+    width: 10% !important;
+    max-width: 110px !important;
+    text-align: center !important;
+}
+
+body.post-type-mkv_product .wp-list-table th.column-date,
+body.post-type-mkv_product .wp-list-table td.column-date {
+    width: 12% !important;
+    max-width: 130px !important;
+    font-size: 12px !important;
+    color: var(--mkv-text-muted) !important;
+    line-height: 1.4 !important;
+}
+
+/* Row Actions (Sửa, Xóa) */
+body.post-type-mkv_product .row-actions {
+    margin-top: 4px !important;
+    font-size: 12px !important;
+}
+body.post-type-mkv_product .row-actions a {
+    color: var(--mkv-primary) !important;
+    text-decoration: none !important;
+    font-weight: 500 !important;
+}
+body.post-type-mkv_product .row-actions a:hover {
+    text-decoration: underline !important;
+}
+body.post-type-mkv_product .row-actions .trash a {
+    color: var(--mkv-red) !important;
+}
+
+/* Product Edit Meta Box */
+body.post-type-mkv_product #mkv_product_details {
+    border: 1px solid var(--mkv-border) !important;
+    box-shadow: none !important;
+    border-radius: var(--mkv-radius-lg) !important;
+    background: var(--mkv-surface);
+}
+body.post-type-mkv_product #mkv_product_details .hndle {
+    border-bottom: 1px solid var(--mkv-border-light) !important;
+    background: var(--mkv-border-light);
+    border-radius: var(--mkv-radius-lg) var(--mkv-radius-lg) 0 0;
+    padding: 12px 16px !important;
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+    color: var(--mkv-text-main) !important;
+}
+body.post-type-mkv_product #mkv_product_details .inside {
+    padding: 20px !important;
+    margin: 0 !important;
+}
+body.post-type-mkv_product #mkv_product_details input[type="text"],
+body.post-type-mkv_product #mkv_product_details input[type="number"] {
+    border: 1px solid var(--mkv-border) !important;
+    border-radius: var(--mkv-radius) !important;
+    padding: 7px 10px !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 13px !important;
+    color: var(--mkv-text-main) !important;
+    box-shadow: none !important;
+    background: var(--mkv-surface) !important;
+    transition: var(--mkv-transition);
+    height: auto !important;
+}
+body.post-type-mkv_product #mkv_product_details input:focus {
+    border-color: var(--mkv-primary) !important;
+    box-shadow: 0 0 0 3px rgba(0,114,188,0.1) !important;
+    outline: none !important;
+}
+body.post-type-mkv_product #mkv_product_details label {
+    font-weight: 500 !important;
+    color: var(--mkv-text-main) !important;
+    font-size: 13px !important;
+}
+
+/* Quick Edit */
+body.post-type-mkv_product .inline-edit-row {
+    background: var(--mkv-border-light);
+}
+body.post-type-mkv_product .inline-edit-row fieldset {
+    padding: 16px;
+    background: var(--mkv-surface);
+    border-radius: var(--mkv-radius-lg);
+    border: 1px solid var(--mkv-border);
+    margin: 0 !important;
+    flex: 1;
+    min-width: 250px;
+}
+body.post-type-mkv_product .inline-edit-row legend.inline-edit-legend {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--mkv-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 14px;
+    display: block;
+}
+body.post-type-mkv_product .inline-edit-row label {
+    display: flex !important;
+    flex-direction: column;
+    align-items: stretch;
+    margin-bottom: 14px;
+    float: none !important;
+}
+body.post-type-mkv_product .inline-edit-row span.title {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: var(--mkv-text-muted);
+    font-size: 12.5px;
+    width: auto !important;
+    float: none !important;
+}
+body.post-type-mkv_product .inline-edit-row input[type="text"],
+body.post-type-mkv_product .inline-edit-row select {
+    border-radius: var(--mkv-radius) !important;
+    border: 1px solid var(--mkv-border) !important;
+    padding: 6px 10px !important;
+    height: 36px !important;
+    flex: 1;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    box-shadow: none !important;
+}
+body.post-type-mkv_product .inline-edit-row p.submit {
+    margin: 14px 0 0 0 !important;
+    padding: 14px;
+    background: var(--mkv-surface);
+    border-radius: var(--mkv-radius-lg);
+    border: 1px solid var(--mkv-border);
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+body.post-type-mkv_product .inline-edit-row .save {
+    background: var(--mkv-primary) !important;
+    color: var(--mkv-surface) !important;
+    border: none !important;
+    border-radius: var(--mkv-radius) !important;
+    padding: 0 20px !important;
+    height: 36px !important;
+    font-size: 13px !important;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    transition: var(--mkv-transition);
+}
+body.post-type-mkv_product .inline-edit-row .save:hover { background: var(--mkv-primary-dark) !important; }
+body.post-type-mkv_product .inline-edit-row .cancel {
+    background: var(--mkv-surface) !important;
+    color: var(--mkv-text-muted) !important;
+    border: 1px solid var(--mkv-border) !important;
+    border-radius: var(--mkv-radius) !important;
+    padding: 0 16px !important;
+    height: 36px !important;
+    font-size: 13px !important;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    transition: var(--mkv-transition);
+}
+body.post-type-mkv_product .inline-edit-row .cancel:hover { background: var(--mkv-border-light) !important; }
+
+/* =====================================================
+   Taxonomy (Categories) Page Overrides
+   ===================================================== */
+
+/* Page title — hide WP default since navbar already shows context */
+body.taxonomy-mkv_product_cat .wrap > h1 {
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    color: var(--mkv-text-main) !important;
+    margin-bottom: 16px !important;
+    padding: 0 !important;
+}
+
+/* Two-column layout fix */
+body.taxonomy-mkv_product_cat .col-wrap {
+    padding: 0 !important;
+}
+body.taxonomy-mkv_product_cat #col-left {
+    padding-right: 16px !important;
+}
+body.taxonomy-mkv_product_cat #col-right {
+    padding-left: 16px !important;
+}
+
+/* Add New Category form */
+body.taxonomy-mkv_product_cat .form-field input[type="text"],
+body.taxonomy-mkv_product_cat .form-field textarea,
+body.taxonomy-mkv_product_cat .form-field select {
+    border: 1px solid var(--mkv-border) !important;
+    border-radius: var(--mkv-radius) !important;
+    padding: 8px 12px !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 13px !important;
+    color: var(--mkv-text-main) !important;
+    box-shadow: none !important;
+    background: var(--mkv-surface) !important;
+    transition: var(--mkv-transition);
+    width: 100% !important;
+    max-width: 100% !important;
+}
+body.taxonomy-mkv_product_cat .form-field input:focus,
+body.taxonomy-mkv_product_cat .form-field textarea:focus,
+body.taxonomy-mkv_product_cat .form-field select:focus {
+    border-color: var(--mkv-primary) !important;
+    box-shadow: 0 0 0 3px rgba(0,114,188,0.1) !important;
+    outline: none !important;
+}
+body.taxonomy-mkv_product_cat .form-field label {
+    font-weight: 600 !important;
+    color: var(--mkv-text-main) !important;
+    font-size: 13px !important;
+    margin-bottom: 6px !important;
+}
+body.taxonomy-mkv_product_cat .form-field p {
+    color: var(--mkv-text-muted) !important;
+    font-size: 12px !important;
+    margin-top: 4px !important;
+}
+
+/* Submit button */
+body.taxonomy-mkv_product_cat #submit,
+body.taxonomy-mkv_product_cat .button-primary {
+    background: var(--mkv-primary) !important;
+    border-color: var(--mkv-primary) !important;
+    color: #fff !important;
+    border-radius: var(--mkv-radius) !important;
+    padding: 6px 20px !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    height: auto !important;
+    line-height: 1.5 !important;
+    transition: var(--mkv-transition);
+    cursor: pointer;
+}
+body.taxonomy-mkv_product_cat #submit:hover,
+body.taxonomy-mkv_product_cat .button-primary:hover {
+    background: var(--mkv-primary-dark) !important;
+}
+
+/* Category list table */
+body.taxonomy-mkv_product_cat .wp-list-table {
+    border: none !important;
+    box-shadow: var(--mkv-shadow-sm) !important;
+    border-radius: var(--mkv-radius-lg) !important;
+    overflow: hidden;
+    background: var(--mkv-surface);
+    border-spacing: 0;
+}
+body.taxonomy-mkv_product_cat .wp-list-table thead th,
+body.taxonomy-mkv_product_cat .wp-list-table tfoot th {
+    background: var(--mkv-border-light) !important;
+    border-bottom: 1px solid var(--mkv-border) !important;
+    color: var(--mkv-text-muted) !important;
+    font-weight: 600 !important;
+    font-size: 12.5px;
+    padding: 12px 16px !important;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+body.taxonomy-mkv_product_cat .wp-list-table tbody td {
+    padding: 13px 16px !important;
+    border-bottom: 1px solid var(--mkv-border-light) !important;
+    vertical-align: middle !important;
+    font-size: 13.5px;
+    color: var(--mkv-text-main);
+}
+body.taxonomy-mkv_product_cat .wp-list-table tbody tr:hover {
+    background-color: #f8faff !important;
+}
+
+/* Row actions */
+body.taxonomy-mkv_product_cat .row-actions {
+    visibility: hidden;
+    opacity: 0;
+    transition: var(--mkv-transition);
+}
+body.taxonomy-mkv_product_cat .wp-list-table tbody tr:hover .row-actions {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Tablenav on taxonomy page */
+body.taxonomy-mkv_product_cat .tablenav {
+    height: auto !important;
+    margin: 16px 0 !important;
+    padding: 0 !important;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    clear: both;
+}
+body.taxonomy-mkv_product_cat .tablenav.bottom {
+    display: none !important;
+}
+body.taxonomy-mkv_product_cat .tablenav select {
+    border-radius: var(--mkv-radius) !important;
+    border: 1px solid var(--mkv-border) !important;
+    padding: 0 12px !important;
+    font-size: 13px !important;
+    height: 36px !important;
+    color: var(--mkv-text-main) !important;
+    box-shadow: none !important;
+    font-family: 'Inter', sans-serif !important;
+}
+body.taxonomy-mkv_product_cat .tablenav .button {
+    border-radius: var(--mkv-radius) !important;
+    border: 1px solid var(--mkv-border) !important;
+    padding: 0 14px !important;
+    font-size: 13px !important;
+    background: var(--mkv-surface) !important;
+    color: var(--mkv-text-muted) !important;
+    height: 36px !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: none !important;
+    font-family: 'Inter', sans-serif !important;
+    transition: var(--mkv-transition);
+}
+body.taxonomy-mkv_product_cat .tablenav .button:hover {
+    background: var(--mkv-border-light) !important;
+    color: var(--mkv-text-main) !important;
+}
+
+/* Search box on taxonomy page */
+body.taxonomy-mkv_product_cat .search-form {
+    margin-bottom: 16px !important;
+}
+body.taxonomy-mkv_product_cat .search-form input[type="search"] {
+    border-radius: var(--mkv-radius) !important;
+    border: 1px solid var(--mkv-border) !important;
+    padding: 0 12px !important;
+    font-size: 13px !important;
+    height: 36px !important;
+    box-shadow: none !important;
+    font-family: 'Inter', sans-serif !important;
+}
+
+/* Inline quick-edit on taxonomy page — ensure it's clickable */
+body.taxonomy-mkv_product_cat .inline-edit-row {
+    background: var(--mkv-border-light) !important;
+}
+body.taxonomy-mkv_product_cat .inline-edit-row input[type="text"] {
+    border-radius: var(--mkv-radius) !important;
+    border: 1px solid var(--mkv-border) !important;
+    padding: 6px 10px !important;
+    height: 36px !important;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    box-shadow: none !important;
+}
+body.taxonomy-mkv_product_cat .inline-edit-row .save {
+    background: var(--mkv-primary) !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: var(--mkv-radius) !important;
+    padding: 0 20px !important;
+    height: 36px !important;
+    font-size: 13px !important;
+    font-weight: 600;
+    cursor: pointer;
+}
+body.taxonomy-mkv_product_cat .inline-edit-row .cancel {
+    background: var(--mkv-surface) !important;
+    color: var(--mkv-text-muted) !important;
+    border: 1px solid var(--mkv-border) !important;
+    border-radius: var(--mkv-radius) !important;
+    padding: 0 16px !important;
+    height: 36px !important;
+    font-size: 13px !important;
+    cursor: pointer;
+}
+
+/* ========== DARK MODE ADAPTATIONS FOR WP CPT & TAXONOMY PAGES ========== */
+html.dark body.post-type-mkv_product,
+html.dark body.taxonomy-mkv_product_cat,
+html.dark body.post-new-php.post-type-mkv_product,
+html.dark body.post-php.post-type-mkv_product {
+    background: #0b0f19 !important;
+    color: #f1f5f9 !important;
+}
+
+html.dark body.post-type-mkv_product #wpbody-content,
+html.dark body.taxonomy-mkv_product_cat #wpbody-content {
+    background: #0b0f19 !important;
+}
+
+html.dark body.post-type-mkv_product .wrap > h1.wp-heading-inline {
+    color: #f1f5f9 !important;
+}
+
+html.dark body.post-type-mkv_product .subsubsub a {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #94a3b8 !important;
+}
+html.dark body.post-type-mkv_product .subsubsub a:hover {
+    background: #334155 !important;
+    color: #f1f5f9 !important;
+}
+html.dark body.post-type-mkv_product .subsubsub a.current {
+    background: #1e3a8a !important;
+    color: #60a5fa !important;
+    border-color: #3b82f6 !important;
+}
+
+html.dark body.post-type-mkv_product .tablenav.top {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
+}
+
+html.dark body.post-type-mkv_product .search-box input[type="search"],
+html.dark body.post-type-mkv_product .tablenav select {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+html.dark body.post-type-mkv_product .tablenav .button,
+html.dark body.post-type-mkv_product .search-box .button {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+html.dark body.post-type-mkv_product .tablenav .button:hover,
+html.dark body.post-type-mkv_product .search-box .button:hover {
+    background: #334155 !important;
+    border-color: var(--mkv-primary) !important;
+    color: #60a5fa !important;
+}
+
+html.dark body.post-type-mkv_product .wp-list-table {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+html.dark body.post-type-mkv_product .wp-list-table thead th,
+html.dark body.post-type-mkv_product .wp-list-table tfoot th {
+    background: #0f172a !important;
+    border-bottom-color: #334155 !important;
+    color: #94a3b8 !important;
+}
+
+html.dark body.post-type-mkv_product .wp-list-table tbody td {
+    background: #1e293b !important;
+    border-bottom-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+html.dark body.post-type-mkv_product .wp-list-table tbody tr:hover td {
+    background-color: #273549 !important;
+}
+
+html.dark body.post-type-mkv_product .wp-list-table td.column-title a.row-title {
+    color: #f8fafc !important;
+}
+
+html.dark body.post-type-mkv_product .wp-list-table td.column-mkv_sku span {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #94a3b8 !important;
+}
+
+html.dark .mkv-cpt-back-btn {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #cbd5e1 !important;
+}
+html.dark .mkv-cpt-back-btn:hover {
+    background: #334155 !important;
+    color: #ffffff !important;
+}
+
+html.dark #poststuff .postbox {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+html.dark #poststuff .postbox .postbox-header {
+    border-bottom-color: #334155 !important;
+}
+html.dark #poststuff .postbox .postbox-header h2 {
+    color: #f1f5f9 !important;
+}
+html.dark #poststuff input[type="text"],
+html.dark #poststuff input[type="number"],
+html.dark #poststuff textarea,
+html.dark #poststuff select {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}

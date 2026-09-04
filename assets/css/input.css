@@ -1,0 +1,78 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --mkv-bg: #f2f3f5;
+    --mkv-surface: #ffffff;
+    --mkv-text-main: #1e293b;
+    --mkv-text-muted: #64748b;
+    --mkv-border: #e2e8f0;
+    --mkv-border-light: #f8fafc;
+  }
+
+  .dark {
+    --mkv-bg: #0f172a;
+    --mkv-surface: #1e293b;
+    --mkv-text-main: #f8fafc;
+    --mkv-text-muted: #94a3b8;
+    --mkv-border: #334155;
+    --mkv-border-light: #1e293b;
+  }
+  
+  body.mkv-admin-page {
+    @apply text-mkv-text-main font-sans bg-mkv-bg m-0 p-0 overflow-x-hidden;
+  }
+}
+
+@layer components {
+  /* You can gradually migrate components to Tailwind here */
+  .mkv-card {
+    @apply bg-[var(--mkv-surface)] text-[var(--mkv-text-main)] border border-[var(--mkv-border-light)] shadow-sm rounded-lg overflow-hidden transition-shadow duration-200 mb-5;
+  }
+  .mkv-card:hover {
+    @apply shadow-md;
+  }
+  
+  /* Buttons */
+  .mkv-btn {
+    @apply inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-[13px] font-medium cursor-pointer transition-all border border-transparent whitespace-nowrap outline-none shadow-sm;
+  }
+  .mkv-btn:active {
+    @apply transform translate-y-px shadow-none;
+  }
+  .mkv-btn:hover {
+    @apply opacity-90 shadow-md;
+  }
+  .mkv-btn-primary {
+    @apply bg-[var(--mkv-primary)] text-white hover:opacity-90;
+  }
+  .mkv-btn-danger {
+    @apply bg-red-50 text-red-600 border-red-200 hover:bg-red-100 hover:border-red-300;
+  }
+  .mkv-btn-warning {
+    @apply bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100 hover:border-amber-300;
+  }
+  .mkv-btn-info {
+    @apply bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 hover:border-blue-300;
+  }
+  .mkv-btn-success {
+    @apply bg-[var(--mkv-green, #10b981)] text-white hover:opacity-90;
+  }
+  .mkv-btn-secondary {
+    @apply bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm;
+  }
+  .mkv-btn-outline {
+    @apply bg-transparent text-[var(--mkv-primary)] border border-[var(--mkv-primary)] hover:bg-[var(--mkv-primary)] hover:text-white;
+  }
+  .mkv-btn-sm {
+    @apply px-2 py-1 text-[12px] gap-1;
+  }
+  
+  /* Modern Input fields */
+  .mkv-input {
+    @apply w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-sm shadow-sm placeholder-slate-400
+    focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-shadow duration-200;
+  }
+}

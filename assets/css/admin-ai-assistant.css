@@ -1,0 +1,517 @@
+/* ==========================================================================
+   Mini KiotViet - AI Assistant Styles (Glassmorphism)
+   ========================================================================== */
+
+.mkv-ai-drawer {
+    position: fixed !important;
+    top: 0 !important;
+    right: -450px !important;
+    width: 400px !important;
+    height: 100vh !important;
+    background: rgba(255, 255, 255, 0.85) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-left: 1px solid rgba(255, 255, 255, 0.4) !important;
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.1) !important;
+    z-index: 9999999 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    font-family: 'Inter', sans-serif !important;
+    pointer-events: auto !important;
+}
+
+.mkv-ai-drawer.open {
+    right: 0 !important;
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Header */
+.mkv-ai-header {
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.9) 0%, rgba(59, 130, 246, 0.8) 100%);
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.2);
+}
+
+.mkv-ai-header-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.mkv-ai-header-title i {
+    font-size: 24px;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 8px;
+    border-radius: 12px;
+}
+
+.mkv-ai-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+    line-height: 1.2;
+}
+
+.mkv-ai-header p {
+    margin: 4px 0 0;
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+.mkv-ai-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: all 0.2s;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.mkv-ai-close:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Chat Body */
+.mkv-ai-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+}
+
+.mkv-ai-body::-webkit-scrollbar {
+    width: 6px;
+}
+.mkv-ai-body::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.5);
+    border-radius: 10px;
+}
+
+/* Chat Bubbles */
+.mkv-ai-msg {
+    display: flex;
+    gap: 12px;
+    max-width: 90%;
+}
+
+.mkv-ai-msg.user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+
+.mkv-ai-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 16px;
+}
+
+.mkv-ai-msg.ai .mkv-ai-avatar {
+    background: linear-gradient(135deg, #2563eb, #3b82f6);
+    color: white;
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+}
+
+.mkv-ai-msg.user .mkv-ai-avatar {
+    background: #e5e7eb;
+    color: #4b5563;
+}
+
+.mkv-ai-content {
+    background: white;
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--mkv-text-main);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    position: relative;
+    word-break: break-word;
+}
+
+.mkv-ai-msg.ai .mkv-ai-content {
+    border-top-left-radius: 4px;
+}
+
+.mkv-ai-msg.user .mkv-ai-content {
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-top-right-radius: 4px;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+}
+
+.mkv-ai-content p {
+    margin: 0 0 8px 0;
+}
+.mkv-ai-content p:last-child {
+    margin-bottom: 0;
+}
+.mkv-ai-content ul, .mkv-ai-content ol {
+    margin: 8px 0;
+    padding-left: 20px;
+}
+.mkv-ai-content li {
+    margin-bottom: 4px;
+}
+.mkv-ai-content strong {
+    font-weight: 600;
+}
+
+/* Prompt Chips */
+.mkv-ai-chips {
+    padding: 0 20px 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    border-top: 1px solid rgba(226, 232, 240, 0.5);
+    padding-top: 12px;
+}
+
+.mkv-ai-chip {
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid #cbd5e1;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.2s;
+    backdrop-filter: blur(10px);
+}
+
+.mkv-ai-chip:hover {
+    background: var(--mkv-border-light);
+    border-color: #94a3b8;
+    color: #0f172a;
+    transform: translateY(-1px);
+}
+
+/* Input Area */
+.mkv-ai-footer {
+    padding: 16px 20px;
+    background: rgba(255, 255, 255, 0.8);
+    border-top: 1px solid rgba(226, 232, 240, 0.8);
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+}
+
+.mkv-ai-input-wrap {
+    flex: 1;
+    position: relative;
+}
+
+.mkv-ai-input {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 20px;
+    padding: 10px 16px;
+    font-size: 14px;
+    background: rgba(255,255,255,0.9);
+    resize: none;
+    outline: none;
+    transition: border-color 0.2s;
+    font-family: inherit;
+    box-sizing: border-box;
+    max-height: 120px;
+}
+
+.mkv-ai-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.mkv-ai-mic {
+    background: transparent;
+    color: var(--mkv-text-muted);
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 20px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    margin-bottom: 2px;
+}
+
+.mkv-ai-mic:hover {
+    color: #3b82f6;
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.mkv-ai-mic.recording {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+    animation: mkvAiPulse 1.5s infinite;
+}
+
+@keyframes mkvAiPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.mkv-ai-send {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    margin-bottom: 2px;
+}
+
+.mkv-ai-send:hover {
+    background: #2563eb;
+    transform: scale(1.05);
+}
+.mkv-ai-send:active {
+    transform: scale(0.95);
+}
+
+/* Typing Indicator */
+.mkv-ai-typing {
+    display: none;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 4px;
+}
+
+.mkv-ai-dot {
+    width: 6px;
+    height: 6px;
+    background: #94a3b8;
+    border-radius: 50%;
+    animation: mkvAiBounce 1.4s infinite ease-in-out both;
+}
+
+.mkv-ai-dot:nth-child(1) { animation-delay: -0.32s; }
+.mkv-ai-dot:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes mkvAiBounce {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1); }
+}
+
+/* Overlay for mobile or optional focus */
+.mkv-ai-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(0,0,0,0.3) !important;
+    backdrop-filter: blur(2px);
+    z-index: 9999998 !important;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: auto !important;
+}
+
+.mkv-ai-overlay.show {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Markdown table support */
+.mkv-ai-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+    font-size: 13px;
+}
+.mkv-ai-content th, .mkv-ai-content td {
+    border: 1px solid var(--mkv-border);
+    padding: 6px 8px;
+}
+.mkv-ai-content th {
+    background: var(--mkv-border-light);
+    font-weight: 600;
+}
+
+/* ==========================================================================
+   FAB (Floating Action Button)
+   ========================================================================== */
+.mkv-ai-fab {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    display: flex;
+    align-items: center;
+    background: linear-gradient(135deg, #2563eb, #3b82f6);
+    color: white;
+    padding: 12px;
+    border-radius: 30px;
+    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+    cursor: pointer;
+    z-index: 9999990;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: auto;
+}
+
+.mkv-ai-fab:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(37, 99, 235, 0.5);
+}
+
+.mkv-ai-fab-icon {
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mkv-ai-fab-text {
+    max-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    font-weight: 600;
+    font-size: 14px;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.mkv-ai-fab:hover .mkv-ai-fab-text {
+    max-width: 100px;
+    margin-left: 8px;
+    opacity: 1;
+}
+
+/* Hide FAB when Drawer is open */
+body.mkv-ai-drawer-open .mkv-ai-fab {
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(0.8);
+}
+
+/* ==========================================================================
+   Mobile Responsiveness
+   ========================================================================== */
+@media screen and (max-width: 600px) {
+    .mkv-ai-drawer {
+        width: 100% !important;
+        right: -100% !important;
+    }
+}
+
+/* ==========================================================================
+   Dark Mode Support (Admin color schemes)
+   ========================================================================== */
+@media (prefers-color-scheme: dark) {
+    body.admin-color-modern .mkv-ai-drawer, 
+    body.admin-color-ocean .mkv-ai-drawer,
+    .mkv-ai-dark-mode .mkv-ai-drawer {
+        background: rgba(30, 41, 59, 0.9) !important;
+        border-left: 1px solid rgba(255,255,255,0.1) !important;
+    }
+    
+    body.admin-color-modern .mkv-ai-header, 
+    body.admin-color-ocean .mkv-ai-header,
+    .mkv-ai-dark-mode .mkv-ai-header {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    
+    body.admin-color-modern .mkv-ai-content, 
+    body.admin-color-ocean .mkv-ai-content,
+    .mkv-ai-dark-mode .mkv-ai-content {
+        background: #334155;
+        color: #f8fafc;
+        border-color: rgba(255,255,255,0.1);
+    }
+    
+    body.admin-color-modern .mkv-ai-msg.user .mkv-ai-content, 
+    body.admin-color-ocean .mkv-ai-msg.user .mkv-ai-content,
+    .mkv-ai-dark-mode .mkv-ai-msg.user .mkv-ai-content {
+        background: #2563eb;
+        color: #ffffff;
+    }
+    
+    body.admin-color-modern .mkv-ai-footer, 
+    body.admin-color-ocean .mkv-ai-footer,
+    .mkv-ai-dark-mode .mkv-ai-footer {
+        background: rgba(30, 41, 59, 0.95);
+        border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    body.admin-color-modern .mkv-ai-input, 
+    body.admin-color-ocean .mkv-ai-input,
+    .mkv-ai-dark-mode .mkv-ai-input {
+        background: rgba(15, 23, 42, 0.8);
+        border-color: rgba(255,255,255,0.1);
+        color: #f8fafc;
+    }
+    
+    body.admin-color-modern .mkv-ai-chip, 
+    body.admin-color-ocean .mkv-ai-chip,
+    .mkv-ai-dark-mode .mkv-ai-chip {
+        background: rgba(30, 41, 59, 0.6);
+        border-color: rgba(255,255,255,0.2);
+        color: #cbd5e1;
+    }
+    
+    body.admin-color-modern .mkv-ai-chip:hover, 
+    body.admin-color-ocean .mkv-ai-chip:hover,
+    .mkv-ai-dark-mode .mkv-ai-chip:hover {
+        background: #475569;
+        color: #f8fafc;
+    }
+    
+    /* Function UI Cards Dark Mode */
+    body.admin-color-modern .mkv-func-card,
+    body.admin-color-ocean .mkv-func-card,
+    .mkv-ai-dark-mode .mkv-func-card {
+        background: #1e293b;
+        border-color: rgba(255,255,255,0.1);
+        color: #f8fafc;
+    }
+    
+    body.admin-color-modern .mkv-func-card .label,
+    body.admin-color-ocean .mkv-func-card .label,
+    .mkv-ai-dark-mode .mkv-func-card .label {
+        color: #94a3b8;
+    }
+    
+    body.admin-color-modern .mkv-func-card .val,
+    body.admin-color-ocean .mkv-func-card .val,
+    .mkv-ai-dark-mode .mkv-func-card .val {
+        color: #f1f5f9;
+    }
+}
