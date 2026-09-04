@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+
+# Runtime and debug logs
+*.log
+mkv_request.log
+
+# Local test/debug output
+scratch/log.txt
+scratch/test_output.txt
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+*.swp
+npm-debug.log*
