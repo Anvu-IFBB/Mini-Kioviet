@@ -74,7 +74,7 @@ class MKV_Reports
                     $start_dt, $end_dt
                 ));
                 foreach ($orders_export as $o) {
-                    fputcsv($output, array($o->code, $o->customer_name ?: 'Khách lẻ', $o->total_amount, $o->status, $o->created_at));
+                    fputcsv($output, array($o->order_code, $o->customer_name ?: 'Khách lẻ', $o->total_amount, $o->status, $o->created_at));
                 }
             } elseif ($active_tab === 'profit') {
                 fputcsv($output, array('Sản phẩm', 'Số lượng bán', 'Doanh thu', 'Tiền vốn', 'Lợi nhuận gộp'));
@@ -107,21 +107,50 @@ class MKV_Reports
         }
 
         // --- Thống kê tổng ---
-        $total_revenue = (float) $wpdb->get_var($wpdb->prepare(
-            "SELECT SUM(total_amount) FROM {$wpdb->prefix}mkv_orders WHERE created_at BETWEEN %s AND %s AND status IN ('paid', 'shipping', 'completed')",
+        $gross_revenue = (float) $wpdb->get_var($wpdb->prepare(
+            "SELECT SUM(GREATEST(0, total_amount - shipping_fee)) FROM {$wpdb->prefix}mkv_orders WHERE created_at BETWEEN %s AND %s AND status IN ('paid', 'completed')",
             $start_dt, $end_dt
         ));
-        $total_cost = (float) $wpdb->get_var($wpdb->prepare(
-            "SELECT SUM(cost_total) FROM {$wpdb->prefix}mkv_orders WHERE created_at BETWEEN %s AND %s AND status IN ('paid', 'shipping', 'completed')",
+        $returns_amount = (float) $wpdb->get_var($wpdb->prepare(
+            "SELECT SUM(GREATEST(0, total_amount - shipping_fee)) FROM {$wpdb->prefix}mkv_orders WHERE created_at BETWEEN %s AND %s AND status = 'returned'",
             $start_dt, $end_dt
         ));
+        $total_revenue = max(0.0, $gross_revenue - $returns_amount);
+
+        // Dòng tiền thực thu và nợ phát sinh
+        $total_collected = (float) $wpdb->get_var($wpdb->prepare(
+            "SELECT SUM(amount) FROM {$wpdb->prefix}mkv_cashbook WHERE type = 'thu' AND created_at BETWEEN %s AND %s",
+            $start_dt, $end_dt
+        ));
+        $total_debt_pending = (float) $wpdb->get_var($wpdb->prepare(
+            "SELECT SUM(COALESCE(customer_debt_amount, debt_amount, 0) + CASE WHEN payment_status = 'cod_pending' THEN COALESCE(cod_amount, total_amount, 0) ELSE 0 END)
+             FROM {$wpdb->prefix}mkv_orders
+             WHERE created_at BETWEEN %s AND %s AND status NOT IN ('cancelled', 'draft', 'returned')",
+            $start_dt, $end_dt
+        ));
+
+        // Giá vốn và Lợi nhuận gộp
+        $gross_cost = (float) $wpdb->get_var($wpdb->prepare(
+            "SELECT SUM(cost_total) FROM {$wpdb->prefix}mkv_orders WHERE created_at BETWEEN %s AND %s AND status IN ('paid', 'completed')",
+            $start_dt, $end_dt
+        ));
+        $returns_cost = (float) $wpdb->get_var($wpdb->prepare(
+            "SELECT SUM(cost_total) FROM {$wpdb->prefix}mkv_orders WHERE created_at BETWEEN %s AND %s AND status = 'returned'",
+            $start_dt, $end_dt
+        ));
+        $total_cost    = max(0.0, $gross_cost - $returns_cost);
         $gross_profit  = $total_revenue - $total_cost;
+
         $total_orders  = (int) $wpdb->get_var($wpdb->prepare(
-            "SELECT COUNT(id) FROM {$wpdb->prefix}mkv_orders WHERE created_at BETWEEN %s AND %s AND status IN ('paid', 'shipping', 'completed')",
+            "SELECT COUNT(id) FROM {$wpdb->prefix}mkv_orders WHERE created_at BETWEEN %s AND %s AND status IN ('paid', 'completed')",
             $start_dt, $end_dt
         ));
         $cancelled_orders = (int) $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(id) FROM {$wpdb->prefix}mkv_orders WHERE created_at BETWEEN %s AND %s AND status='cancelled'",
+            $start_dt, $end_dt
+        ));
+        $returned_orders = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(id) FROM {$wpdb->prefix}mkv_orders WHERE created_at BETWEEN %s AND %s AND status='returned'",
             $start_dt, $end_dt
         ));
         $aov = $total_orders > 0 ? $total_revenue / $total_orders : 0;
@@ -130,6 +159,16 @@ class MKV_Reports
             $start_dt, $end_dt
         ));
 
+                $channel_breakdown = $wpdb->get_results($wpdb->prepare(
+                        "SELECT sales_channel, COUNT(id) AS order_count, SUM(GREATEST(0, total_amount - shipping_fee)) AS revenue
+                         FROM {$wpdb->prefix}mkv_orders
+                         WHERE created_at BETWEEN %s AND %s
+                             AND status IN ('paid', 'completed')
+                         GROUP BY sales_channel
+                         ORDER BY revenue DESC",
+                        $start_dt, $end_dt
+                ));
+
         // --- Top sản phẩm ---
         $top_products = $wpdb->get_results($wpdb->prepare(
             "SELECT p.post_title as name, SUM(oi.qty) as total_sold, SUM(oi.subtotal) as total_revenue,
@@ -137,7 +176,7 @@ class MKV_Reports
              FROM {$wpdb->prefix}mkv_order_items oi
              JOIN {$wpdb->prefix}posts p ON oi.product_id = p.ID
              JOIN {$wpdb->prefix}mkv_orders o ON oi.order_id = o.id
-             WHERE o.created_at BETWEEN %s AND %s AND o.status IN ('paid', 'shipping', 'completed')
+             WHERE o.created_at BETWEEN %s AND %s AND o.status IN ('paid', 'completed')
              GROUP BY oi.product_id
              ORDER BY total_sold DESC
              LIMIT 10",
@@ -146,9 +185,9 @@ class MKV_Reports
 
         // --- Dữ liệu biểu đồ theo ngày ---
         $chart_raw = $wpdb->get_results($wpdb->prepare(
-            "SELECT DATE(created_at) as day, SUM(total_amount) as revenue, SUM(cost_total) as cost, COUNT(id) as orders
+            "SELECT DATE(created_at) as day, SUM(GREATEST(0, total_amount - shipping_fee)) as revenue, SUM(cost_total) as cost, COUNT(id) as orders
              FROM {$wpdb->prefix}mkv_orders
-             WHERE created_at BETWEEN %s AND %s AND status IN ('paid', 'shipping', 'completed')
+             WHERE created_at BETWEEN %s AND %s AND status IN ('paid', 'completed')
              GROUP BY DATE(created_at)
              ORDER BY day ASC",
             $start_dt, $end_dt

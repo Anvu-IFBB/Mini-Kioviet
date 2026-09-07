@@ -24,6 +24,14 @@ class MKV_Frontend
     {
         check_ajax_referer('mkv_tracking_nonce', 'nonce');
 
+        $client_ip = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : 'unknown';
+        $rate_key = 'mkv_track_' . md5($client_ip);
+        $attempts = (int) get_transient($rate_key);
+        if ($attempts >= 10) {
+            wp_send_json_error(array('message' => 'Bạn đã thử quá nhiều lần. Vui lòng thử lại sau ít phút.'), 429);
+        }
+        set_transient($rate_key, $attempts + 1, 5 * MINUTE_IN_SECONDS);
+
         $order_code = isset($_POST['order_code']) ? sanitize_text_field(trim($_POST['order_code'])) : '';
         $phone = isset($_POST['phone']) ? sanitize_text_field(trim($_POST['phone'])) : '';
 

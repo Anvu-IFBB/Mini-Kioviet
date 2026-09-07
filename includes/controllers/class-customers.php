@@ -69,7 +69,8 @@ class MKV_Customers
                      (SELECT COUNT(*) FROM {$wpdb->prefix}mkv_order_items oi WHERE oi.order_id = o.id) as item_count
                      FROM {$wpdb->prefix}mkv_orders o
                      WHERE o.customer_id = %d
-                     ORDER BY o.created_at DESC",
+                     ORDER BY o.created_at DESC
+                     LIMIT 50",
                     $customer_id
                 ));
             }

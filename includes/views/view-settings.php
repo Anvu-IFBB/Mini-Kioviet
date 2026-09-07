@@ -9,7 +9,7 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
             <h1 class="mkv-page-title"><i class="hgi-stroke hgi-settings-02"></i> <?php echo esc_html(mkv__('Cài Đặt Hệ Thống')); ?></h1>
             <div class="mkv-page-actions">
                 <button type="submit" class="mkv-btn mkv-btn-primary" style="font-size:14px;padding:8px 24px;">
-                    <i class="hgi-stroke hgi-save-01"></i> <?php echo esc_html(mkv__('Lưu Cài Đặt')); ?>
+                    <i class="hgi-stroke hgi-floppy-disk"></i> <?php echo esc_html(mkv__('Lưu Cài Đặt')); ?>
                 </button>
             </div>
         </div>
@@ -25,7 +25,7 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
             <a href="#" class="mkv-tab-link" onclick="return mkvShowTab(this, 'tab-policy');"><i class="hgi-stroke hgi-book-01"></i> <?php echo esc_html(mkv__('Chính sách')); ?></a>
             <a href="#" class="mkv-tab-link" onclick="return mkvShowTab(this, 'tab-payment');"><i class="hgi-stroke hgi-wallet-01"></i> <?php echo esc_html(mkv__('Thanh toán (VietQR)')); ?></a>
             <a href="#" class="mkv-tab-link" onclick="return mkvShowTab(this, 'tab-receipt');"><i class="hgi-stroke hgi-invoice-02"></i> <?php echo esc_html(mkv__('Hóa đơn in')); ?></a>
-            <a href="#" class="mkv-tab-link" onclick="return mkvShowTab(this, 'tab-shipping');"><i class="hgi-stroke hgi-truck-01"></i> <?php echo esc_html(mkv__('Vận chuyển')); ?></a>
+            <a href="#" class="mkv-tab-link" onclick="return mkvShowTab(this, 'tab-shipping');"><i class="hgi-stroke hgi-truck-delivery"></i> <?php echo esc_html(mkv__('Vận chuyển')); ?></a>
             <a href="#" class="mkv-tab-link" onclick="return mkvShowTab(this, 'tab-ai');"><i class="hgi-stroke hgi-ai-chat-02"></i> <?php echo esc_html(mkv__('Trợ lý AI')); ?></a>
         </div>
 
@@ -317,7 +317,7 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
         <!-- Tab: Vận chuyển -->
         <div id="tab-shipping" class="mkv-tab-content" style="display:none;">
             <div class="mkv-card" style="max-width:800px; padding: 24px;">
-                <h3 class="mkv-card-title" style="margin-bottom: 20px;"><i class="hgi-stroke hgi-truck-01"></i> <?php echo esc_html(mkv__('Cấu hình Vận chuyển (GHTK / GHN)')); ?></h3>
+                <h3 class="mkv-card-title" style="margin-bottom: 20px;"><i class="hgi-stroke hgi-truck-delivery"></i> <?php echo esc_html(mkv__('Cấu hình Vận chuyển (GHTK / GHN)')); ?></h3>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
                     <div class="mkv-form-group" style="grid-column:span 2;">
                         <label class="mkv-label" style="display:flex; align-items:center; gap:8px; cursor:pointer;">

@@ -140,10 +140,13 @@ class MKV_Webhook
         } elseif ($new_status === 'cancelled') {
             MKV_Orders::process_cancel_order($order_id, 0);
         } else {
+            $fulfillment_status = $new_status === 'completed' ? 'delivered' : 'in_transit';
             $is_previously_paid = in_array($order->status, array('paid', 'shipping', 'completed'));
             $is_now_paid = in_array($new_status, array('paid', 'shipping', 'completed'));
+            $has_cod = !empty($order->cod_amount);
             
-            if ($is_now_paid && !$is_previously_paid) {
+            // Giao thành công không đồng nghĩa tiền COD đã được đối soát.
+            if ($is_now_paid && !$is_previously_paid && !$has_cod) {
                 if ($order->total_amount > 0) {
                     $wpdb->insert("{$wpdb->prefix}mkv_cashbook", array(
                         'type'         => 'thu',
@@ -166,7 +169,10 @@ class MKV_Webhook
                     ));
                 }
             }
-            $wpdb->update("{$wpdb->prefix}mkv_orders", array('status' => $new_status), array('id' => $order_id));
+            $wpdb->update("{$wpdb->prefix}mkv_orders", array(
+                'status' => $new_status,
+                'fulfillment_status' => $fulfillment_status,
+            ), array('id' => $order_id));
         }
         return true;
     }

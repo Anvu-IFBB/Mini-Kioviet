@@ -17,7 +17,7 @@ jQuery(document).ready(function($) {
 
 window.mkvToast = function(message, type = 'success') {
     let bgColor = '#10b981'; // success green
-    let icon = 'hgi-check-circle-02';
+    let icon = 'hgi-checkmark-circle-02';
     if (type === 'error') {
         bgColor = '#ef4444';
         icon = 'hgi-alert-circle';
@@ -52,28 +52,37 @@ function mkvInitCurrencyInputs() {
         if (input.dataset.currencyInitialized) return;
         input.dataset.currencyInitialized = 'true';
 
+        // Parse initial value safely (avoid decimal points like 272727.27 turning into 27272727)
+        var rawInitial = input.value || '0';
+        var parsedInitial = Math.round(parseFloat(rawInitial)) || 0;
+
         const hiddenInput = document.createElement('input');
         hiddenInput.type = 'hidden';
         hiddenInput.name = input.name;
-        hiddenInput.value = input.value || '0';
+        hiddenInput.value = parsedInitial.toString();
         
         input.removeAttribute('name');
         input.type = 'text';
         input.parentNode.insertBefore(hiddenInput, input.nextSibling);
 
         if (input.value) {
-            input.value = parseInt(input.value || 0, 10).toLocaleString('vi-VN');
+            input.value = parsedInitial > 0 ? parsedInitial.toLocaleString('vi-VN') : (rawInitial === '0' ? '0' : '');
         }
 
-        input.addEventListener('input', function(e) {
+        input.addEventListener('input', function() {
             let rawValue = this.value.replace(/[^\d]/g, '');
-            if (rawValue === '') rawValue = '0';
             hiddenInput.value = rawValue;
-            this.value = parseInt(rawValue, 10).toLocaleString('vi-VN');
+        });
+
+        input.addEventListener('blur', function() {
+            const rawValue = this.value.replace(/[^\d]/g, '');
+            hiddenInput.value = rawValue;
+            this.value = rawValue === '' ? '' : parseInt(rawValue, 10).toLocaleString('vi-VN');
         });
         
         // Also select all text on focus for easier editing
         input.addEventListener('focus', function() {
+            this.value = this.value.replace(/[^\d]/g, '');
             this.select();
         });
     });

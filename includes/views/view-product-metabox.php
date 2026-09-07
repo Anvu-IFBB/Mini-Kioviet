@@ -10,8 +10,8 @@ if (!defined('ABSPATH')) exit;
         <label for="mkv_barcode"><strong><?php echo esc_html(mkv__('Mã vạch (Barcode)')); ?></strong> <em style="color:#888;font-weight:400;">(<?php echo esc_html(mkv__('để trống = tự sinh')); ?>)</em></label>
         <div style="display:flex;gap:8px;margin-top:6px;">
             <input type="text" id="mkv_barcode" name="mkv_barcode" value="<?php echo esc_attr($barcode); ?>" style="flex:1;">
-            <button type="button" onclick="mkvGenBarcode()" class="button" style="white-space:nowrap;">
-                <i class="hgi-stroke hgi-barcode-01"></i> <?php echo esc_html(mkv__('Sinh mã')); ?>
+            <button type="button" onclick="mkvGenBarcode()" class="button" style="white-space:nowrap; display:inline-flex; align-items:center; gap:4px;">
+                <i class="hgi-stroke hgi-bar-code-01"></i> <?php echo esc_html(mkv__('Sinh mã')); ?>
             </button>
         </div>
         <?php if ($barcode): ?>
@@ -36,7 +36,7 @@ if (!defined('ABSPATH')) exit;
     </div>
     <?php else: ?>
     <div><label><strong><?php echo esc_html(mkv__('Giá nhập')); ?></strong></label>
-        <p style="padding:8px;background:#f0f0f1;border-radius:6px;margin-top:6px;color:#888;">🔒 <?php echo esc_html(mkv__('Bạn không có quyền xem giá nhập')); ?></p>
+        <p style="padding:8px 12px;background:#f0f0f1;border-radius:6px;margin-top:6px;color:#64748b;display:flex;align-items:center;gap:6px;"><i class="hgi-stroke hgi-circle-lock-01"></i> <?php echo esc_html(mkv__('Bạn không có quyền xem giá nhập')); ?></p>
         <input type="hidden" name="mkv_price_in" value="<?php echo esc_attr($price_in); ?>">
     </div>
     <?php endif; ?>

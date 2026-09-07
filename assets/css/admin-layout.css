@@ -5,26 +5,26 @@
 
 /* ========== CSS VARIABLES ========== */
 :root {
-    --mkv-primary:      #006fff;
-    --mkv-primary-dark: #0059cc;
-    --mkv-primary-light: #e5f0ff;
+    --mkv-primary:      #0060df;
+    --mkv-primary-dark: #004ecc;
+    --mkv-primary-light: #eff6ff;
     --mkv-navy:         #002957;
-    --mkv-green:        #00bc7d;
+    --mkv-green:        #10b981;
     --mkv-green-light:  #ecfdf5;
-    --mkv-red:          #fb2c36;
+    --mkv-red:          #ef4444;
     --mkv-red-light:    #fef2f2;
-    --mkv-yellow:       #ff8904;
-    --mkv-yellow-light: #fff7ed;
-    --mkv-orange:       #ff6900;
+    --mkv-yellow:       #f59e0b;
+    --mkv-yellow-light: #fffbeb;
+    --mkv-orange:       #ea580c;
     --mkv-purple:       #7c3aed;
     --mkv-purple-light: #f5f3ff;
-    --mkv-blue:         #006fff;
+    --mkv-blue:         #0060df;
     --mkv-bg:           #f4f6f8;
     --mkv-surface:      #ffffff;
-    --mkv-text-main:    #111827;
-    --mkv-text-muted:   #6b7280;
-    --mkv-border:       #e5e7eb;
-    --mkv-border-light: #f9fafb;
+    --mkv-text-main:    #0f172a;
+    --mkv-text-muted:   #64748b;
+    --mkv-border:       #e2e8f0;
+    --mkv-border-light: #f8fafc;
     --mkv-shadow-sm:    0 1px 3px rgba(0,41,87,.05), 0 1px 2px rgba(0,41,87,.03);
     --mkv-shadow:       0 4px 12px rgba(0,41,87,.06);
     --mkv-shadow-lg:    0 10px 25px rgba(0,41,87,.09);
@@ -587,8 +587,54 @@ hr.wp-header-end { display: none !important; }
 .mkv-page-scroll {
     flex: 1;
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 20px;
     background: var(--mkv-bg);
+    min-width: 0;
+}
+
+.mkv-ai-logs-page {
+    min-width: 0;
+}
+.mkv-ai-logs-card {
+    min-width: 0;
+}
+.mkv-ai-logs-table-wrap {
+    max-height: calc(100vh - 250px);
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.mkv-ai-logs-table-wrap table {
+    min-width: 760px;
+}
+.mkv-ai-logs-table-wrap thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--mkv-surface);
+}
+
+.mkv-customer-orders-scroll {
+    max-height: 480px;
+    overflow: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+.mkv-customer-orders-scroll table {
+    min-width: 720px;
+    width: 100%;
+    margin: 0;
+}
+.mkv-customer-orders-scroll thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--mkv-surface);
+}
+@media (max-width: 900px) {
+    .mkv-customer-kpis {
+        grid-template-columns: 1fr !important;
+    }
 }
 
 /* ==============================================
@@ -637,7 +683,7 @@ hr.wp-header-end { display: none !important; }
     font-weight: 500;
     cursor: pointer;
     text-decoration: none !important;
-    transition: var(--mkv-transition);
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
     border: 1px solid transparent;
     font-family: 'Inter', sans-serif;
     line-height: 1.2;
@@ -645,6 +691,7 @@ hr.wp-header-end { display: none !important; }
     outline: none;
     box-shadow: var(--mkv-shadow-sm);
 }
+.mkv-btn:hover { transform: translateY(-1px); box-shadow: var(--mkv-shadow); }
 .mkv-btn:active { transform: translateY(1px); box-shadow: none; }
 .mkv-btn i { font-size: 16px; }
 .mkv-btn-sm { padding: 5px 12px; font-size: 12.5px; }
@@ -660,7 +707,7 @@ hr.wp-header-end { display: none !important; }
     background: var(--mkv-primary-dark);
     border-color: var(--mkv-primary-dark);
     color: var(--mkv-surface) !important;
-    box-shadow: 0 4px 12px rgba(0,114,188,0.25);
+    box-shadow: 0 4px 12px rgba(0,96,223,0.25);
 }
 .mkv-btn-secondary {
     background: var(--mkv-surface);
@@ -744,7 +791,7 @@ hr.wp-header-end { display: none !important; }
 .mkv-textarea:focus {
     outline: none !important;
     border-color: var(--mkv-primary) !important;
-    box-shadow: 0 0 0 3px rgba(0,114,188,0.12) !important;
+    box-shadow: 0 0 0 3px rgba(0,96,223,0.12) !important;
 }
 .mkv-label {
     display: block;
@@ -918,19 +965,25 @@ hr.wp-header-end { display: none !important; }
     align-items: center;
     padding: 3px 10px;
     border-radius: var(--mkv-radius-pill);
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 600;
     line-height: 1.5;
     white-space: nowrap;
     gap: 4px;
     border: 1px solid transparent;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
 }
-.mkv-badge-blue   { background: #e5f0ff; color: #0059cc; border-color: #99c5ff; }
-.mkv-badge-green  { background: #ecfdf5; color: #007a55; border-color: #a4f4cf; }
-.mkv-badge-red    { background: #fef2f2; color: #c10007; border-color: #ffc9c9; }
-.mkv-badge-yellow { background: #fff7ed; color: #ca3500; border-color: #ffd6a8; }
-.mkv-badge-purple { background: #faf5ff; color: #6e11b0; border-color: #e9d4ff; }
-.mkv-badge-gray   { background: #f5f5f5; color: #525252; border-color: #e5e5e5; }
+.mkv-badge i {
+    font-size: 13px;
+    line-height: 1;
+}
+.mkv-badge-blue   { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+.mkv-badge-green  { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+.mkv-badge-red    { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+.mkv-badge-yellow { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+.mkv-badge-purple { background: #f5f3ff; color: #6d28d9; border-color: #ddd6fe; }
+.mkv-badge-gray   { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
 .mkv-badge-new {
     background: #fff0f6;
     color: var(--mkv-red);
@@ -960,6 +1013,98 @@ hr.wp-header-end { display: none !important; }
 .mkv-alert-error   { background: var(--mkv-red-light);   color: #991b1b; border-color: #fecaca; }
 .mkv-alert-warning { background: var(--mkv-yellow-light); color: #92400e; border-color: #fde68a; }
 .mkv-alert-info    { background: var(--mkv-primary-light); color: #1e40af; border-color: #bfdbfe; }
+
+/* ==============================================
+   MKV DATA TABLES (Enterprise Retail Standard)
+   ============================================== */
+.mkv-table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--mkv-radius);
+    margin-bottom: 16px;
+}
+.mkv-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 13px;
+    color: var(--mkv-text-main);
+    background: var(--mkv-surface);
+    border: 1px solid var(--mkv-border);
+    border-radius: var(--mkv-radius);
+    text-align: left;
+}
+.mkv-table th {
+    background: #f8fafc;
+    color: #475569;
+    font-size: 11.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--mkv-border);
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+.mkv-table th:first-child {
+    border-top-left-radius: var(--mkv-radius);
+}
+.mkv-table th:last-child {
+    border-top-right-radius: var(--mkv-radius);
+}
+.mkv-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--mkv-border-light);
+    vertical-align: middle;
+    transition: background-color 0.12s ease;
+    line-height: 1.45;
+}
+.mkv-table tbody tr:hover td {
+    background-color: #f8fafc;
+}
+.mkv-table tbody tr:last-child td {
+    border-bottom: none;
+}
+.mkv-table tbody tr:last-child td:first-child {
+    border-bottom-left-radius: var(--mkv-radius);
+}
+.mkv-table tbody tr:last-child td:last-child {
+    border-bottom-right-radius: var(--mkv-radius);
+}
+/* Tabular numerals for monetary numbers across metrics & tables */
+.mkv-table td.amount,
+.mkv-table td.price,
+.mkv-table td.total,
+.mkv-table td.num,
+.mkv-stat-card p,
+.mkv-stat-box p,
+.mkv-num,
+.mkv-price,
+.mkv-tabular,
+[data-tabular="true"] {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+}
+
+/* Dark mode overrides for mkv-table */
+html.dark .mkv-table {
+    border-color: var(--mkv-border) !important;
+    background: var(--mkv-surface) !important;
+}
+html.dark .mkv-table th {
+    background: #0f172a !important;
+    color: #94a3b8 !important;
+    border-bottom-color: var(--mkv-border) !important;
+}
+html.dark .mkv-table td {
+    border-bottom-color: #243044 !important;
+}
+html.dark .mkv-table tbody tr:hover td {
+    background-color: #243044 !important;
+}
 
 /* ==============================================
    TABS
@@ -1031,8 +1176,9 @@ hr.wp-header-end { display: none !important; }
 .mkv-modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(15, 23, 42, 0.5);
-    backdrop-filter: blur(2px);
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
     z-index: 99999;
     display: none;
     align-items: center;
@@ -1104,6 +1250,61 @@ hr.wp-header-end { display: none !important; }
     border-radius: 0 0 var(--mkv-radius-xl) var(--mkv-radius-xl);
 }
 
+/* Payment Method Cards in Modal */
+.mkv-method-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+.mkv-method-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 8px;
+    border: 1.5px solid var(--mkv-border);
+    border-radius: var(--mkv-radius);
+    background: var(--mkv-surface);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--mkv-text-main);
+    transition: var(--mkv-transition);
+    text-align: center;
+    user-select: none;
+}
+.mkv-method-card:hover {
+    border-color: var(--mkv-primary);
+    background: var(--mkv-primary-light);
+}
+.mkv-method-card input[type="radio"] {
+    display: none;
+}
+.mkv-method-card.active,
+.mkv-method-card:has(input[type="radio"]:checked) {
+    border-color: var(--mkv-primary) !important;
+    background: var(--mkv-primary-light) !important;
+    color: var(--mkv-primary) !important;
+    font-weight: 600;
+    box-shadow: 0 0 0 1px var(--mkv-primary);
+}
+.mkv-method-card i {
+    font-size: 20px;
+}
+html.dark .mkv-method-card {
+    background: #1e293b;
+    border-color: var(--mkv-border);
+    color: var(--mkv-text-main);
+}
+html.dark .mkv-method-card:hover,
+html.dark .mkv-method-card.active,
+html.dark .mkv-method-card:has(input[type="radio"]:checked) {
+    background: #1e3a8a !important;
+    border-color: #38bdf8 !important;
+    color: #f1f5f9 !important;
+}
+
 /* ==============================================
    FILTER BAR
    ============================================== */
@@ -1125,10 +1326,27 @@ hr.wp-header-end { display: none !important; }
 .mkv-filter-pills {
     display: flex;
     gap: 8px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    white-space: nowrap;
     margin-bottom: 16px;
+    padding-bottom: 6px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+.mkv-filter-pills::-webkit-scrollbar {
+    height: 4px;
+}
+.mkv-filter-pills::-webkit-scrollbar-track {
+    background: transparent;
+}
+.mkv-filter-pills::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
 }
 .mkv-filter-pill {
+    flex-shrink: 0;
     background: var(--mkv-surface);
     color: var(--mkv-text-muted);
     padding: 6px 16px;
@@ -1148,31 +1366,97 @@ hr.wp-header-end { display: none !important; }
 }
 
 /* ==============================================
-   TABLE
+   TABLE & SCROLL CONTAINERS
    ============================================== */
-.mkv-table-wrap, .mkv-modern-table {
+.mkv-table-wrap, .mkv-modern-table, .mkv-table-responsive {
     background: var(--mkv-surface);
     border-radius: var(--mkv-radius-lg);
     border: 1px solid var(--mkv-border);
     box-shadow: var(--mkv-shadow-sm);
     overflow-x: auto;
-    overflow-y: hidden;
+    overflow-y: auto;
+    max-height: calc(100vh - 240px);
     margin-bottom: 20px;
+    position: relative;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9;
 }
+
+/* Custom Sleek Scrollbars */
+.mkv-table-wrap::-webkit-scrollbar,
+.mkv-modern-table::-webkit-scrollbar,
+.mkv-table-responsive::-webkit-scrollbar,
+.mkv-page-scroll::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+.mkv-table-wrap::-webkit-scrollbar-track,
+.mkv-modern-table::-webkit-scrollbar-track,
+.mkv-table-responsive::-webkit-scrollbar-track,
+.mkv-page-scroll::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+.mkv-table-wrap::-webkit-scrollbar-thumb,
+.mkv-modern-table::-webkit-scrollbar-thumb,
+.mkv-table-responsive::-webkit-scrollbar-thumb,
+.mkv-page-scroll::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+.mkv-table-wrap::-webkit-scrollbar-thumb:hover,
+.mkv-modern-table::-webkit-scrollbar-thumb:hover,
+.mkv-table-responsive::-webkit-scrollbar-thumb:hover,
+.mkv-page-scroll::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Dark Mode Scrollbars */
+html.dark .mkv-table-wrap,
+html.dark .mkv-modern-table,
+html.dark .mkv-table-responsive,
+html.dark .mkv-page-scroll {
+    scrollbar-color: #475569 #1e293b;
+}
+html.dark .mkv-table-wrap::-webkit-scrollbar-track,
+html.dark .mkv-modern-table::-webkit-scrollbar-track,
+html.dark .mkv-table-responsive::-webkit-scrollbar-track,
+html.dark .mkv-page-scroll::-webkit-scrollbar-track {
+    background: #1e293b;
+}
+html.dark .mkv-table-wrap::-webkit-scrollbar-thumb,
+html.dark .mkv-modern-table::-webkit-scrollbar-thumb,
+html.dark .mkv-table-responsive::-webkit-scrollbar-thumb,
+html.dark .mkv-page-scroll::-webkit-scrollbar-thumb {
+    background: #475569;
+}
+
 .mkv-table, .mkv-modern-table table {
     width: 100%;
     min-width: 1000px;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     font-size: 13.5px;
     font-family: 'Inter', sans-serif;
     background: var(--mkv-surface);
 }
-.mkv-table thead tr {
+.mkv-modern-table table {
+    min-width: 1240px;
+}
+.mkv-table thead tr,
+.mkv-modern-table thead tr {
     background: var(--mkv-border-light);
-    border-bottom: 1px solid var(--mkv-border);
 }
 .mkv-table thead th,
 .mkv-modern-table th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
     padding: 12px 16px;
     text-align: left;
     font-size: 12.5px;
@@ -1181,8 +1465,15 @@ hr.wp-header-end { display: none !important; }
     white-space: nowrap;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    background: var(--mkv-border-light);
+    background: #f8fafc !important;
     border-bottom: 1px solid var(--mkv-border);
+    box-shadow: 0 1px 0 var(--mkv-border);
+}
+html.dark .mkv-table thead th,
+html.dark .mkv-modern-table th {
+    background: #0f172a !important;
+    border-bottom: 1px solid var(--mkv-border) !important;
+    box-shadow: 0 1px 0 var(--mkv-border);
 }
 .mkv-table tbody td,
 .mkv-modern-table td {
@@ -1194,8 +1485,10 @@ hr.wp-header-end { display: none !important; }
 }
 .mkv-table tbody tr:last-child td,
 .mkv-modern-table tr:last-child td { border-bottom: none; }
-.mkv-table tbody tr:hover,
+.mkv-table tbody tr:hover td,
 .mkv-modern-table tr:hover td { background: #f8faff; }
+html.dark .mkv-table tbody tr:hover td,
+html.dark .mkv-modern-table tr:hover td { background: rgba(255,255,255,0.04) !important; }
 
 .mkv-table-responsive {
     width: 100%;
@@ -1249,6 +1542,47 @@ hr.wp-header-end { display: none !important; }
 .mkv-widget-list li:hover { background-color: #f8faff; }
 .mkv-widget-list li span:first-child { font-weight: 500; }
 .mkv-loading { color: var(--mkv-text-muted); font-style: italic; font-size: 13px; }
+
+/* ==============================================
+   CARD WIDGET SCROLL (Alerts & Lists)
+   ============================================== */
+.mkv-card-scroll {
+    max-height: 360px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+.mkv-card-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+.mkv-card-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+.mkv-card-scroll::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+.mkv-card-scroll::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Specific max height for system alerts */
+.mkv-alerts-scroll {
+    max-height: 480px;
+}
+
+/* Dark mode for card scroll */
+html.dark .mkv-card-scroll {
+    scrollbar-color: #475569 transparent;
+}
+html.dark .mkv-card-scroll::-webkit-scrollbar-thumb {
+    background: #475569;
+}
+html.dark .mkv-card-scroll::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+}
 
 /* ==============================================
    TIMELINE (Dashboard)
@@ -1421,6 +1755,25 @@ hr.wp-header-end { display: none !important; }
 }
 .mkv-action-warning:hover { background: #fef3c7; }
 
+.mkv-action-success {
+    background: #ecfdf5;
+    color: #059669 !important;
+    border-color: #a7f3d0;
+}
+.mkv-action-success:hover {
+    background: #d1fae5;
+    color: #047857 !important;
+    border-color: #6ee7b7;
+}
+html.dark .mkv-action-success {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399 !important;
+    border-color: rgba(52, 211, 153, 0.3);
+}
+html.dark .mkv-action-success:hover {
+    background: rgba(16, 185, 129, 0.25);
+}
+
 
 /* ==============================================
    DASHBOARD SPECIFIC
@@ -1516,3 +1869,99 @@ hr.wp-header-end { display: none !important; }
     .mkv-filter-bar { flex-direction: column; align-items: stretch; }
     .mkv-page-header { flex-direction: column; align-items: flex-start; }
 }
+
+/* Customer Orders History Scrollable Container */
+.mkv-customer-orders-scroll {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 480px;
+    -webkit-overflow-scrolling: touch;
+    border-top: 1px solid var(--mkv-border, #e2e8f0);
+}
+.mkv-customer-orders-scroll table {
+    min-width: 720px;
+    width: 100%;
+    margin: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+.mkv-customer-orders-scroll thead th {
+    position: sticky;
+    top: 0;
+    background: var(--mkv-bg, #f8fafc);
+    z-index: 5;
+    box-shadow: 0 1px 0 var(--mkv-border, #e2e8f0);
+}
+
+/* Customer Detail 2-Column Balanced Grid */
+.mkv-customer-detail-grid {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 20px;
+    align-items: start;
+}
+@media screen and (max-width: 1080px) {
+    .mkv-customer-detail-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Payment Method Cards (Modal & POS) */
+.mkv-method-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+.mkv-method-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 8px;
+    border: 1.5px solid var(--mkv-border, #e2e8f0);
+    border-radius: var(--mkv-radius);
+    background: var(--mkv-surface, #fff);
+    cursor: pointer;
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--mkv-text-main, #0f172a);
+    user-select: none;
+}
+.mkv-method-card input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+.mkv-method-card:hover {
+    border-color: var(--mkv-primary);
+    background: var(--mkv-primary-light, #eff6ff);
+    transform: translateY(-1px);
+}
+.mkv-method-card.active {
+    border-color: var(--mkv-primary);
+    background: var(--mkv-primary-light, #eff6ff);
+    box-shadow: 0 0 0 1.5px var(--mkv-primary);
+    color: var(--mkv-primary);
+    font-weight: 600;
+}
+html.dark .mkv-method-card {
+    background: var(--mkv-surface, #1e293b);
+    border-color: var(--mkv-border, #334155);
+    color: var(--mkv-text-main, #f8fafc);
+}
+html.dark .mkv-method-card:hover {
+    border-color: #38bdf8;
+    background: rgba(56, 189, 248, 0.1);
+}
+html.dark .mkv-method-card.active {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 1.5px #38bdf8;
+    color: #38bdf8;
+}
+
+

@@ -3,6 +3,15 @@ let cart = {};
 // since they depend on PHP variables and DOM state
 // We'll define them globally here and let the view set them if needed.
 
+function escapeHtml(value) {
+    return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 jQuery(document).ready(function($) {
     if ($.fn.select2) {
         $('#pos-customer-select').select2({
@@ -40,6 +49,9 @@ jQuery(document).ready(function($) {
             `)
             .appendTo('head');
     }
+
+    const customerSelect = document.getElementById('pos-customer-select');
+    if (customerSelect) onCustomerChange(customerSelect);
 });
 
 function addToCart(el) {
@@ -67,6 +79,20 @@ function addToCart(el) {
 function onCustomerChange(sel) {
     const opt = sel.options[sel.selectedIndex];
     window.currentCustomerPoints = parseInt(opt.dataset.points || 0);
+    const addressInput = document.getElementById('pos-customer-address');
+    const phoneInput = document.getElementById('pos-shipping-phone');
+    if (addressInput && opt.value !== '0' && opt.dataset.address) {
+        addressInput.value = opt.dataset.address;
+        addressInput.dataset.customerAddress = opt.dataset.address;
+    } else if (addressInput && opt.value === '0') {
+        addressInput.value = '';
+        delete addressInput.dataset.customerAddress;
+    }
+    if (phoneInput && opt.value !== '0' && opt.dataset.phone && !phoneInput.dataset.edited) {
+        phoneInput.value = opt.dataset.phone;
+    } else if (phoneInput && opt.value === '0' && !phoneInput.dataset.edited) {
+        phoneInput.value = '';
+    }
     const box = document.getElementById('pos-points-box');
     const custPointsEl = document.getElementById('pos-cust-points');
     const maxPointsEl = document.getElementById('pos-max-points-val');
@@ -111,7 +137,7 @@ function renderCart() {
         subtotal += item.price * item.qty;
         html += `<div class="cart-item">
             <div style="flex:1; padding-right:12px;">
-                <div style="font-weight:600; line-height:1.3; margin-bottom:4px; color:#1e293b; font-size:14px;">${item.name}</div>
+                <div style="font-weight:600; line-height:1.3; margin-bottom:4px; color:#1e293b; font-size:14px;">${escapeHtml(item.name)}</div>
                 <div style="color:#64748b; font-size:12px;">${item.price.toLocaleString('vi-VN')} ₫</div>
                 <input type="hidden" name="products[${id}][id]" value="${id}">
                 <input type="hidden" name="products[${id}][price]" value="${item.price}">
@@ -173,8 +199,10 @@ function renderCart() {
     
     // Auto-fill paid amount if empty or if we want to reset it
     const paidInput = document.getElementById('pos-paid-amount');
+    const salesChannel = document.getElementById('pos-sales-channel')?.value || 'pos';
     if (paidInput && (!paidInput.dataset.edited || paidInput.value === '')) {
-        paidInput.value = finalTotal.toLocaleString('vi-VN');
+        const isDeliveryOrder = enableShippingEl && enableShippingEl.checked && salesChannel !== 'pos';
+        paidInput.value = (isDeliveryOrder ? 0 : finalTotal).toLocaleString('vi-VN');
     }
     
     // Cập nhật lại số tiền thừa/nợ
@@ -319,7 +347,7 @@ function previewReceipt() {
         const lineTotal = item.price * item.qty;
         total += lineTotal;
         itemsHtml += `<tr>
-            <td style="padding:2px 0;">${item.name}</td>
+            <td style="padding:2px 0;">${escapeHtml(item.name)}</td>
             <td style="text-align:center; padding:2px 0;">x${item.qty}</td>
             <td style="text-align:right; padding:2px 0;">${lineTotal.toLocaleString('vi-VN')}</td>
         </tr>`;
@@ -372,7 +400,14 @@ function previewReceipt() {
         if (receiptQrImg) receiptQrImg.src = receiptQrUrl;
         
         const receiptQrText = document.getElementById('receipt-qr-text');
-        if (receiptQrText) receiptQrText.innerHTML = `<div>STK: <strong>${window.mkv_bank_info.account}</strong> - ${window.mkv_bank_info.id}</div><div>Nội dung: <strong>${memo}</strong></div>`;
+        if (receiptQrText) {
+            receiptQrText.replaceChildren();
+            const bankLine = document.createElement('div');
+            bankLine.textContent = 'STK: ' + window.mkv_bank_info.account + ' - ' + window.mkv_bank_info.id;
+            const memoLine = document.createElement('div');
+            memoLine.textContent = 'Nội dung: ' + memo;
+            receiptQrText.append(bankLine, memoLine);
+        }
         
         receiptQrBox.style.display = 'block';
     } else if (receiptQrBox) {
@@ -384,11 +419,13 @@ function previewReceipt() {
 
 function closeReceiptModal() {
     document.getElementById('mkv-receipt-modal').style.display = 'none';
-    clearCart();
-    // After closing the receipt for a successful order, we want to start fresh.
-    document.getElementById('pos-customer-select').value = "0";
-    onCustomerChange(document.getElementById('pos-customer-select'));
-    renderCart();
+    if (window.mkv_receipt_is_completed) {
+        clearCart();
+        document.getElementById('pos-customer-select').value = "0";
+        onCustomerChange(document.getElementById('pos-customer-select'));
+        window.mkv_receipt_is_completed = false;
+        renderCart();
+    }
 }
 
 function printReceipt() {
@@ -456,6 +493,7 @@ document.getElementById('pos-form').addEventListener('submit', function(e) {
         btn.disabled = false;
         btn.innerHTML = oldText;
         if (res.success) {
+            window.mkv_receipt_is_completed = true;
             // Hiển thị QR Code nếu là thanh toán chuyển khoản
             const pmInput = document.querySelector('input[name="payment_method"]:checked');
             const pm = pmInput ? pmInput.value : '';
@@ -476,7 +514,14 @@ document.getElementById('pos-form').addEventListener('submit', function(e) {
                 if (qrImg) qrImg.src = qrUrl;
                 
                 const qrText = document.getElementById('receipt-qr-text');
-                if (qrText) qrText.innerHTML = `<div>STK: <strong>${window.mkv_bank_info.account}</strong> - ${window.mkv_bank_info.id}</div><div>Mã đơn: <strong>${orderCode}</strong></div>`;
+                if (qrText) {
+                    qrText.replaceChildren();
+                    const bankLine = document.createElement('div');
+                    bankLine.textContent = 'STK: ' + window.mkv_bank_info.account + ' - ' + window.mkv_bank_info.id;
+                    const orderLine = document.createElement('div');
+                    orderLine.textContent = 'Mã đơn: ' + orderCode;
+                    qrText.append(bankLine, orderLine);
+                }
                 
                 qrContainer.style.display = 'block';
             } else if (qrContainer) {

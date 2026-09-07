@@ -14,7 +14,11 @@ jQuery(document).ready(function ($) {
             },
             success: function (data) {
                 function fmtMoney(v) {
-                    return parseFloat(v || 0).toLocaleString('vi-VN') + ' ₫';
+                    return Math.round(parseFloat(v || 0)).toLocaleString('vi-VN') + ' ₫';
+                }
+
+                function escapeHtml(value) {
+                    return $('<div>').text(value == null ? '' : String(value)).html();
                 }
 
                 // --- Stat Cards ---
@@ -23,10 +27,18 @@ jQuery(document).ready(function ($) {
                 $('#mkv-today-customers-count').text(data.today_customers || 0);
                 $('#mkv-today-net-revenue').text(fmtMoney(data.today_revenue));
 
+                // Cashflow & Receivables (Chuẩn KiotViet)
+                $('#mkv-today-actual-collected').text(fmtMoney(data.today_actual_collected));
+                $('#mkv-today-pending-debt').text(fmtMoney(data.today_pending_debt));
+                $('#mkv-today-shipping-info').text((data.today_shipping_count || 0) + ' đơn');
+                $('#mkv-today-shipping-total-sub').text(data.today_shipping_total > 0 ? ('COD: ' + fmtMoney(data.today_shipping_total)) : '—');
+                $('#mkv-global-total-customer-debt').text(fmtMoney(data.total_customer_debt));
+
                 // Global Stats
                 $('#mkv-global-total-products').text(data.total_products || 0);
                 $('#mkv-global-total-customers').text(data.total_customers || 0);
                 $('#mkv-global-total-revenue').text(fmtMoney(data.total_revenue));
+                $('#mkv-global-total-balance').text(fmtMoney(data.total_cash_balance));
 
                 // Change indicator
                 function getChangeHtml(percent, curPeriod) {
@@ -58,6 +70,7 @@ jQuery(document).ready(function ($) {
                 $('#mkv-orders-change').html(getChangeHtml(data.orders_change, period));
                 $('#mkv-customers-change').html(getChangeHtml(data.customers_change, period));
                 $('#mkv-revenue-change').html(getChangeHtml(data.revenue_change, period));
+                $('#mkv-collected-change').html(getChangeHtml(data.collected_change, period));
 
                 // --- 1. Line Chart: Doanh thu ---
                 var canvas = document.getElementById('mkvRevenueChart');
@@ -98,7 +111,7 @@ jQuery(document).ready(function ($) {
                                 tooltip: {
                                     callbacks: {
                                         label: function (ctx) {
-                                            return ' ' + ((typeof mkv_i18n !== 'undefined' && mkv_i18n.revenue_label) || 'Doanh thu:') + ' ' + parseFloat(ctx.parsed.y).toLocaleString('vi-VN') + ' ₫';
+                                            return ' ' + ((typeof mkv_i18n !== 'undefined' && mkv_i18n.revenue_label) || 'Doanh thu:') + ' ' + fmtMoney(ctx.parsed.y);
                                         }
                                     }
                                 }
@@ -202,7 +215,7 @@ jQuery(document).ready(function ($) {
                                 tooltip: {
                                     callbacks: {
                                         label: function (ctx) {
-                                            return ' ' + parseFloat(ctx.parsed.x).toLocaleString('vi-VN') + ' ₫';
+                                            return ' ' + fmtMoney(ctx.parsed.x);
                                         }
                                     }
                                 }
@@ -227,7 +240,7 @@ jQuery(document).ready(function ($) {
                     data.recent_activities.forEach(function (o) {
                         const fallbackGuest = (typeof mkv_i18n !== 'undefined' && mkv_i18n.guest_customer) ? mkv_i18n.guest_customer : 'Khách lẻ';
                         const customer = o.customer_name ? o.customer_name : fallbackGuest;
-                        const amount = parseFloat(o.total_amount || 0).toLocaleString('vi-VN') + ' ₫';
+                        const amount = fmtMoney(o.total_amount);
                         
                         let timeStr = '';
                         if (o.time) {
@@ -242,14 +255,14 @@ jQuery(document).ready(function ($) {
 
                         const activityTemplate = ((typeof mkv_i18n !== 'undefined' && mkv_i18n.activity_template) || 'vừa mua đơn hàng <strong>{order_code}</strong> với giá trị <strong style="color:var(--mkv-primary);">{amount}</strong>');
                         const activityText = activityTemplate
-                            .replace('{order_code}', o.order_code)
+                            .replace('{order_code}', escapeHtml(o.order_code))
                             .replace('{amount}', amount);
 
                         html += `
                         <div class="mkv-timeline-item">
                             <div class="mkv-timeline-time">${timeStr}</div>
                             <div class="mkv-timeline-content">
-                                <strong>${customer}</strong> ${activityText}
+                                <strong>${escapeHtml(customer)}</strong> ${activityText}
                             </div>
                         </div>
                         `;
@@ -266,7 +279,7 @@ jQuery(document).ready(function ($) {
                         const badge = item.stock <= 0
                             ? '<span class="mkv-badge mkv-badge-red">' + ((typeof mkv_i18n !== 'undefined' && mkv_i18n.out_of_stock) || 'Hết hàng') + '</span>'
                             : '<span class="mkv-badge mkv-badge-yellow">' + ((typeof mkv_i18n !== 'undefined' && mkv_i18n.in_stock_prefix) || 'Còn') + ' ' + item.stock + '</span>';
-                        html += '<li><span>' + item.name + '</span>' + badge + '</li>';
+                        html += '<li><span>' + escapeHtml(item.name) + '</span>' + badge + '</li>';
                     });
                     $('#mkv-low-stock').html(html);
                 } else {

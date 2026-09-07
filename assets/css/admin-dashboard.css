@@ -55,6 +55,19 @@
     color: var(--mkv-text-muted);
     min-height: 18px;
 }
+.mkv-today-stats-row-divider {
+    border-top: 1px dashed #e2e8f0;
+    background: #fafbfc;
+}
+.mkv-stat-sublabel {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 4px;
+    display: block;
+}
+.mkv-text-emerald { color: #059669 !important; }
+.mkv-text-amber { color: #d97706 !important; }
+.mkv-text-indigo { color: #6366f1 !important; }
 
 /* Dashboard layout */
 .mkv-dashboard-layout {

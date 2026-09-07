@@ -39,7 +39,7 @@ $user = wp_get_current_user();
         <div class="mkv-ai-msg ai">
             <div class="mkv-ai-avatar"><i class="hgi-stroke hgi-ai-chat-02"></i></div>
             <div class="mkv-ai-content">
-                <p>Xin chào <strong><?php echo esc_html($user->display_name); ?></strong>! 👋</p>
+                <p>Xin chào <strong><?php echo esc_html($user->display_name); ?></strong>!</p>
                 <p>Tôi là <?php echo esc_html(get_option('mkv_ai_assistant_name', 'KiotViet Copilot')); ?>. Hôm nay bạn cần hỗ trợ gì về số liệu hay thao tác bán hàng không?</p>
             </div>
         </div>

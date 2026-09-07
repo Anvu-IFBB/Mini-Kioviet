@@ -10,6 +10,16 @@ $bank_acc   = get_option('mkv_bank_account', '');
 $bank_name  = get_option('mkv_bank_name', '');
 $enable_pos_qr = (int) get_option('mkv_enable_pos_qr', 1);
 $enable_receipt_qr = (int) get_option('mkv_receipt_enable_qr', 1);
+$default_sales_channel = sanitize_key($_GET['channel'] ?? 'pos');
+$sales_channels = array(
+    'pos' => mkv__('Tại quầy'),
+    'online' => mkv__('Giao hàng / Online'),
+    'social' => mkv__('Facebook / Zalo'),
+    'marketplace' => mkv__('Sàn thương mại điện tử'),
+);
+if (!isset($sales_channels[$default_sales_channel])) {
+    $default_sales_channel = 'pos';
+}
 ?>
 
 
@@ -107,6 +117,15 @@ $enable_receipt_qr = (int) get_option('mkv_receipt_enable_qr', 1);
                 <input type="hidden" name="action" value="mkv_create_order">
                 <?php wp_nonce_field('mkv_create_order_nonce', '_wpnonce'); ?>
 
+                <div style="margin-bottom:12px;">
+                    <label for="pos-sales-channel" style="font-size:12px; font-weight:600; color:var(--mkv-text-muted); text-transform:uppercase;"><?php echo esc_html(mkv__('Kênh bán hàng')); ?></label>
+                    <select name="sales_channel" id="pos-sales-channel" class="mkv-select" style="width:100%; margin-top:4px;">
+                        <?php foreach ($sales_channels as $channel_key => $channel_label): ?>
+                            <option value="<?php echo esc_attr($channel_key); ?>" <?php selected($default_sales_channel, $channel_key); ?>><?php echo esc_html($channel_label); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
                 <!-- Chọn kho bán -->
                 <div style="margin-bottom:12px;">
                     <label style="font-size:12px; font-weight:600; color:var(--mkv-text-muted); text-transform:uppercase;"><?php echo esc_html(mkv__('Kho xuất bán')); ?></label>
@@ -123,7 +142,7 @@ $enable_receipt_qr = (int) get_option('mkv_receipt_enable_qr', 1);
                     <select name="customer_id" id="pos-customer-select" class="mkv-select" style="width:100%; margin-top:4px;" onchange="onCustomerChange(this)">
                         <option value="0" data-points="0"><?php echo esc_html(mkv__('— Khách lẻ (Không tích điểm) —')); ?></option>
                         <?php foreach ($customers as $c): ?>
-                            <option value="<?php echo $c->id; ?>" data-points="<?php echo (int)$c->points; ?>">
+                            <option value="<?php echo $c->id; ?>" data-points="<?php echo (int)$c->points; ?>" data-address="<?php echo esc_attr($c->address ?? ''); ?>" data-phone="<?php echo esc_attr($c->phone ?? ''); ?>">
                                 <?php echo esc_html($c->name . ($c->phone ? ' - ' . $c->phone : '') . ' (' . (int)$c->points . mkv__(' điểm)')); ?>
                             </option>
                         <?php endforeach; ?>
@@ -155,13 +174,13 @@ $enable_receipt_qr = (int) get_option('mkv_receipt_enable_qr', 1);
                 </div>
 
                 <!-- Tuỳ chọn Giao hàng (Nếu có bật trong cài đặt) -->
-                <?php if (get_option('mkv_shipping_enable', 0) == 1): ?>
+                <?php if (get_option('mkv_shipping_enable', 0) == 1 || $default_sales_channel !== 'pos'): ?>
                 <div style="margin-bottom:16px; background:#f8fafc; padding:12px; border-radius:10px; border:1px solid #e2e8f0;">
                     <label style="display:flex; align-items:center; gap:8px; font-weight:600; cursor:pointer; color:#1e293b; font-size:13px;">
-                        <input type="checkbox" name="is_enable_shipping" value="1" id="pos-enable-shipping" onchange="toggleShippingFields()">
-                        <i class="hgi-stroke hgi-truck-01" style="color:var(--mkv-primary);"></i> <?php echo esc_html(mkv__('Giao hàng tận nơi')); ?>
+                        <input type="checkbox" name="is_enable_shipping" value="1" id="pos-enable-shipping" onchange="toggleShippingFields()" <?php checked($default_sales_channel !== 'pos'); ?>>
+                        <i class="hgi-stroke hgi-truck-delivery" style="color:var(--mkv-primary);"></i> <?php echo esc_html(mkv__('Giao hàng tận nơi')); ?>
                     </label>
-                    <div id="pos-shipping-fields" style="display:none; margin-top:12px; border-top:1px dashed #cbd5e1; padding-top:12px;">
+                    <div id="pos-shipping-fields" style="display:<?php echo $default_sales_channel !== 'pos' ? 'block' : 'none'; ?>; margin-top:12px; border-top:1px dashed #cbd5e1; padding-top:12px;">
                         <div style="margin-bottom:8px;">
                             <label style="font-size:12px; color:var(--mkv-text-muted); display:block; margin-bottom:4px;"><?php echo esc_html(mkv__('Phí giao hàng (Thu khách)')); ?></label>
                             <input type="number" name="shipping_fee" id="pos-shipping-fee" class="mkv-input" style="width:100%;" value="0" min="0" oninput="renderCart()">
@@ -170,7 +189,17 @@ $enable_receipt_qr = (int) get_option('mkv_receipt_enable_qr', 1);
                             <label style="font-size:12px; color:var(--mkv-text-muted); display:block; margin-bottom:4px;"><?php echo esc_html(mkv__('Địa chỉ nhận hàng chi tiết (Kèm Tỉnh/Thành)')); ?></label>
                             <textarea name="customer_address" id="pos-customer-address" class="mkv-textarea" style="width:100%;" rows="2" placeholder="Số nhà, Đường, Phường/Xã, Quận/Huyện, Tỉnh/Thành..."></textarea>
                         </div>
-                        <input type="hidden" name="shipping_provider" value="<?php echo esc_attr(get_option('mkv_shipping_provider', 'ghtk')); ?>">
+                        <div style="margin-bottom:8px;">
+                            <label style="font-size:12px; color:var(--mkv-text-muted); display:block; margin-bottom:4px;"><?php echo esc_html(mkv__('Đơn vị vận chuyển')); ?></label>
+                            <select name="shipping_provider" id="pos-shipping-provider" class="mkv-input">
+                                <option value="ghtk" <?php selected(get_option('mkv_shipping_provider', 'ghtk'), 'ghtk'); ?>>GHTK</option>
+                                <option value="ghn" <?php selected(get_option('mkv_shipping_provider', 'ghtk'), 'ghn'); ?>>GHN (cần kết nối API)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size:12px; color:var(--mkv-text-muted); display:block; margin-bottom:4px;"><?php echo esc_html(mkv__('Số điện thoại người nhận')); ?></label>
+                            <input type="text" name="shipping_phone" id="pos-shipping-phone" class="mkv-input" inputmode="tel" placeholder="090...">
+                        </div>
                     </div>
                 </div>
                 <script>
@@ -180,6 +209,9 @@ $enable_receipt_qr = (int) get_option('mkv_receipt_enable_qr', 1);
                     if (!isChecked) {
                         document.getElementById('pos-shipping-fee').value = 0;
                         document.getElementById('pos-customer-address').value = '';
+                    } else {
+                        const customerSelect = document.getElementById('pos-customer-select');
+                        if (customerSelect) onCustomerChange(customerSelect);
                     }
                     renderCart();
                 }

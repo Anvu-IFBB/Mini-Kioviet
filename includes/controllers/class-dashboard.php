@@ -37,12 +37,14 @@ class MKV_Dashboard
     public function render_wp_dashboard_widget()
     {
         $stats = MKV_Analytics_Service::get_dashboard_stats('today');
-        echo '<div style="display:flex; justify-content:space-between; flex-wrap:wrap;">';
-        echo '<div style="width:48%; background:#f0f6ff; padding:10px; border-radius:5px; margin-bottom:10px;"><strong>Đơn hôm nay:</strong> <br><span style="font-size:18px; color:#0052cc;">' . esc_html($stats['today_orders']) . '</span></div>';
-        echo '<div style="width:48%; background:#ebfff0; padding:10px; border-radius:5px; margin-bottom:10px;"><strong>Doanh thu hôm nay:</strong> <br><span style="font-size:18px; color:#00875a;">' . number_format($stats['today_revenue'], 0, ',', '.') . ' ₫</span></div>';
-        echo '<div style="width:48%; background:#f4f5f7; padding:10px; border-radius:5px; margin-bottom:10px;"><strong>Tổng sản phẩm:</strong> <br><span style="font-size:18px;">' . esc_html($stats['total_products'] ?? 0) . '</span></div>';
-        echo '<div style="width:48%; background:#f4f5f7; padding:10px; border-radius:5px; margin-bottom:10px;"><strong>Tổng khách hàng:</strong> <br><span style="font-size:18px;">' . esc_html($stats['total_customers'] ?? 0) . '</span></div>';
-        echo '<div style="width:100%; background:#e6fcff; padding:10px; border-radius:5px;"><strong>Tổng doanh thu (Toàn TG):</strong> <br><span style="font-size:18px; color:#00b8d9;">' . number_format($stats['total_revenue'] ?? 0, 0, ',', '.') . ' ₫</span></div>';
+        echo '<div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">';
+        echo '<div style="width:48%; background:#f0f6ff; padding:10px; border-radius:6px;"><strong>Đơn hôm nay:</strong> <br><span style="font-size:18px; font-weight:700; color:#0052cc;">' . esc_html($stats['today_orders']) . '</span></div>';
+        echo '<div style="width:48%; background:#ebfff0; padding:10px; border-radius:6px;"><strong>Doanh thu hôm nay:</strong> <br><span style="font-size:18px; font-weight:700; color:#00875a;">' . number_format($stats['today_revenue'], 0, ',', '.') . ' ₫</span></div>';
+        echo '<div style="width:48%; background:#e8f5e9; padding:10px; border-radius:6px;"><strong>Thực thu hôm nay:</strong> <br><span style="font-size:18px; font-weight:700; color:#2e7d32;">' . number_format($stats['today_actual_collected'], 0, ',', '.') . ' ₫</span></div>';
+        echo '<div style="width:48%; background:#fff3e0; padding:10px; border-radius:6px;"><strong>Chưa thu (Nợ + COD):</strong> <br><span style="font-size:18px; font-weight:700; color:#e65100;">' . number_format($stats['today_pending_debt'], 0, ',', '.') . ' ₫</span></div>';
+        echo '<div style="width:48%; background:#f4f5f7; padding:10px; border-radius:6px;"><strong>Tổng khách hàng:</strong> <br><span style="font-size:18px; font-weight:700;">' . esc_html($stats['total_customers'] ?? 0) . '</span></div>';
+        echo '<div style="width:48%; background:#f4f5f7; padding:10px; border-radius:6px;"><strong>Tồn quỹ hiện tại:</strong> <br><span style="font-size:18px; font-weight:700; color:#0070f3;">' . number_format($stats['total_cash_balance'] ?? 0, 0, ',', '.') . ' ₫</span></div>';
+        echo '<div style="width:100%; background:#e6fcff; padding:10px; border-radius:6px;"><strong>Tổng doanh thu (Toàn TG):</strong> <br><span style="font-size:18px; font-weight:700; color:#00b8d9;">' . number_format($stats['total_revenue'] ?? 0, 0, ',', '.') . ' ₫</span></div>';
         echo '</div>';
         echo '<div style="margin-top:10px;"><a href="' . esc_url(admin_url('admin.php?page=mini-kiotviet')) . '" class="button button-primary">Xem Dashboard Chi Tiết</a></div>';
     }

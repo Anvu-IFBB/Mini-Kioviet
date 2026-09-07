@@ -10,6 +10,7 @@
     --mkv-text-muted: #64748b;
     --mkv-border: #e2e8f0;
     --mkv-border-light: #f8fafc;
+    --mkv-green: #10b981;
   }
 
   .dark {
@@ -58,7 +59,7 @@
     @apply bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 hover:border-blue-300;
   }
   .mkv-btn-success {
-    @apply bg-[var(--mkv-green, #10b981)] text-white hover:opacity-90;
+    @apply bg-[var(--mkv-green)] text-white hover:opacity-90;
   }
   .mkv-btn-secondary {
     @apply bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm;

@@ -58,9 +58,31 @@ class MKV_Cashbook
             // Xử lý trừ nợ nhà cung cấp (nếu là Phiếu Chi)
             if ($type === 'chi' && $supplier_id > 0) {
                 $res3 = $wpdb->query($wpdb->prepare(
-                    "UPDATE {$wpdb->prefix}mkv_suppliers SET total_debt = total_debt - %f WHERE id = %d",
+                    "UPDATE {$wpdb->prefix}mkv_suppliers SET total_debt = GREATEST(0, total_debt - %f) WHERE id = %d",
                     $amount, $supplier_id
                 ));
+
+                // Tự động phân bổ số tiền chi trả vào các phiếu nhập còn nợ của NCC (FIFO)
+                $unpaid_pos = $wpdb->get_results($wpdb->prepare(
+                    "SELECT id, total_amount, paid_amount 
+                     FROM {$wpdb->prefix}mkv_purchase_orders 
+                     WHERE supplier_id = %d AND paid_amount < total_amount 
+                     ORDER BY id ASC",
+                    $supplier_id
+                ));
+                if (!empty($unpaid_pos)) {
+                    $rem_payment = (float) $amount;
+                    foreach ($unpaid_pos as $upo) {
+                        if ($rem_payment <= 0) break;
+                        $needed = (float)$upo->total_amount - (float)$upo->paid_amount;
+                        $pay = min($rem_payment, $needed);
+                        $wpdb->query($wpdb->prepare(
+                            "UPDATE {$wpdb->prefix}mkv_purchase_orders SET paid_amount = paid_amount + %f WHERE id = %d",
+                            $pay, $upo->id
+                        ));
+                        $rem_payment -= $pay;
+                    }
+                }
             }
             
             // Add notification

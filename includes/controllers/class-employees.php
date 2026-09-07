@@ -113,6 +113,12 @@ class MKV_Employees
 
         // Check email uniqueness if email changed
         $current_user_info = get_userdata($user_id);
+        if (!$current_user_info) {
+            wp_die('Nhân viên không tồn tại.');
+        }
+        if (user_can($current_user_info, 'administrator') && !current_user_can('manage_options')) {
+            wp_die('Không được phép chỉnh sửa tài khoản quản trị viên.');
+        }
         if ($email !== $current_user_info->user_email && email_exists($email)) {
             wp_redirect(admin_url('admin.php?page=mkv-employees&error=exists'));
             exit;

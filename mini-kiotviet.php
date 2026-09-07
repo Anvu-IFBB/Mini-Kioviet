@@ -15,6 +15,15 @@ define('MKV_VERSION', '3.0');
 
 // Enqueue assets
 add_action('admin_enqueue_scripts', function () {
+    $screen = function_exists('get_current_screen') ? get_current_screen() : null;
+    $is_mkv_screen = $screen && (
+        strpos((string) $screen->id, 'mini-kiotviet') !== false ||
+        strpos((string) $screen->id, 'mkv-') !== false ||
+        $screen->post_type === 'mkv_product' ||
+        strpos((string) $screen->taxonomy, 'mkv_') === 0
+    );
+    if (!$is_mkv_screen) return;
+
     wp_enqueue_style('google-fonts-inter', 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap', array(), null);
     wp_enqueue_style('hugeicons', 'https://cdn.hugeicons.com/font/hgi-stroke-rounded.css', array(), '1.0');
 
@@ -295,6 +304,35 @@ add_action('admin_menu', function () {
         remove_menu_page('profile.php');
     }
 }, 999);
+
+// Keep the WordPress submenu aligned with the POS workflow, regardless of controller load order.
+add_action('admin_menu', function () {
+    global $submenu;
+    if (empty($submenu['mini-kiotviet'])) return;
+
+    $menu_order = array(
+        'mini-kiotviet' => 10,
+        'mkv-pos' => 20,
+        'mkv-orders' => 30,
+        'edit.php?post_type=mkv_product' => 40,
+        'mkv-categories' => 50,
+        'mkv-inventory' => 60,
+        'mkv-purchases' => 70,
+        'mkv-customers' => 80,
+        'mkv-cashbook' => 90,
+        'mkv-reports' => 100,
+        'mkv-employees' => 110,
+        'mkv-notifications' => 120,
+        'mkv-settings' => 130,
+        'mkv-ai-logs' => 140,
+    );
+
+    usort($submenu['mini-kiotviet'], function ($left, $right) use ($menu_order) {
+        $left_order = $menu_order[$left[2]] ?? 999;
+        $right_order = $menu_order[$right[2]] ?? 999;
+        return $left_order <=> $right_order;
+    });
+}, 9999);
 
 // Redirect Dashboard mặc định -> MKV Dashboard
 add_action('admin_init', function () {

@@ -8,9 +8,13 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
         <i class="hgi-stroke hgi-dashboard-square-02"></i> <?php echo esc_html(mkv__('Tổng Quan')); ?>
     </h1>
     <div class="mkv-page-actions">
-        <a href="<?php echo admin_url('admin.php?page=mkv-pos'); ?>" class="mkv-btn mkv-btn-primary">
-            <i class="hgi-stroke hgi-shopping-cart-01"></i> <?php echo esc_html(mkv__('Bán Hàng (POS)')); ?>
-        </a>
+        <?php if (current_user_can('mkv_manage_orders')): ?>
+        <a href="<?php echo admin_url('admin.php?page=mkv-pos'); ?>" class="mkv-btn mkv-btn-primary"><i class="hgi-stroke hgi-shopping-cart-01"></i> <?php echo esc_html(mkv__('Bán hàng POS')); ?></a>
+        <a href="<?php echo admin_url('admin.php?page=mkv-pos&channel=online'); ?>" class="mkv-btn mkv-btn-info"><i class="hgi-stroke hgi-truck-delivery"></i> <?php echo esc_html(mkv__('Tạo đơn giao hàng')); ?></a>
+        <?php endif; ?>
+        <?php if (current_user_can('mkv_manage_purchases')): ?>
+        <a href="<?php echo admin_url('admin.php?page=mkv-purchases&tab=create'); ?>" class="mkv-btn mkv-btn-secondary"><i class="hgi-stroke hgi-package-add"></i> <?php echo esc_html(mkv__('Nhập hàng')); ?></a>
+        <?php endif; ?>
         <a href="<?php echo admin_url('post-new.php?post_type=mkv_product'); ?>" class="mkv-btn mkv-btn-secondary">
             <i class="hgi-stroke hgi-add-square"></i> <?php echo esc_html(mkv__('Thêm sản phẩm')); ?>
         </a>
@@ -23,24 +27,28 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
         <!-- Thống kê tổng quan -->
         <div class="mkv-card" style="margin-bottom: 20px;">
             <div class="mkv-card-body" style="padding: 15px;">
-                <div class="mkv-today-stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="mkv-today-stats-grid" style="grid-template-columns: repeat(4, 1fr);">
                     <div class="mkv-dashboard-stat-col" style="border-right: 1px solid #ebecf0;">
-                        <div class="mkv-dashboard-stat-label"><?php echo esc_html(mkv__('Tổng sản phẩm (Toàn thời gian)')); ?></div>
+                        <div class="mkv-dashboard-stat-label"><?php echo esc_html(mkv__('Tổng sản phẩm')); ?></div>
                         <div id="mkv-global-total-products" class="mkv-dashboard-stat-value mkv-text-blue" style="font-size: 20px;">0</div>
                     </div>
                     <div class="mkv-dashboard-stat-col" style="border-right: 1px solid #ebecf0;">
-                        <div class="mkv-dashboard-stat-label"><?php echo esc_html(mkv__('Tổng khách hàng (Toàn thời gian)')); ?></div>
+                        <div class="mkv-dashboard-stat-label"><?php echo esc_html(mkv__('Tổng khách hàng')); ?></div>
                         <div id="mkv-global-total-customers" class="mkv-dashboard-stat-value mkv-text-purple" style="font-size: 20px;">0</div>
                     </div>
-                    <div class="mkv-dashboard-stat-col">
-                        <div class="mkv-dashboard-stat-label"><?php echo esc_html(mkv__('Tổng doanh thu (Toàn thời gian)')); ?></div>
+                    <div class="mkv-dashboard-stat-col" style="border-right: 1px solid #ebecf0;">
+                        <div class="mkv-dashboard-stat-label"><?php echo esc_html(mkv__('Tổng doanh số (Toàn TG)')); ?></div>
                         <div id="mkv-global-total-revenue" class="mkv-dashboard-stat-value mkv-text-green" style="font-size: 20px;">0 ₫</div>
+                    </div>
+                    <div class="mkv-dashboard-stat-col">
+                        <div class="mkv-dashboard-stat-label"><?php echo esc_html(mkv__('Tồn quỹ hiện tại')); ?></div>
+                        <div id="mkv-global-total-balance" class="mkv-dashboard-stat-value mkv-text-emerald" style="font-size: 20px;">0 ₫</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Kết quả bán hàng -->
+        <!-- Kết quả bán hàng & Dòng tiền -->
         <div class="mkv-card">
             <div class="mkv-card-header">
                 <h3 class="mkv-card-title" id="mkv-main-stats-title">
@@ -59,6 +67,7 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
                 </select>
             </div>
             <div class="mkv-card-body" style="padding:0;">
+                <!-- Hàng 1: Hiệu suất bán hàng -->
                 <div class="mkv-today-stats-grid">
                     <div class="mkv-dashboard-stat-col">
                         <div class="mkv-dashboard-stat-label"><?php echo esc_html(mkv__('Hóa đơn')); ?></div>
@@ -76,9 +85,47 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
                         <div id="mkv-customers-change" class="mkv-dashboard-stat-change">—</div>
                     </div>
                     <div class="mkv-dashboard-stat-col">
-                        <div class="mkv-dashboard-stat-label"><?php echo esc_html(mkv__('Doanh thu thuần')); ?></div>
+                        <div class="mkv-dashboard-stat-label" title="<?php echo esc_attr(mkv__('Tổng giá trị hàng đã xuất bán (đã trừ trả hàng)')); ?>">
+                            <?php echo esc_html(mkv__('Doanh thu bán hàng')); ?> <i class="hgi-stroke hgi-information-circle" style="font-size:12px; vertical-align:middle;"></i>
+                        </div>
                         <div id="mkv-today-net-revenue" class="mkv-dashboard-stat-value mkv-text-green">0 ₫</div>
                         <div id="mkv-revenue-change" class="mkv-dashboard-stat-change">—</div>
+                    </div>
+                </div>
+
+                <!-- Hàng 2: Dòng tiền thực tế & Công nợ (Chuẩn KiotViet) -->
+                <div class="mkv-today-stats-grid mkv-today-stats-row-divider">
+                    <div class="mkv-dashboard-stat-col">
+                        <div class="mkv-dashboard-stat-label">
+                            <i class="hgi-stroke hgi-money-receive-01" style="color:#059669;"></i> <?php echo esc_html(mkv__('Thực thu (Đã nhận tiền)')); ?>
+                        </div>
+                        <div id="mkv-today-actual-collected" class="mkv-dashboard-stat-value mkv-text-emerald">0 ₫</div>
+                        <div id="mkv-collected-change" class="mkv-dashboard-stat-change">—</div>
+                        <span class="mkv-stat-sublabel"><?php echo esc_html(mkv__('Tiền thực tế đã vào Quỹ')); ?></span>
+                    </div>
+                    <div class="mkv-dashboard-stat-col">
+                        <div class="mkv-dashboard-stat-label">
+                            <i class="hgi-stroke hgi-time-02" style="color:#d97706;"></i> <?php echo esc_html(mkv__('Chưa thu (Khách nợ + COD)')); ?>
+                        </div>
+                        <div id="mkv-today-pending-debt" class="mkv-dashboard-stat-value mkv-text-amber">0 ₫</div>
+                        <div class="mkv-dashboard-stat-change" style="visibility:hidden;">—</div>
+                        <span class="mkv-stat-sublabel"><?php echo esc_html(mkv__('Nợ đơn mới & COD shipper')); ?></span>
+                    </div>
+                    <div class="mkv-dashboard-stat-col">
+                        <div class="mkv-dashboard-stat-label">
+                            <i class="hgi-stroke hgi-truck-delivery" style="color:#6366f1;"></i> <?php echo esc_html(mkv__('Đang giao hàng (Online)')); ?>
+                        </div>
+                        <div id="mkv-today-shipping-info" class="mkv-dashboard-stat-value mkv-text-indigo" style="font-size:22px; padding-top:4px;">0 đơn</div>
+                        <div class="mkv-dashboard-stat-change" id="mkv-today-shipping-total-sub">—</div>
+                        <span class="mkv-stat-sublabel"><?php echo esc_html(mkv__('Đơn gửi qua bưu điện/hãng')); ?></span>
+                    </div>
+                    <div class="mkv-dashboard-stat-col">
+                        <div class="mkv-dashboard-stat-label">
+                            <i class="hgi-stroke hgi-user-account" style="color:#64748b;"></i> <?php echo esc_html(mkv__('Tổng nợ khách hàng')); ?>
+                        </div>
+                        <div id="mkv-global-total-customer-debt" class="mkv-dashboard-stat-value" style="color:#475569; font-size:22px; padding-top:4px;">0 ₫</div>
+                        <div class="mkv-dashboard-stat-change" style="visibility:hidden;">—</div>
+                        <span class="mkv-stat-sublabel"><?php echo esc_html(mkv__('Toàn bộ công nợ cần thu')); ?></span>
                     </div>
                 </div>
             </div>
@@ -153,9 +200,11 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
                 </h3>
             </div>
             <div class="mkv-card-body" style="padding:0;">
-                <ul id="mkv-low-stock" class="mkv-widget-list">
-                    <li class="mkv-loading" style="padding:14px 20px;"><?php echo esc_html(mkv__('Đang tải...')); ?></li>
-                </ul>
+                <div class="mkv-card-scroll" style="max-height:380px;">
+                    <ul id="mkv-low-stock" class="mkv-widget-list">
+                        <li class="mkv-loading" style="padding:14px 20px;"><?php echo esc_html(mkv__('Đang tải...')); ?></li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>

@@ -282,16 +282,16 @@ window.mkvCloseAIChat = function() {
                         var errorMessage = typeof response.data === 'string'
                             ? response.data
                             : (response.data && response.data.message) || 'Không thể kết nối với hệ thống.';
-                        appendMessage('ai', '⚠️ ' + errorMessage);
+                        appendMessage('ai', errorMessage);
                     }
                 },
                 error: function(xhr, status) {
                     $typing.hide();
                     isWaiting = false;
                     if (status === 'timeout') {
-                        appendMessage('ai', '⏱️ AI phản hồi chậm hơn dự kiến. Bạn vui lòng thử lại sau giây lát.');
+                        appendMessage('ai', 'AI phản hồi chậm hơn dự kiến. Bạn vui lòng thử lại sau giây lát.');
                     } else {
-                        appendMessage('ai', '⚠️ Lỗi kết nối máy chủ. Vui lòng kiểm tra lại kết nối!');
+                        appendMessage('ai', 'Lỗi kết nối máy chủ. Vui lòng kiểm tra lại kết nối!');
                     }
                 }
             });
@@ -324,10 +324,10 @@ window.mkvCloseAIChat = function() {
             if (functionData && functionName === 'check_order_status' && !functionData.error && functionData.status !== 'not_found') {
                 cardHtml = `
                     <div style="margin-top: 10px; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; font-size: 13px;">
-                        <div style="font-weight: 600; margin-bottom: 8px;">Đơn hàng: ${functionData.order_code}</div>
-                        <div><span style="color:#64748b">Trạng thái:</span> <strong>${functionData.status}</strong></div>
-                        <div><span style="color:#64748b">Tổng tiền:</span> <strong style="color:var(--mkv-primary)">${functionData.total_amount}</strong></div>
-                        <div><span style="color:#64748b">Khách hàng:</span> ${functionData.customer}</div>
+                        <div style="font-weight: 600; margin-bottom: 8px;">Đơn hàng: ${escapeHtml(functionData.order_code)}</div>
+                        <div><span style="color:#64748b">Trạng thái:</span> <strong>${escapeHtml(functionData.status)}</strong></div>
+                        <div><span style="color:#64748b">Tổng tiền:</span> <strong style="color:var(--mkv-primary)">${escapeHtml(functionData.total_amount)}</strong></div>
+                        <div><span style="color:#64748b">Khách hàng:</span> ${escapeHtml(functionData.customer)}</div>
                     </div>
                 `;
             } else if (functionData && functionName === 'search_product_info' && !functionData.error && Array.isArray(functionData)) {
@@ -335,8 +335,8 @@ window.mkvCloseAIChat = function() {
                 functionData.forEach(function(item) {
                     cardHtml += `
                         <div style="padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; font-size: 13px;">
-                            <div style="font-weight: 600; margin-bottom: 4px;">${item.name}</div>
-                            <div><span style="color:#64748b">Giá:</span> <strong style="color:var(--mkv-primary)">${item.price}</strong> | <span style="color:#64748b">Tồn kho:</span> <strong>${item.stock}</strong></div>
+                            <div style="font-weight: 600; margin-bottom: 4px;">${escapeHtml(item.name)}</div>
+                            <div><span style="color:#64748b">Giá:</span> <strong style="color:var(--mkv-primary)">${escapeHtml(item.price)}</strong> | <span style="color:#64748b">Tồn kho:</span> <strong>${escapeHtml(item.stock)}</strong></div>
                         </div>
                     `;
                 });
@@ -344,9 +344,9 @@ window.mkvCloseAIChat = function() {
             } else if (functionData && functionName === 'create_order_draft' && !functionData.error) {
                 cardHtml = `
                     <div class="mkv-func-card" style="margin-top: 10px; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff4e6; font-size: 13px;">
-                        <div style="font-weight: 600; margin-bottom: 8px; color: #ea580c;">Đơn Nháp: ${functionData.order_code}</div>
-                        <div><span class="label" style="color:#64748b">Sản phẩm:</span> <strong class="val">${functionData.product} (x${functionData.quantity})</strong></div>
-                        <div><span class="label" style="color:#64748b">Tổng cộng:</span> <strong class="val" style="color:var(--mkv-primary)">${functionData.total_amount.toLocaleString()} VNĐ</strong></div>
+                        <div style="font-weight: 600; margin-bottom: 8px; color: #ea580c;">Đơn Nháp: ${escapeHtml(functionData.order_code)}</div>
+                        <div><span class="label" style="color:#64748b">Sản phẩm:</span> <strong class="val">${escapeHtml(functionData.product)} (x${escapeHtml(functionData.quantity)})</strong></div>
+                        <div><span class="label" style="color:#64748b">Tổng cộng:</span> <strong class="val" style="color:var(--mkv-primary)">${Number(functionData.total_amount || 0).toLocaleString()} VNĐ</strong></div>
                     </div>
                 `;
             } else if (functionData && (functionName === 'get_revenue_report' || functionName === 'get_today_revenue') && !functionData.error) {
@@ -354,8 +354,8 @@ window.mkvCloseAIChat = function() {
                 var rev = functionData.revenue_formatted || functionData.formatted_revenue || '0 VNĐ';
                 cardHtml = `
                     <div class="mkv-func-card" style="margin-top: 10px; padding: 16px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f0fdf4; font-size: 13px; text-align: center;">
-                        <div class="label" style="font-weight: 600; margin-bottom: 4px; color: #166534;">Doanh thu ${lbl}</div>
-                        <div class="val" style="font-size: 20px; font-weight: 700; color: #15803d;">${rev}</div>
+                        <div class="label" style="font-weight: 600; margin-bottom: 4px; color: #166534;">Doanh thu ${escapeHtml(lbl)}</div>
+                        <div class="val" style="font-size: 20px; font-weight: 700; color: #15803d;">${escapeHtml(rev)}</div>
                     </div>
                 `;
             } else if (functionData && functionName === 'get_low_stock_alert' && !functionData.error && functionData.items) {
@@ -366,8 +366,8 @@ window.mkvCloseAIChat = function() {
                     functionData.items.forEach(function(item) {
                         cardHtml += `
                             <div class="mkv-func-card" style="padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fef2f2; font-size: 13px;">
-                                <div class="val" style="font-weight: 600; margin-bottom: 4px; color: #b91c1c;">${item.name}</div>
-                                <div><span class="label" style="color:#64748b">SKU:</span> <strong class="val">${item.sku}</strong> | <span class="label" style="color:#64748b">Tồn:</span> <strong class="val" style="color:#ef4444">${item.stock}</strong></div>
+                                <div class="val" style="font-weight: 600; margin-bottom: 4px; color: #b91c1c;">${escapeHtml(item.name)}</div>
+                                <div><span class="label" style="color:#64748b">SKU:</span> <strong class="val">${escapeHtml(item.sku)}</strong> | <span class="label" style="color:#64748b">Tồn:</span> <strong class="val" style="color:#ef4444">${escapeHtml(item.stock)}</strong></div>
                             </div>
                         `;
                     });
@@ -376,9 +376,9 @@ window.mkvCloseAIChat = function() {
             } else if (functionData && functionName === 'search_customer_info' && !functionData.error) {
                 cardHtml = `
                     <div class="mkv-func-card" style="margin-top: 10px; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; font-size: 13px;">
-                        <div class="val" style="font-weight: 600; margin-bottom: 8px; font-size: 14px;"><i class="hgi-stroke hgi-user"></i> ${functionData.name}</div>
-                        <div><span class="label" style="color:#64748b">SĐT:</span> <strong class="val">${functionData.phone}</strong></div>
-                        <div><span class="label" style="color:#64748b">Địa chỉ:</span> <span class="val">${functionData.address}</span></div>
+                        <div class="val" style="font-weight: 600; margin-bottom: 8px; font-size: 14px;"><i class="hgi-stroke hgi-user"></i> ${escapeHtml(functionData.name)}</div>
+                        <div><span class="label" style="color:#64748b">SĐT:</span> <strong class="val">${escapeHtml(functionData.phone)}</strong></div>
+                        <div><span class="label" style="color:#64748b">Địa chỉ:</span> <span class="val">${escapeHtml(functionData.address)}</span></div>
                         <hr style="margin: 8px 0; border: none; border-top: 1px dashed #cbd5e1;">
                         <div style="display:flex; justify-content:space-between;">
                             <div><span class="label" style="color:#64748b">Đã mua:</span> <strong class="val">${functionData.total_orders} đơn</strong></div>

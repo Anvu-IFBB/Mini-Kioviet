@@ -15,31 +15,43 @@
     <div class="mkv-filter-bar" style="margin-bottom:16px; display:block;">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
             <!-- Quick buttons -->
-            <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                <a href="?page=mkv-reports&quick=today"     class="button <?php echo ($quick === 'today') ? 'button-primary' : ''; ?>"><?php echo esc_html(mkv__('Hôm nay')); ?></a>
-                <a href="?page=mkv-reports&quick=yesterday" class="button <?php echo ($quick === 'yesterday') ? 'button-primary' : ''; ?>"><?php echo esc_html(mkv__('Hôm qua')); ?></a>
-                <a href="?page=mkv-reports&quick=week"      class="button <?php echo ($quick === 'week') ? 'button-primary' : ''; ?>"><?php echo esc_html(mkv__('Tuần này')); ?></a>
-                <a href="?page=mkv-reports&quick=month"     class="button <?php echo ($quick === 'month' || (empty($quick) && !isset($_GET['start_date']))) ? 'button-primary' : ''; ?>"><?php echo esc_html(mkv__('Tháng này')); ?></a>
-                <a href="?page=mkv-reports&quick=year"      class="button <?php echo ($quick === 'year') ? 'button-primary' : ''; ?>"><?php echo esc_html(mkv__('Năm nay')); ?></a>
+            <div class="mkv-filter-pills" style="margin-bottom:0; padding-bottom:0;">
+                <a href="?page=mkv-reports&quick=today"     class="mkv-filter-pill <?php echo ($quick === 'today') ? 'active' : ''; ?>"><?php echo esc_html(mkv__('Hôm nay')); ?></a>
+                <a href="?page=mkv-reports&quick=yesterday" class="mkv-filter-pill <?php echo ($quick === 'yesterday') ? 'active' : ''; ?>"><?php echo esc_html(mkv__('Hôm qua')); ?></a>
+                <a href="?page=mkv-reports&quick=week"      class="mkv-filter-pill <?php echo ($quick === 'week') ? 'active' : ''; ?>"><?php echo esc_html(mkv__('Tuần này')); ?></a>
+                <a href="?page=mkv-reports&quick=month"     class="mkv-filter-pill <?php echo ($quick === 'month' || (empty($quick) && !isset($_GET['start_date']))) ? 'active' : ''; ?>"><?php echo esc_html(mkv__('Tháng này')); ?></a>
+                <a href="?page=mkv-reports&quick=year"      class="mkv-filter-pill <?php echo ($quick === 'year') ? 'active' : ''; ?>"><?php echo esc_html(mkv__('Năm nay')); ?></a>
             </div>
 
             <!-- Custom date range -->
-            <form method="get" style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+            <form method="get" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                 <input type="hidden" name="page" value="mkv-reports">
-                <input type="date" name="start_date" value="<?php echo esc_attr($start_date); ?>">
-                <span><?php echo esc_html(mkv__('đến')); ?></span>
-                <input type="date" name="end_date" value="<?php echo esc_attr($end_date); ?>">
-                <button type="submit" class="button"><i class="hgi-stroke hgi-filter"></i> <?php echo esc_html(mkv__('Lọc')); ?></button>
+                <input type="date" name="start_date" class="mkv-input" value="<?php echo esc_attr($start_date); ?>" style="height:34px; font-size:13px; width:140px;">
+                <span style="font-size:13px; color:var(--mkv-text-muted);"><?php echo esc_html(mkv__('đến')); ?></span>
+                <input type="date" name="end_date" class="mkv-input" value="<?php echo esc_attr($end_date); ?>" style="height:34px; font-size:13px; width:140px;">
+                <button type="submit" class="mkv-btn mkv-btn-primary" style="height:34px; padding:0 14px; font-size:13px;"><i class="hgi-stroke hgi-filter"></i> <?php echo esc_html(mkv__('Lọc')); ?></button>
             </form>
         </div>
     </div>
 
-    <!-- 6 KPI Stat Cards -->
+    <!-- 8 KPI Stat Cards -->
     <div class="mkv-stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
         <div class="mkv-stat-box mkv-border-blue">
-            <h3><?php echo esc_html(mkv__('Doanh thu thuần')); ?></h3>
+            <h3><?php echo esc_html(mkv__('Doanh thu bán hàng')); ?></h3>
             <p class="mkv-text-blue"><?php echo number_format($total_revenue, 0, ',', '.'); ?> ₫</p>
             <i class="hgi-stroke hgi-money-bag-02 icon-bg"></i>
+        </div>
+
+        <div class="mkv-stat-box mkv-border-green">
+            <h3><?php echo esc_html(mkv__('Thực thu (Đã nhận tiền)')); ?></h3>
+            <p class="mkv-text-green"><?php echo number_format($total_collected, 0, ',', '.'); ?> ₫</p>
+            <i class="hgi-stroke hgi-money-receive-01 icon-bg"></i>
+        </div>
+
+        <div class="mkv-stat-box mkv-border-yellow">
+            <h3><?php echo esc_html(mkv__('Chưa thu (Khách nợ + COD)')); ?></h3>
+            <p class="mkv-text-yellow"><?php echo number_format($total_debt_pending, 0, ',', '.'); ?> ₫</p>
+            <i class="hgi-stroke hgi-time-02 icon-bg"></i>
         </div>
 
         <?php if (current_user_can('mkv_view_cost_price')): ?>
@@ -56,22 +68,58 @@
             <i class="hgi-stroke hgi-invoice-01 icon-bg"></i>
         </div>
 
+        <div class="mkv-stat-box mkv-border-red">
+            <h3><?php echo esc_html(mkv__('Khách trả hàng')); ?></h3>
+            <p class="mkv-text-red"><?php echo $returned_orders; ?></p>
+            <i class="hgi-stroke hgi-arrow-left-right icon-bg"></i>
+        </div>
+
         <div class="mkv-stat-box mkv-border-yellow">
             <h3><?php echo esc_html(mkv__('Giá trị TB / Đơn (AOV)')); ?></h3>
             <p class="mkv-text-yellow"><?php echo number_format($aov, 0, ',', '.'); ?> ₫</p>
             <i class="hgi-stroke hgi-wallet-02 icon-bg"></i>
         </div>
 
-        <div class="mkv-stat-box mkv-border-red">
-            <h3><?php echo esc_html(mkv__('Số đơn hủy')); ?></h3>
-            <p class="mkv-text-red"><?php echo $cancelled_orders; ?></p>
-            <i class="hgi-stroke hgi-cancel-circle icon-bg"></i>
-        </div>
-
         <div class="mkv-stat-box">
             <h3><?php echo esc_html(mkv__('Khách hàng mới')); ?></h3>
             <p><?php echo $new_customers; ?></p>
-            <i class="hgi-stroke hgi-user-add icon-bg"></i>
+            <i class="hgi-stroke hgi-user-add-01 icon-bg"></i>
+        </div>
+    </div>
+
+    <div class="mkv-card" style="margin-top:20px;">
+        <div class="mkv-card-header">
+            <h3 class="mkv-card-title"><i class="hgi-stroke hgi-store-01"></i> <?php echo esc_html(mkv__('Doanh thu theo kênh bán')); ?></h3>
+        </div>
+        <div class="mkv-card-body" style="padding:0; overflow:auto;">
+            <table class="mkv-table">
+                <thead>
+                    <tr>
+                        <th><?php echo esc_html(mkv__('Kênh bán')); ?></th>
+                        <th><?php echo esc_html(mkv__('Số đơn')); ?></th>
+                        <th><?php echo esc_html(mkv__('Doanh thu')); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    $channel_names = array(
+                        'pos' => mkv__('Tại quầy'),
+                        'online' => mkv__('Online'),
+                        'social' => mkv__('Facebook / Zalo'),
+                        'marketplace' => mkv__('Sàn thương mại điện tử'),
+                    );
+                    ?>
+                    <?php if (empty($channel_breakdown)): ?>
+                        <tr><td colspan="3" style="text-align:center; padding:24px; color:var(--mkv-text-muted);"><?php echo esc_html(mkv__('Chưa có dữ liệu trong kỳ này.')); ?></td></tr>
+                    <?php else: foreach ($channel_breakdown as $channel_row): ?>
+                        <tr>
+                            <td><strong><?php echo esc_html($channel_names[$channel_row->sales_channel] ?? $channel_row->sales_channel); ?></strong></td>
+                            <td><?php echo (int) $channel_row->order_count; ?></td>
+                            <td><strong style="color:var(--mkv-primary);"><?php echo number_format((float) $channel_row->revenue, 0, ',', '.'); ?> ₫</strong></td>
+                        </tr>
+                    <?php endforeach; endif; ?>
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -127,7 +175,8 @@
             <div style="padding:16px 20px; border-bottom:1px solid var(--mkv-border);">
                 <h3 style="margin:0; padding:0; border:none;"><i class="hgi-stroke hgi-fire"></i> <?php echo esc_html(mkv__('Top Sản Phẩm Bán Chạy Kỳ Này')); ?></h3>
             </div>
-            <table class="mkv-table">
+            <div class="mkv-table-wrap" style="border:none; box-shadow:none; border-radius:0; margin-bottom:0; max-height:450px;">
+                <table class="mkv-table" style="min-width:500px;">
                 <thead>
                     <tr>
                         <th><?php echo esc_html(mkv__('Sản phẩm')); ?></th>
@@ -157,6 +206,7 @@
                     <?php endif; ?>
                 </tbody>
             </table>
+            </div>
         </div>
 
         <!-- Danh sách đơn hàng trong kỳ -->
@@ -165,21 +215,24 @@
             <div style="padding:16px 20px; border-bottom:1px solid var(--mkv-border);">
                 <h3 style="margin:0; padding:0; border:none;"><i class="hgi-stroke hgi-invoice-01"></i> <?php echo esc_html(mkv__('Đơn Hàng Trong Kỳ')); ?></h3>
             </div>
-            <table class="mkv-table">
+            <div class="mkv-table-wrap" style="border:none; box-shadow:none; border-radius:0; margin-bottom:0; max-height:450px;">
+                <table class="mkv-table" style="min-width:720px;">
                 <thead>
                     <tr>
                         <th><?php echo esc_html(mkv__('Mã đơn')); ?></th>
                         <th><?php echo esc_html(mkv__('Khách hàng')); ?></th>
                         <th><?php echo esc_html(mkv__('Trạng thái')); ?></th>
                         <th style="width:110px;"><?php echo esc_html(mkv__('Tổng tiền')); ?></th>
+                        <th style="width:110px;"><?php echo esc_html(mkv__('Đã thu')); ?></th>
+                        <th style="width:130px;"><?php echo esc_html(mkv__('Còn nợ / COD')); ?></th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($orders)): ?>
-                        <tr><td colspan="4" style="text-align:center; padding:30px; color:var(--mkv-text-muted);"><?php echo esc_html(mkv__('Không có dữ liệu trong khoảng thời gian này.')); ?></td></tr>
+                        <tr><td colspan="6" style="text-align:center; padding:30px; color:var(--mkv-text-muted);"><?php echo esc_html(mkv__('Không có dữ liệu trong khoảng thời gian này.')); ?></td></tr>
                     <?php else: ?>
                         <?php foreach ($orders as $o): 
-                            $st_color = ($o->status === 'completed' || $o->status === 'paid') ? 'mkv-badge-green' : (($o->status === 'cancelled') ? 'mkv-badge-red' : 'mkv-badge-yellow');
+                            $st_color = ($o->status === 'completed' || $o->status === 'paid') ? 'mkv-badge-green' : (($o->status === 'cancelled') ? 'mkv-badge-red' : (($o->status === 'returned') ? 'mkv-badge-gray' : 'mkv-badge-yellow'));
                             $status_map = array(
                                 'draft'     => 'Nháp',
                                 'pending'   => 'Chờ duyệt',
@@ -187,18 +240,34 @@
                                 'shipping'  => 'Đang giao',
                                 'completed' => 'Hoàn thành',
                                 'cancelled' => 'Đã hủy',
+                                'returned'  => 'Đã trả hàng',
                             );
+                            $paid_val = (float) ($o->paid_amount ?? 0);
+                            $debt_val = (float) ($o->customer_debt_amount ?? $o->debt_amount ?? 0);
+                            $is_cod   = ($o->payment_status ?? '') === 'cod_pending';
+                            $cod_val  = (float) ($o->cod_amount ?? $o->total_amount ?? 0);
                         ?>
                         <tr>
                             <td><strong><a href="?page=mkv-orders&id=<?php echo $o->id; ?>"><?php echo esc_html($o->order_code); ?></a></strong><br><small style="color:var(--mkv-text-muted);"><?php echo esc_html(date('d/m H:i', strtotime($o->created_at))); ?></small></td>
                             <td><?php echo esc_html($o->customer_name ?: mkv__('Khách lẻ')); ?></td>
                             <td><span class="mkv-badge <?php echo $st_color; ?>"><?php echo esc_html(mkv__($status_map[$o->status] ?? $o->status)); ?></span></td>
                             <td><strong style="color:var(--mkv-primary);"><?php echo number_format($o->total_amount, 0, ',', '.'); ?> ₫</strong></td>
+                            <td><span style="color:#059669; font-weight:600;"><?php echo number_format($paid_val, 0, ',', '.'); ?> ₫</span></td>
+                            <td>
+                                <?php if ($is_cod): ?>
+                                    <span class="mkv-badge mkv-badge-purple" title="COD chờ đối soát"><?php echo number_format($cod_val, 0, ',', '.'); ?> ₫</span>
+                                <?php elseif ($debt_val > 0): ?>
+                                    <span class="mkv-badge mkv-badge-red" title="Khách nợ"><?php echo number_format($debt_val, 0, ',', '.'); ?> ₫</span>
+                                <?php else: ?>
+                                    <span class="mkv-badge mkv-badge-green"><?php echo esc_html(mkv__('Đủ')); ?></span>
+                                <?php endif; ?>
+                            </td>
                         </tr>
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </tbody>
             </table>
+            </div>
         </div>
         <?php endif; ?>
     </div>
@@ -213,8 +282,8 @@
                 <p style="margin:5px 0 0 0; font-size:13px; color:var(--mkv-text-muted);"><?php echo esc_html(mkv__('Tổng hợp dòng tiền thực tế nhập vào / xuất ra khỏi Sổ Quỹ.')); ?></p>
             </div>
             
-            <div style="padding: 20px;">
-                <table class="mkv-table">
+            <div class="mkv-table-wrap" style="border:none; box-shadow:none; border-radius:0; margin-bottom:0; padding:0;">
+                <table class="mkv-table" style="min-width:640px;">
                     <thead>
                         <tr>
                             <th><?php echo esc_html(mkv__('Phương thức thanh toán')); ?></th>

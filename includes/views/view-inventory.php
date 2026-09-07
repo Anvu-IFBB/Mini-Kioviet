@@ -1,15 +1,15 @@
 <?php if (!defined('ABSPATH')) exit; ?>
 <?php require_once MKV_DIR . 'includes/views/header-kiotviet.php'; ?>
 <div class="mkv-page-header">
-    <h1 class="mkv-page-title"><i class="hgi-stroke hgi-layout-grid-two"></i> Quản Lý Kho</h1>
+    <h1 class="mkv-page-title"><i class="hgi-stroke hgi-layout-grid"></i> <?php echo esc_html(mkv__('Quản Lý Kho')); ?></h1>
 </div>
 
     <div class="mkv-tabs-bar">
         <a href="?page=mkv-inventory&tab=locations" class="mkv-tab-link <?php echo $active_tab==='locations'?'active':'';?>"><i class="hgi-stroke hgi-store-01"></i> <?php echo esc_html(mkv__('Danh sách kho')); ?></a>
-        <a href="?page=mkv-inventory&tab=stock"     class="mkv-tab-link <?php echo $active_tab==='stock'    ?'active':'';?>"><i class="hgi-stroke hgi-box-02"></i> <?php echo esc_html(mkv__('Tồn kho')); ?></a>
-        <a href="?page=mkv-inventory&tab=transfer"  class="mkv-tab-link <?php echo $active_tab==='transfer' ?'active':'';?>"><i class="hgi-stroke hgi-transfer-horizontal"></i> <?php echo esc_html(mkv__('Chuyển kho')); ?></a>
+        <a href="?page=mkv-inventory&tab=stock"     class="mkv-tab-link <?php echo $active_tab==='stock'    ?'active':'';?>"><i class="hgi-stroke hgi-package"></i> <?php echo esc_html(mkv__('Tồn kho')); ?></a>
+        <a href="?page=mkv-inventory&tab=transfer"  class="mkv-tab-link <?php echo $active_tab==='transfer' ?'active':'';?>"><i class="hgi-stroke hgi-arrow-data-transfer-horizontal"></i> <?php echo esc_html(mkv__('Chuyển kho')); ?></a>
         <a href="?page=mkv-inventory&tab=stocktake" class="mkv-tab-link <?php echo $active_tab==='stocktake'?'active':'';?>"><i class="hgi-stroke hgi-task-edit-01"></i> <?php echo esc_html(mkv__('Kiểm kho')); ?></a>
-        <a href="?page=mkv-inventory&tab=logs"      class="mkv-tab-link <?php echo $active_tab==='logs'     ?'active':'';?>"><i class="hgi-stroke hgi-clipboard-list"></i> <?php echo esc_html(mkv__('Thẻ kho (Lịch sử)')); ?></a>
+        <a href="?page=mkv-inventory&tab=logs"      class="mkv-tab-link <?php echo $active_tab==='logs'     ?'active':'';?>"><i class="hgi-stroke hgi-clipboard"></i> <?php echo esc_html(mkv__('Thẻ kho (Lịch sử)')); ?></a>
     </div>
 
     <?php if (isset($_GET['added'])):    ?><div class="notice notice-success is-dismissible"><p><?php echo esc_html(mkv__('Đã thêm kho mới!')); ?></p></div><?php endif; ?>
@@ -37,12 +37,12 @@
                     <input type="text" name="loc_code" placeholder="<?php echo esc_attr(mkv__('VD: KHN, KSG')); ?>" class="mkv-input" style="margin-top:6px;"></p>
                     <p><label style="font-size:13px; font-weight:600; color:var(--mkv-text-main);"><?php echo esc_html(mkv__('Địa chỉ')); ?></label>
                     <input type="text" name="loc_address" class="mkv-input" style="margin-top:6px;"></p>
-                    <button type="submit" class="mkv-btn mkv-btn-primary" style="width:100%; justify-content:center; margin-top:8px; height:38px; border-radius:8px;"><i class="hgi-stroke hgi-save-01"></i> <?php echo esc_html(mkv__('Thêm kho')); ?></button>
+                    <button type="submit" class="mkv-btn mkv-btn-primary" style="width:100%; justify-content:center; margin-top:8px; height:38px; border-radius:8px;"><i class="hgi-stroke hgi-floppy-disk"></i> <?php echo esc_html(mkv__('Thêm kho')); ?></button>
                 </form>
             </div>
         </div>
-        <div class="mkv-card" style="padding:0; flex:1;">
-            <table class="mkv-table">
+        <div class="mkv-table-wrap" style="flex:1;">
+            <table class="mkv-table" style="min-width: 600px;">
                 <thead><tr><th><?php echo esc_html(mkv__('Tên kho')); ?></th><th><?php echo esc_html(mkv__('Mã kho')); ?></th><th><?php echo esc_html(mkv__('Địa chỉ')); ?></th><th style="width:90px;"><?php echo esc_html(mkv__('Trạng thái')); ?></th></tr></thead>
                 <tbody>
                 <?php if (empty($locations)): ?>
@@ -61,8 +61,8 @@
     </div>
 
     <?php /* ==== TAB: Stock ==== */ elseif ($active_tab === 'stock'): ?>
-    <div class="mkv-card" style="padding:0; overflow-x:auto;">
-        <table class="mkv-table" style="min-width: 800px;">
+    <div class="mkv-table-wrap">
+        <table class="mkv-table" style="min-width: 850px;">
             <thead><tr>
                 <th><?php echo esc_html(mkv__('Sản phẩm')); ?></th>
                 <?php foreach ($locations as $loc): ?><th style="width:90px;"><?php echo esc_html($loc->name); ?></th><?php endforeach; ?>
@@ -92,7 +92,7 @@
                         <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
                             <small style="color:var(--mkv-text-muted);">SKU: <?php echo esc_html(get_post_meta($p->ID,'_mkv_sku',true)?:'—'); ?></small>
                             <a href="?page=mkv-inventory&tab=logs&product_id=<?php echo $p->ID; ?>" class="mkv-badge mkv-badge-blue" style="text-decoration:none; font-size:11px; padding:2px 8px; cursor:pointer;" title="<?php echo esc_attr(mkv__('Xem thẻ kho của sản phẩm này')); ?>">
-                                <i class="hgi-stroke hgi-clipboard-list"></i> <?php echo esc_html(mkv__('Thẻ kho')); ?>
+                                <i class="hgi-stroke hgi-clipboard"></i> <?php echo esc_html(mkv__('Thẻ kho')); ?>
                             </a>
                         </div>
                     </td>
@@ -105,20 +105,20 @@
                     <?php endforeach; ?>
                     <td><strong><?php echo $total; ?></strong></td>
                     <td>
-                        <form method="post" action="<?php echo admin_url('admin-post.php'); ?>" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+                        <form method="post" action="<?php echo admin_url('admin-post.php'); ?>" style="display:inline-flex; gap:6px; align-items:center; background:var(--mkv-border-light); padding:4px 6px; border-radius:8px; border:1px solid var(--mkv-border);">
                             <input type="hidden" name="action" value="mkv_adjust_stock">
                             <input type="hidden" name="product_id" value="<?php echo $p->ID; ?>">
                             <?php wp_nonce_field('mkv_adjust_stock_nonce'); ?>
-                            <select name="location_id" class="mkv-select" style="width:auto; padding:6px; font-size:13px!important;">
+                            <select name="location_id" class="mkv-select" style="height:28px; padding:0 8px; font-size:12px; border-radius:6px;" title="<?php echo esc_attr(mkv__('Chọn kho')); ?>">
                                 <?php foreach ($locations as $loc): ?><option value="<?php echo $loc->id; ?>"><?php echo esc_html($loc->name); ?></option><?php endforeach; ?>
                             </select>
-                            <select name="type" class="mkv-select" style="width:auto; padding:6px; font-size:13px!important;">
-                                <option value="in"><?php echo esc_html(mkv__('Nhập (+)')); ?></option>
-                                <option value="out"><?php echo esc_html(mkv__('Xuất (−)')); ?></option>
+                            <select name="type" class="mkv-select" style="height:28px; padding:0 6px; font-size:12px; border-radius:6px;" title="<?php echo esc_attr(mkv__('Loại điều chỉnh')); ?>">
+                                <option value="in" style="color:var(--mkv-green); font-weight:600;"><?php echo esc_html(mkv__('+ Nhập')); ?></option>
+                                <option value="out" style="color:var(--mkv-red); font-weight:600;"><?php echo esc_html(mkv__('− Xuất')); ?></option>
                             </select>
-                            <input type="number" name="qty" min="1" placeholder="<?php echo esc_attr(mkv__('SL')); ?>" required class="mkv-input" style="width:70px; padding:6px; font-size:13px!important;">
-                            <input type="text" name="note" placeholder="<?php echo esc_attr(mkv__('Lý do')); ?>" class="mkv-input" style="width:120px; padding:6px; font-size:13px!important;">
-                            <button type="submit" class="mkv-btn mkv-btn-primary mkv-btn-sm"><i class="hgi-stroke hgi-tick-02"></i></button>
+                            <input type="number" name="qty" min="1" placeholder="<?php echo esc_attr(mkv__('SL')); ?>" required class="mkv-input" style="width:55px; height:28px; padding:0 6px; font-size:12.5px; text-align:center; border-radius:6px;" title="<?php echo esc_attr(mkv__('Số lượng')); ?>">
+                            <input type="text" name="note" placeholder="<?php echo esc_attr(mkv__('Lý do')); ?>" class="mkv-input" style="width:110px; height:28px; padding:0 8px; font-size:12px; border-radius:6px;" title="<?php echo esc_attr(mkv__('Ghi chú lý do')); ?>">
+                            <button type="submit" class="mkv-btn mkv-btn-primary" style="height:28px; width:28px; padding:0; justify-content:center; border-radius:6px;" title="<?php echo esc_attr(mkv__('Xác nhận điều chỉnh')); ?>"><i class="hgi-stroke hgi-tick-02"></i></button>
                         </form>
                     </td>
                 </tr>
@@ -131,7 +131,7 @@
     <div style="display:grid;grid-template-columns:420px 1fr;gap:24px;align-items:start;">
         <div class="mkv-card">
             <div class="mkv-card-header">
-                <h3 class="mkv-card-title"><i class="hgi-stroke hgi-transfer-horizontal"></i> <?php echo esc_html(mkv__('Chuyển kho')); ?></h3>
+                <h3 class="mkv-card-title"><i class="hgi-stroke hgi-arrow-data-transfer-horizontal"></i> <?php echo esc_html(mkv__('Chuyển kho')); ?></h3>
             </div>
             <div class="mkv-card-body">
                 <p style="color:var(--mkv-text-muted);font-size:13px;margin-top:0;"><?php echo esc_html(mkv__('Sử dụng Database Transaction — đảm bảo dữ liệu không bị thất thoát.')); ?></p>
@@ -161,7 +161,7 @@
                     <input type="number" name="qty" min="1" required class="mkv-input" style="margin-top:6px;"></p>
                     <p><label style="font-size:13px; font-weight:600; color:var(--mkv-text-main);"><?php echo esc_html(mkv__('Ghi chú')); ?></label>
                     <input type="text" name="note" class="mkv-input" style="margin-top:6px;"></p>
-                    <button type="submit" class="mkv-btn mkv-btn-primary" style="width:100%; justify-content:center; margin-top:8px; height:38px; border-radius:8px;"><i class="hgi-stroke hgi-transfer-horizontal"></i> <?php echo esc_html(mkv__('Xác nhận Chuyển kho')); ?></button>
+                    <button type="submit" class="mkv-btn mkv-btn-primary" style="width:100%; justify-content:center; margin-top:8px; height:38px; border-radius:8px;"><i class="hgi-stroke hgi-arrow-data-transfer-horizontal"></i> <?php echo esc_html(mkv__('Xác nhận Chuyển kho')); ?></button>
                 </form>
             </div>
         </div>
@@ -219,13 +219,13 @@
                     <p><label style="font-size:13px; font-weight:600; color:var(--mkv-text-main);"><?php echo esc_html(mkv__('Ghi chú')); ?></label>
                     <input type="text" name="note" class="mkv-input" style="margin-top:6px;"></p>
 
-                    <button type="submit" class="mkv-btn mkv-btn-primary" style="width:100%; justify-content:center; margin-top:8px; height:38px; border-radius:8px;"><i class="hgi-stroke hgi-save-01"></i> <?php echo esc_html(mkv__('Hoàn thành & Cân bằng kho')); ?></button>
+                    <button type="submit" class="mkv-btn mkv-btn-primary" style="width:100%; justify-content:center; margin-top:8px; height:38px; border-radius:8px;"><i class="hgi-stroke hgi-floppy-disk"></i> <?php echo esc_html(mkv__('Hoàn thành & Cân bằng kho')); ?></button>
                 </form>
             </div>
         </div>
         
-        <div class="mkv-card" style="padding:0; overflow-x:auto;">
-            <table class="mkv-table">
+        <div class="mkv-table-wrap">
+            <table class="mkv-table" style="min-width: 700px;">
                 <thead><tr><th><?php echo esc_html(mkv__('Mã Phiếu')); ?></th><th><?php echo esc_html(mkv__('Kho')); ?></th><th><?php echo esc_html(mkv__('Chênh lệch')); ?></th><th><?php echo esc_html(mkv__('Thời gian')); ?></th></tr></thead>
                 <tbody>
                 <?php if (empty($stocktakes)): ?>
@@ -294,7 +294,7 @@
             <input type="hidden" name="tab" value="logs">
             <div style="flex:2; min-width:220px;">
                 <label style="font-size:12px; font-weight:600; color:var(--mkv-text-muted); display:block; margin-bottom:4px;">
-                    <i class="hgi-stroke hgi-box-02"></i> <?php echo esc_html(mkv__('Chọn sản phẩm')); ?>
+                    <i class="hgi-stroke hgi-package"></i> <?php echo esc_html(mkv__('Chọn sản phẩm')); ?>
                 </label>
                 <select name="product_id" class="mkv-select" style="width:100%;">
                     <option value="0"><?php echo esc_html(mkv__('-- Tất cả sản phẩm --')); ?></option>
@@ -347,7 +347,7 @@
                     <i class="hgi-stroke hgi-filter"></i> <?php echo esc_html(mkv__('Lọc thẻ kho')); ?>
                 </button>
                 <a href="?page=mkv-inventory&tab=logs" class="mkv-btn mkv-btn-outline" style="height:38px; border-radius:8px;">
-                    <i class="hgi-stroke hgi-rotate-left"></i> <?php echo esc_html(mkv__('Đặt lại')); ?>
+                    <i class="hgi-stroke hgi-rotate-left-01"></i> <?php echo esc_html(mkv__('Đặt lại')); ?>
                 </a>
             </div>
         </form>
@@ -358,7 +358,7 @@
         <?php if ($filter_product_id > 0): ?>
         <div class="mkv-card" style="padding:16px; display:flex; align-items:center; gap:14px; border-left:4px solid var(--mkv-primary);">
             <div style="width:44px; height:44px; border-radius:10px; background:var(--mkv-primary-light); color:var(--mkv-primary); display:flex; align-items:center; justify-content:center; font-size:22px;">
-                <i class="hgi-stroke hgi-box-02"></i>
+                <i class="hgi-stroke hgi-package"></i>
             </div>
             <div>
                 <div style="font-size:12px; font-weight:600; color:var(--mkv-text-muted);"><?php echo esc_html(mkv__('Tồn kho hiện tại')); ?></div>
@@ -396,7 +396,7 @@
     </div>
 
     <!-- Bảng Thẻ kho chi tiết -->
-    <div class="mkv-card" style="padding:0; overflow-x:auto;">
+    <div class="mkv-table-wrap">
         <table class="mkv-table" style="min-width: 950px;">
             <thead><tr>
                 <th style="width:140px;"><?php echo esc_html(mkv__('Thời gian')); ?></th>

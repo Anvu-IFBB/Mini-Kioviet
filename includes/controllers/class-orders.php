@@ -21,6 +21,7 @@ class MKV_Orders
         add_action('admin_post_mkv_update_order_status',  array($this, 'handle_update_order_status'));
         add_action('admin_post_mkv_cancel_order',         array($this, 'handle_cancel_order'));
         add_action('admin_post_mkv_return_order',         array($this, 'handle_return_order'));
+        add_action('admin_post_mkv_collect_order_debt',   array($this, 'handle_collect_order_debt'));
         add_action('admin_post_mkv_push_shipping',        array($this, 'handle_push_shipping'));
         add_action('admin_enqueue_scripts',               array($this, 'enqueue_assets'));
     }
@@ -54,7 +55,7 @@ class MKV_Orders
     public function render_pos_page()
     {
         global $wpdb;
-        $customers = $wpdb->get_results("SELECT id, name, phone, points FROM {$wpdb->prefix}mkv_customers ORDER BY name ASC");
+        $customers = $wpdb->get_results("SELECT id, name, phone, address, points FROM {$wpdb->prefix}mkv_customers ORDER BY name ASC");
         $products  = get_posts(array('post_type' => 'mkv_product', 'numberposts' => -1, 'post_status' => 'publish'));
         $locations = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}mkv_locations WHERE status='active' ORDER BY id ASC");
         require_once MKV_DIR . 'includes/views/view-pos.php';
@@ -65,10 +66,21 @@ class MKV_Orders
         global $wpdb;
 
         $status_filter = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
-        $where = '';
+        $channel_filter = sanitize_key($_GET['channel'] ?? '');
+        $where_parts = array();
+        $where_values = array();
         if ($status_filter) {
-            $where = $wpdb->prepare("WHERE o.status = %s", $status_filter);
+            $where_parts[] = 'o.status = %s';
+            $where_values[] = $status_filter;
         }
+        if (in_array($channel_filter, array('pos', 'online', 'social', 'marketplace'), true)) {
+            $where_parts[] = 'o.sales_channel = %s';
+            $where_values[] = $channel_filter;
+        } else {
+            $channel_filter = '';
+        }
+        $where = $where_parts ? 'WHERE ' . implode(' AND ', $where_parts) : '';
+        if ($where_values) $where = $wpdb->prepare($where, $where_values);
 
         $orders = $wpdb->get_results(
             "SELECT o.*, c.name as customer_name
@@ -118,15 +130,53 @@ class MKV_Orders
         $allow_negative = (int) get_option('mkv_allow_negative_stock', 0);
         $order_code     = 'DH' . date('ymdHis') . rand(10, 99);
         $is_draft       = isset($_POST['is_draft']) && $_POST['is_draft'] == '1';
+        $sales_channel  = sanitize_text_field($_POST['sales_channel'] ?? 'pos');
+        $allowed_channels = array('pos', 'online', 'social', 'marketplace');
+        if (!in_array($sales_channel, $allowed_channels, true)) {
+            $sales_channel = 'pos';
+        }
         
         $paid_str       = sanitize_text_field($_POST['paid_amount'] ?? '');
         $paid_input     = (float) preg_replace('/\D/', '', $paid_str);
+        $shipping_requested = !empty($_POST['is_enable_shipping']);
+        $shipping_address_input = sanitize_textarea_field($_POST['customer_address'] ?? '');
+        $shipping_phone_input = sanitize_text_field($_POST['shipping_phone'] ?? '');
+
+        if ($shipping_requested && $customer_id > 0) {
+            $customer_shipping = $wpdb->get_row($wpdb->prepare(
+                "SELECT address, phone FROM {$wpdb->prefix}mkv_customers WHERE id=%d",
+                $customer_id
+            ));
+            if ($customer_shipping) {
+                $shipping_address_input = $shipping_address_input ?: (string) $customer_shipping->address;
+                $shipping_phone_input = $shipping_phone_input ?: (string) $customer_shipping->phone;
+            }
+        }
+
+        if ($shipping_requested && ($shipping_address_input === '' || $shipping_phone_input === '')) {
+            $err_msg = 'Đơn giao hàng cần có địa chỉ và số điện thoại người nhận.';
+            if ($is_ajax) wp_send_json_error($err_msg);
+            wp_die($err_msg);
+        }
 
         // Validate tồn kho từng sản phẩm (không bắt lỗi tồn kho nếu là lưu nháp)
+        foreach ($_POST['products'] as $item) {
+            $pid = intval($item['id'] ?? 0);
+            $qty = intval($item['qty'] ?? 0);
+            if ($pid <= 0 || $qty <= 0 || !get_post($pid) || get_post_type($pid) !== 'mkv_product') {
+                $err_msg = 'Sản phẩm hoặc số lượng không hợp lệ.';
+                if ($is_ajax) {
+                    if (ob_get_level() > 0) ob_clean();
+                    wp_send_json_error($err_msg);
+                }
+                wp_die($err_msg);
+            }
+        }
+
         if (!$is_draft) {
             foreach ($_POST['products'] as $item) {
-            $pid  = intval($item['id']);
-            $qty  = intval($item['qty']);
+            $pid  = intval($item['id'] ?? 0);
+            $qty  = intval($item['qty'] ?? 0);
             $stock_row = $wpdb->get_row($wpdb->prepare(
                 "SELECT SUM(stock) as s FROM {$wpdb->prefix}mkv_inventory_stock WHERE product_id=%d AND location_id=%d",
                 $pid, $location_id
@@ -216,9 +266,14 @@ class MKV_Orders
             }
         }
         
-        $tax_amount = (int) get_option('mkv_vat_included', 0)
-            ? $subtotal - ($subtotal / (1 + $vat_rate))
-            : $subtotal * $vat_rate;
+        $vat_included = (int) get_option('mkv_vat_included', 0);
+        if ($vat_included) {
+            $tax_amount = round($vat_rate > 0 ? ($subtotal - ($subtotal / (1 + $vat_rate))) : 0);
+            $total_amount = round(max(0, $subtotal) + $shipping_fee);
+        } else {
+            $tax_amount = round($subtotal * $vat_rate);
+            $total_amount = round(max(0, $subtotal + $tax_amount) + $shipping_fee);
+        }
 
         // Tính discount điểm
         $points_discount = 0;
@@ -229,7 +284,7 @@ class MKV_Orders
             $customer = $wpdb->get_row($wpdb->prepare("SELECT points FROM {$wpdb->prefix}mkv_customers WHERE id=%d", $customer_id));
             if ($customer && $customer->points >= $points_used) {
                 // Giới hạn điểm dùng không vượt quá tổng tiền
-                $max_points_needed = ceil(($subtotal + $tax_amount) / $point_value);
+                $max_points_needed = ceil($total_amount / $point_value);
                 $points_used = (int) min($points_used, $max_points_needed);
                 
                 $points_discount = $points_used * $point_value;
@@ -248,24 +303,48 @@ class MKV_Orders
         $shipping_fee = 0;
         $shipping_provider = null;
         $customer_address = null;
-        if (!empty($_POST['is_enable_shipping']) || !empty($_POST['customer_address']) || (isset($_POST['shipping_fee']) && $_POST['shipping_fee'] > 0)) {
-            $shipping_fee = max(0, (float) ($_POST['shipping_fee'] ?? 0));
+        $shipping_phone = null;
+        if ($shipping_requested || !empty($_POST['customer_address']) || (isset($_POST['shipping_fee']) && $_POST['shipping_fee'] > 0)) {
+            $shipping_fee = max(0, round((float) ($_POST['shipping_fee'] ?? 0)));
             $shipping_provider = sanitize_text_field($_POST['shipping_provider'] ?? get_option('mkv_shipping_provider', 'ghtk'));
-            $customer_address = sanitize_textarea_field($_POST['customer_address'] ?? '');
+            $customer_address = $shipping_address_input;
+            $shipping_phone = $shipping_phone_input;
         }
 
-        $total_amount = max(0, $subtotal + $tax_amount - $points_discount) + $shipping_fee;
+        // Tính lại tổng tiền sau khi trừ giảm giá và cộng phí ship
+        if ($vat_included) {
+            $total_amount = round(max(0, $subtotal - $points_discount) + $shipping_fee);
+        } else {
+            $total_amount = round(max(0, $subtotal + $tax_amount - $points_discount) + $shipping_fee);
+        }
         
-        // Tính toán thanh toán và công nợ
+        // Tính toán thanh toán và công nợ (luôn làm tròn số nguyên tiền VNĐ)
         if ($is_draft) {
             $paid_amount = 0;
             $debt_amount = 0;
         } else {
             // Khách có thể đưa dư, nhưng hệ thống chỉ ghi nhận thu tối đa bằng tổng tiền.
             // Nếu đưa thiếu, phần còn lại là công nợ.
-            $paid_amount = min($total_amount, $paid_input);
-            $debt_amount = max(0, $total_amount - $paid_amount);
+            $paid_amount = round(min($total_amount, $paid_input));
+            $debt_amount = round(max(0, $total_amount - $paid_amount));
         }
+
+        $cod_amount = !empty($_POST['is_enable_shipping'])
+            ? max(0, min($total_amount, $total_amount - $paid_amount))
+            : 0;
+        $customer_debt_amount = $shipping_requested ? 0 : $debt_amount;
+        if ($is_draft) {
+            $payment_status = 'unpaid';
+        } elseif ($cod_amount > 0) {
+            $payment_status = 'cod_pending';
+        } elseif ($paid_amount >= $total_amount) {
+            $payment_status = 'paid';
+        } elseif ($paid_amount > 0) {
+            $payment_status = 'partially_paid';
+        } else {
+            $payment_status = 'unpaid';
+        }
+
 
         $wpdb->update("{$wpdb->prefix}mkv_orders", array(
             'subtotal'     => $subtotal,
@@ -276,10 +355,16 @@ class MKV_Orders
             'debt_amount'  => $debt_amount,
             'cost_total'   => $cost_total,
             'points_used'  => $points_used,
-            'status'       => $is_draft ? 'draft' : 'paid',
+            'status'       => $is_draft ? 'draft' : ($shipping_requested ? 'pending' : 'paid'),
+            'payment_status' => $payment_status,
             'shipping_provider' => $shipping_provider,
             'shipping_fee' => $shipping_fee,
             'customer_address' => $customer_address,
+            'sales_channel' => $sales_channel,
+            'fulfillment_status' => $is_draft ? 'pending' : ($shipping_provider ? 'ready' : 'completed'),
+            'cod_amount' => $cod_amount,
+            'customer_debt_amount' => $customer_debt_amount,
+            'shipping_phone' => $shipping_phone,
         ), array('id' => $order_id));
 
         // Tích điểm (chỉ tích khi đơn hàng là paid, KHÔNG phải draft)
@@ -291,7 +376,7 @@ class MKV_Orders
             // Nếu có cộng điểm hoặc có nợ, cập nhật customer
             $wpdb->query($wpdb->prepare(
                 "UPDATE {$wpdb->prefix}mkv_customers SET points=points+%d, total_spent=total_spent+%f, total_debt=total_debt+%f WHERE id=%d",
-                $earned_points, $total_amount, $debt_amount, $customer_id
+                $earned_points, $total_amount, $customer_debt_amount, $customer_id
             ));
         }
 
@@ -404,7 +489,7 @@ class MKV_Orders
         $order = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}mkv_orders WHERE id=%d", $order_id));
         if (!$order) wp_die('Đơn hàng không tồn tại.');
 
-        $is_previously_paid = in_array($order->status, array('paid', 'shipping', 'completed'));
+        $is_previously_paid = in_array($order->payment_status ?? '', array('paid', 'cod_settled'), true);
         $is_now_paid        = in_array($new_status, array('paid', 'shipping', 'completed'));
 
         if ($is_previously_paid && !$is_now_paid) {
@@ -451,16 +536,27 @@ class MKV_Orders
             $wpdb->query('COMMIT');
         }
 
-        $wpdb->update("{$wpdb->prefix}mkv_orders", array('status' => $new_status), array('id' => $order_id));
+        $fulfillment_status = 'pending';
+        if ($new_status === 'shipping') $fulfillment_status = 'in_transit';
+        if ($new_status === 'completed') $fulfillment_status = 'delivered';
+        if ($new_status === 'cancelled') $fulfillment_status = 'cancelled';
+
+        $wpdb->update("{$wpdb->prefix}mkv_orders", array(
+            'status' => $new_status,
+            'fulfillment_status' => $fulfillment_status,
+        ), array('id' => $order_id));
 
         // Tích điểm và cập nhật Sổ quỹ nếu đơn hàng chuyển sang nhóm đã thanh toán
-        if ($is_now_paid && !$is_previously_paid) {
-            // Sổ quỹ
-            if ($order->total_amount > 0) {
+        if ($is_now_paid && !$is_previously_paid && ($order->payment_status ?? '') !== 'cod_pending') {
+            $customer_debt_to_clear = (float) ($order->customer_debt_amount ?? $order->debt_amount);
+            $amount_to_collect = max(0.0, (float) $order->total_amount - (float) $order->paid_amount);
+            
+            // Sổ quỹ (chỉ thu số tiền còn thiếu, không thu lại phần đã thanh toán trước đó)
+            if ($amount_to_collect > 0) {
                 $wpdb->insert("{$wpdb->prefix}mkv_cashbook", array(
                     'type'         => 'thu',
-                    'method'       => $order->payment_method,
-                    'amount'       => $order->total_amount,
+                    'method'       => $order->payment_method ?: 'cash',
+                    'amount'       => $amount_to_collect,
                     'reference_id' => $order_id,
                     'note'         => 'Thu tiền bán hàng (Đơn ' . $order->order_code . ')',
                     'created_by'   => get_current_user_id(),
@@ -469,7 +565,20 @@ class MKV_Orders
             }
 
             // Cập nhật paid_amount trong order thành total_amount
-            $wpdb->update("{$wpdb->prefix}mkv_orders", array('paid_amount' => $order->total_amount, 'debt_amount' => 0), array('id' => $order_id));
+            $wpdb->update("{$wpdb->prefix}mkv_orders", array(
+                'paid_amount' => $order->total_amount,
+                'debt_amount' => 0,
+                'customer_debt_amount' => 0,
+                'payment_status' => 'paid',
+            ), array('id' => $order_id));
+
+            if ($order->customer_id && $customer_debt_to_clear > 0) {
+                $wpdb->query($wpdb->prepare(
+                    "UPDATE {$wpdb->prefix}mkv_customers SET total_debt = GREATEST(0, total_debt - %f) WHERE id=%d",
+                    $customer_debt_to_clear,
+                    $order->customer_id
+                ));
+            }
 
             if ($order->customer_id) {
                 $rate   = max(1, (int) get_option('mkv_points_rate', 100));
@@ -502,11 +611,186 @@ class MKV_Orders
         exit;
     }
 
+    /**
+     * Parse monetary amount input robustly supporting Vietnamese and standard float formats
+     */
+    public static function sanitize_money($raw)
+    {
+        if (is_int($raw)) return (float) $raw;
+        if (is_float($raw)) return $raw;
+
+        $str = trim((string) $raw);
+        if ($str === '') return 0.0;
+
+        // Remove currency symbols and non-essential whitespace e.g. "500.000 đ" -> "500.000"
+        $str = preg_replace('/[^\d.,]/u', '', $str);
+        if ($str === '') return 0.0;
+
+        // Both dots and commas present e.g. 1.250.000,50 (VN) or 1,250,000.50 (US)
+        if (strpos($str, ',') !== false && strpos($str, '.') !== false) {
+            $last_dot = strrpos($str, '.');
+            $last_comma = strrpos($str, ',');
+            if ($last_comma > $last_dot) {
+                // VN: 1.250.000,50
+                $str = str_replace('.', '', $str);
+                $str = str_replace(',', '.', $str);
+            } else {
+                // US: 1,250,000.50
+                $str = str_replace(',', '', $str);
+            }
+            return (float) $str;
+        }
+
+        // Multiple dots e.g. "16.514.227" -> all thousand separators
+        if (substr_count($str, '.') > 1) {
+            return (float) str_replace('.', '', $str);
+        }
+
+        // Single dot e.g. "272.727" vs "272727.27"
+        if (strpos($str, '.') !== false) {
+            $parts = explode('.', $str);
+            // If exactly 3 digits after the dot (e.g. 272.727, 500.000, 10.000) -> thousand separator in VND!
+            if (strlen($parts[1]) === 3) {
+                return (float) ($parts[0] . $parts[1]);
+            }
+            // Standard float e.g. 272727.27
+            return (float) $str;
+        }
+
+        // Commas without dots
+        if (strpos($str, ',') !== false) {
+            $parts = explode(',', $str);
+            if (count($parts) > 2 || strlen($parts[1]) === 3) {
+                return (float) implode('', $parts);
+            }
+            return (float) ($parts[0] . '.' . $parts[1]);
+        }
+
+        return (float) preg_replace('/\D/', '', $str);
+    }
+
+    public function handle_collect_order_debt()
+    {
+        $order_id = intval($_POST['order_id'] ?? 0);
+        if (!current_user_can('mkv_manage_orders') || !wp_verify_nonce($_POST['_wpnonce'] ?? '', 'mkv_collect_order_debt_' . $order_id)) {
+            wp_die('Không có quyền.');
+        }
+
+        global $wpdb;
+        $amount = self::sanitize_money($_POST['amount'] ?? '');
+        $method = sanitize_key($_POST['method'] ?? 'cash');
+        if (!in_array($method, array('cash', 'transfer', 'card'), true)) $method = 'cash';
+
+        $wpdb->query('START TRANSACTION');
+        $order = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}mkv_orders WHERE id=%d FOR UPDATE",
+            $order_id
+        ));
+        if (!$order) {
+            $wpdb->query('ROLLBACK');
+            wp_die('Đơn hàng không tồn tại.');
+        }
+
+        $is_cod = ($order->payment_status ?? '') === 'cod_pending';
+        $unpaid = max(0.0, (float) $order->total_amount - (float) $order->paid_amount);
+
+        if ($is_cod) {
+            $due = (float) $order->cod_amount > 0 ? (float) $order->cod_amount : $unpaid;
+        } else {
+            if ((float) ($order->customer_debt_amount ?? 0) > 0) {
+                $due = (float) $order->customer_debt_amount;
+            } elseif ((float) ($order->debt_amount ?? 0) > 0) {
+                $due = (float) $order->debt_amount;
+            } else {
+                $due = $unpaid;
+            }
+        }
+
+        // Allow a 10 VND rounding tolerance for fractional VND taxes/discounts
+        $tolerance = 10.0;
+        if ($due <= 0 || $amount <= 0 || ($amount - $due) > $tolerance) {
+            $wpdb->query('ROLLBACK');
+            wp_die('Số tiền thu không hợp lệ.');
+        }
+
+        $is_full = ($amount >= $due - $tolerance);
+        $new_paid = $is_full ? (float) $order->total_amount : min((float) $order->total_amount, (float) $order->paid_amount + $amount);
+        $new_debt = $is_cod ? 0.0 : ($is_full ? 0.0 : max(0.0, $due - $amount));
+        $new_payment_status = $is_cod
+            ? ($is_full ? 'cod_settled' : 'cod_pending')
+            : ($is_full ? 'paid' : 'partially_paid');
+
+        $order_update = array(
+            'paid_amount'    => $new_paid,
+            'payment_status' => $new_payment_status,
+        );
+        if ($is_cod) {
+            if ($is_full) {
+                $order_update['cod_amount'] = 0;
+                $order_update['cod_settled_at'] = current_time('mysql');
+                $order_update['cod_settlement_ref'] = 'COD-' . $order->order_code . '-' . time();
+            } else {
+                $order_update['cod_amount'] = $new_debt;
+            }
+            $order_update['debt_amount'] = 0;
+            $order_update['customer_debt_amount'] = 0;
+        } else {
+            $order_update['debt_amount'] = $new_debt;
+            $order_update['customer_debt_amount'] = $new_debt;
+        }
+
+        if ($wpdb->update("{$wpdb->prefix}mkv_orders", $order_update, array('id' => $order_id)) === false) {
+            $wpdb->query('ROLLBACK');
+            wp_die('Không thể cập nhật thanh toán.');
+        }
+
+        if (!$is_cod && $order->customer_id) {
+            $wpdb->query($wpdb->prepare(
+                "UPDATE {$wpdb->prefix}mkv_customers
+                 SET total_debt = GREATEST(0, total_debt - %f)
+                 WHERE id=%d",
+                $amount,
+                $order->customer_id
+            ));
+        }
+
+        $note = $is_cod
+            ? 'Đối soát COD đơn ' . $order->order_code
+            : 'Thu công nợ đơn ' . $order->order_code;
+        if ($wpdb->insert("{$wpdb->prefix}mkv_cashbook", array(
+            'type'         => 'thu',
+            'method'       => $method,
+            'amount'       => $amount,
+            'reference_id' => $order_id,
+            'customer_id'  => $order->customer_id ?: null,
+            'note'         => $note,
+            'created_by'   => get_current_user_id(),
+            'created_at'   => current_time('mysql'),
+        )) === false) {
+            $wpdb->query('ROLLBACK');
+            wp_die('Không thể ghi phiếu thu.');
+        }
+
+        // Tạo thông báo nội bộ
+        $wpdb->insert("{$wpdb->prefix}mkv_notifications", array(
+            'type'       => 'order',
+            'title'      => ($is_cod ? 'Đối soát COD thành công: ' : 'Thu nợ thành công: ') . $order->order_code,
+            'message'    => 'Số tiền: ' . number_format($amount, 0, ',', '.') . ' ₫ (' . ($method === 'cash' ? 'Tiền mặt' : ($method === 'transfer' ? 'Chuyển khoản' : 'Thẻ')) . ')',
+            'is_read'    => 0,
+            'created_at' => current_time('mysql'),
+        ));
+
+        $wpdb->query('COMMIT');
+        $redirect_to = wp_get_referer() ?: admin_url('admin.php?page=mkv-orders&payment_collected=1');
+        wp_safe_redirect(add_query_arg('payment_collected', '1', $redirect_to));
+        exit;
+    }
+
     public static function process_cancel_order($order_id, $user_id = 0)
     {
         global $wpdb;
         $order = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}mkv_orders WHERE id=%d", $order_id));
-        if (!$order || $order->status === 'cancelled') {
+        if (!$order || in_array($order->status, array('cancelled', 'returned'), true)) {
             return new WP_Error('invalid_order', 'Đơn hàng không hợp lệ.');
         }
 
@@ -530,21 +814,20 @@ class MKV_Orders
             $used_points   = $order->status !== 'draft' ? (int) $order->points_used : 0;
             $earned_points = 0;
             $total_spent   = 0;
-            $debt_amount   = 0;
+            $debt_amount   = (float) ($order->customer_debt_amount ?? $order->debt_amount ?? 0);
             
             // Chỉ thu hồi điểm tích lũy và total_spent nếu đơn này ĐÃ cộng
             if ($is_paid_shipping) {
                 $rate = max(1, (int) get_option('mkv_points_rate', 100));
                 $earned_points = (int) floor($order->total_amount / $rate);
                 $total_spent = $order->total_amount;
-                $debt_amount = isset($order->debt_amount) ? $order->debt_amount : 0;
             }
             
             $points_diff = (int) ($used_points - $earned_points); // Khôi phục điểm đã dùng, trừ điểm đã kiếm
             
             if ($points_diff !== 0 || $total_spent > 0 || $debt_amount > 0) {
                 $wpdb->query($wpdb->prepare(
-                    "UPDATE {$wpdb->prefix}mkv_customers SET points = points + %d, total_spent = total_spent - %f, total_debt = total_debt - %f WHERE id = %d",
+                    "UPDATE {$wpdb->prefix}mkv_customers SET points = points + %d, total_spent = GREATEST(0, total_spent - %f), total_debt = GREATEST(0, total_debt - %f) WHERE id = %d",
                     $points_diff, $total_spent, $debt_amount, $order->customer_id
                 ));
             }
@@ -580,7 +863,12 @@ class MKV_Orders
             }
         }
 
-        $wpdb->update("{$wpdb->prefix}mkv_orders", array('status' => 'cancelled'), array('id' => $order_id));
+        $wpdb->update("{$wpdb->prefix}mkv_orders", array(
+            'status'               => 'cancelled',
+            'fulfillment_status'   => 'cancelled',
+            'debt_amount'          => 0,
+            'customer_debt_amount' => 0,
+        ), array('id' => $order_id));
         return true;
     }
 
@@ -672,18 +960,23 @@ class MKV_Orders
             $earned_points = (int) floor($order->total_amount / $rate);
             $used_points   = (int) $order->points_used;
             $points_diff   = (int) ($used_points - $earned_points); // Khôi phục điểm đã dùng, trừ điểm đã kiếm
-            $debt_amount   = isset($order->debt_amount) ? $order->debt_amount : 0;
+            $debt_amount   = (float) ($order->customer_debt_amount ?? $order->debt_amount ?? 0);
             
             if ($points_diff !== 0 || $order->total_amount > 0 || $debt_amount > 0) {
                 $wpdb->query($wpdb->prepare(
-                    "UPDATE {$wpdb->prefix}mkv_customers SET points = points + %d, total_spent = total_spent - %f, total_debt = total_debt - %f WHERE id = %d",
+                    "UPDATE {$wpdb->prefix}mkv_customers SET points = points + %d, total_spent = GREATEST(0, total_spent - %f), total_debt = GREATEST(0, total_debt - %f) WHERE id = %d",
                     $points_diff, $order->total_amount, $debt_amount, $order->customer_id
                 ));
             }
         }
 
         // Cập nhật trạng thái đơn thành Trả Hàng
-        $wpdb->update("{$wpdb->prefix}mkv_orders", array('status' => 'returned'), array('id' => $order_id));
+        $wpdb->update("{$wpdb->prefix}mkv_orders", array(
+            'status'               => 'returned',
+            'fulfillment_status'   => 'returned',
+            'debt_amount'          => 0,
+            'customer_debt_amount' => 0,
+        ), array('id' => $order_id));
 
         return true;
     }

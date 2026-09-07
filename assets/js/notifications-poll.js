@@ -59,13 +59,13 @@
 
                 // Hiển thị toast nếu có đơn mới (tracking orders count)
                 if (lastOrdersCount >= 0 && data.orders > lastOrdersCount) {
-                    showToast('🛒 Có đơn hàng mới!', 'Hệ thống vừa ghi nhận đơn hàng mới.', 'order');
+                    showToast('<i class="hgi-stroke hgi-shopping-bag-02" style="margin-right:6px; color:#0070f3;"></i> Có đơn hàng mới!', 'Hệ thống vừa ghi nhận đơn hàng mới.', 'order');
                     playNotificationChime();
                 }
                 
                 // Hiển thị toast nếu có cảnh báo hệ thống mới (tracking alerts count)
                 if (lastAlertsCount >= 0 && data.alerts > lastAlertsCount) {
-                    showToast('⚠️ Cảnh báo hệ thống', 'Bạn có thông báo mới (hết hàng, dưới định mức...) trong mục Thông Báo.', 'warning');
+                    showToast('<i class="hgi-stroke hgi-alert-02" style="margin-right:6px; color:#f59e0b;"></i> Cảnh báo hệ thống', 'Bạn có thông báo mới (hết hàng, dưới định mức...) trong mục Thông Báo.', 'warning');
                 }
 
                 lastOrdersCount = data.orders;

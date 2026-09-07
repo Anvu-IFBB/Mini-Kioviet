@@ -164,43 +164,46 @@ $unread_count = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}mkv_no
                     <a href="<?php echo admin_url('admin.php?page=mkv-categories'); ?>" class="<?php echo $is_categories ? 'active' : ''; ?>"><?php echo esc_html(mkv__('Danh mục')); ?></a>
                     <?php endif; ?>
                     <?php if (current_user_can('mkv_manage_inventory')): ?>
-                    <a href="<?php echo admin_url('admin.php?page=mkv-inventory'); ?>" class="<?php echo $is_inventory ? 'active' : ''; ?>"><?php echo esc_html(mkv__('Kiểm Kho')); ?></a>
+                            <a href="<?php echo admin_url('admin.php?page=mkv-inventory'); ?>" class="<?php echo $is_inventory ? 'active' : ''; ?>"><?php echo esc_html(mkv__('Kho & Tồn')); ?></a>
                     <?php endif; ?>
                 </div>
             </div>
             <?php endif; ?>
 
-            <!-- Mua hàng -->
-            <?php if (current_user_can('mkv_manage_purchases')): ?>
-            <a href="<?php echo admin_url('admin.php?page=mkv-purchases'); ?>"
-               class="mkv-nav-link <?php echo $is_purchases ? 'active' : ''; ?>">
-                <?php echo esc_html(mkv__('Mua Hàng')); ?>
-            </a>
-            <?php endif; ?>
+                    <!-- Giao dịch -->
+                    <?php if (current_user_can('mkv_manage_orders') || current_user_can('mkv_manage_purchases')): ?>
+                    <div class="mkv-nav-dropdown <?php echo ($is_orders || $is_purchases || $is_pos) ? 'active' : ''; ?>">
+                        <a href="#" class="mkv-nav-link">
+                            <?php echo esc_html(mkv__('Giao Dịch')); ?> <i class="hgi-stroke hgi-arrow-down-01 arrow"></i>
+                        </a>
+                        <div class="mkv-dropdown-menu">
+                            <?php if (current_user_can('mkv_manage_orders')): ?>
+                            <a href="<?php echo admin_url('admin.php?page=mkv-pos'); ?>" class="<?php echo $is_pos ? 'active' : ''; ?>"><?php echo esc_html(mkv__('Bán hàng tại quầy')); ?></a>
+                            <a href="<?php echo admin_url('admin.php?page=mkv-orders'); ?>" class="<?php echo $is_orders ? 'active' : ''; ?>"><?php echo esc_html(mkv__('Đơn hàng')); ?></a>
+                            <?php endif; ?>
+                            <?php if (current_user_can('mkv_manage_purchases')): ?>
+                            <a href="<?php echo admin_url('admin.php?page=mkv-purchases'); ?>" class="<?php echo $is_purchases ? 'active' : ''; ?>"><?php echo esc_html(mkv__('Nhập hàng')); ?></a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <?php endif; ?>
 
-            <!-- Đơn hàng / Bán hàng -->
-            <?php if (current_user_can('mkv_manage_orders')): ?>
-            <a href="<?php echo admin_url('admin.php?page=mkv-orders'); ?>"
-               class="mkv-nav-link <?php echo $is_orders ? 'active' : ''; ?>">
-                <?php echo esc_html(mkv__('Đơn hàng')); ?>
-            </a>
-            <?php endif; ?>
-
-            <!-- Khách hàng -->
-            <?php if (current_user_can('mkv_manage_customers')): ?>
-            <a href="<?php echo admin_url('admin.php?page=mkv-customers'); ?>"
-               class="mkv-nav-link <?php echo $is_customers ? 'active' : ''; ?>">
-                <?php echo esc_html(mkv__('Khách hàng')); ?>
-            </a>
-            <?php endif; ?>
-
-            <!-- Nhân viên -->
-            <?php if (current_user_can('mkv_manage_employees')): ?>
-            <a href="<?php echo admin_url('admin.php?page=mkv-employees'); ?>"
-               class="mkv-nav-link <?php echo $is_employees ? 'active' : ''; ?>">
-                <?php echo esc_html(mkv__('Nhân Viên')); ?>
-            </a>
-            <?php endif; ?>
+                    <!-- Đối tác -->
+                    <?php if (current_user_can('mkv_manage_customers') || current_user_can('mkv_manage_purchases')): ?>
+                    <div class="mkv-nav-dropdown <?php echo ($is_customers || $is_purchases) ? 'active' : ''; ?>">
+                        <a href="#" class="mkv-nav-link">
+                            <?php echo esc_html(mkv__('Đối Tác')); ?> <i class="hgi-stroke hgi-arrow-down-01 arrow"></i>
+                        </a>
+                        <div class="mkv-dropdown-menu">
+                            <?php if (current_user_can('mkv_manage_customers')): ?>
+                            <a href="<?php echo admin_url('admin.php?page=mkv-customers'); ?>" class="<?php echo $is_customers ? 'active' : ''; ?>"><?php echo esc_html(mkv__('Khách hàng')); ?></a>
+                            <?php endif; ?>
+                            <?php if (current_user_can('mkv_manage_purchases')): ?>
+                            <a href="<?php echo admin_url('admin.php?page=mkv-purchases&tab=suppliers'); ?>" class="<?php echo $is_purchases ? 'active' : ''; ?>"><?php echo esc_html(mkv__('Nhà cung cấp')); ?></a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <?php endif; ?>
 
             <!-- Sổ quỹ -->
             <?php if (current_user_can('mkv_manage_cashbook')): ?>
@@ -212,18 +215,44 @@ $unread_count = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}mkv_no
 
             <!-- Báo cáo -->
             <?php if (current_user_can('mkv_manage_reports')): ?>
-            <a href="<?php echo admin_url('admin.php?page=mkv-reports'); ?>"
-               class="mkv-nav-link <?php echo $is_reports ? 'active' : ''; ?>">
-                <?php echo esc_html(mkv__('Báo Cáo')); ?>
-            </a>
+            <div class="mkv-nav-dropdown <?php echo $is_reports ? 'active' : ''; ?>">
+                <a href="<?php echo admin_url('admin.php?page=mkv-reports'); ?>" class="mkv-nav-link">
+                    <?php echo esc_html(mkv__('Báo Cáo')); ?> <i class="hgi-stroke hgi-arrow-down-01 arrow"></i>
+                </a>
+                <div class="mkv-dropdown-menu">
+                    <a href="<?php echo admin_url('admin.php?page=mkv-reports&tab=sales'); ?>"><?php echo esc_html(mkv__('Báo cáo bán hàng')); ?></a>
+                    <a href="<?php echo admin_url('admin.php?page=mkv-reports&tab=profit'); ?>"><?php echo esc_html(mkv__('Báo cáo lợi nhuận')); ?></a>
+                    <a href="<?php echo admin_url('admin.php?page=mkv-reports&tab=end_of_day'); ?>"><?php echo esc_html(mkv__('Sổ quỹ cuối ngày')); ?></a>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <!-- Nhân viên -->
+            <?php if (current_user_can('mkv_manage_employees')): ?>
+            <div class="mkv-nav-dropdown <?php echo $is_employees ? 'active' : ''; ?>">
+                <a href="<?php echo admin_url('admin.php?page=mkv-employees'); ?>" class="mkv-nav-link">
+                    <?php echo esc_html(mkv__('Nhân Viên')); ?> <i class="hgi-stroke hgi-arrow-down-01 arrow"></i>
+                </a>
+                <div class="mkv-dropdown-menu">
+                    <a href="<?php echo admin_url('admin.php?page=mkv-employees'); ?>"><?php echo esc_html(mkv__('Danh sách nhân viên')); ?></a>
+                    <?php if (current_user_can('manage_options')): ?><a href="<?php echo admin_url('admin.php?page=mkv-ai-logs'); ?>"><?php echo esc_html(mkv__('Lịch sử AI')); ?></a><?php endif; ?>
+                </div>
+            </div>
             <?php endif; ?>
             
             <?php if (current_user_can('mkv_manage_settings')): ?>
             <!-- Thiết lập -->
-            <a href="<?php echo admin_url('admin.php?page=mkv-settings'); ?>"
-               class="mkv-nav-link <?php echo $is_settings ? 'active' : ''; ?>">
-                <?php echo esc_html(mkv__('Cài đặt')); ?>
-            </a>
+            <div class="mkv-nav-dropdown <?php echo $is_settings ? 'active' : ''; ?>">
+                <a href="<?php echo admin_url('admin.php?page=mkv-settings'); ?>" class="mkv-nav-link">
+                    <?php echo esc_html(mkv__('Thiết Lập')); ?> <i class="hgi-stroke hgi-arrow-down-01 arrow"></i>
+                </a>
+                <div class="mkv-dropdown-menu">
+                    <a href="<?php echo admin_url('admin.php?page=mkv-settings'); ?>"><?php echo esc_html(mkv__('Cửa hàng & mẫu in')); ?></a>
+                    <a href="<?php echo admin_url('admin.php?page=mkv-settings#payment'); ?>"><?php echo esc_html(mkv__('Thanh toán & VietQR')); ?></a>
+                    <a href="<?php echo admin_url('admin.php?page=mkv-settings#shipping'); ?>"><?php echo esc_html(mkv__('Vận chuyển & Webhook')); ?></a>
+                    <a href="<?php echo admin_url('admin.php?page=mkv-settings#ai'); ?>"><?php echo esc_html(mkv__('Trợ lý AI Copilot')); ?></a>
+                </div>
+            </div>
             <?php endif; ?>
         </nav>
     </header>

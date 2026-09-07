@@ -53,7 +53,7 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
             <input type="date" name="end_date" class="mkv-input" value="<?php echo esc_attr($end_date); ?>" style="width:150px;">
         </div>
         <div class="mkv-form-group" style="margin-bottom:0;">
-            <button type="submit" class="mkv-btn mkv-btn-secondary"><i class="hgi-stroke hgi-filter-01"></i> <?php echo esc_html(mkv__('Lọc dữ liệu')); ?></button>
+            <button type="submit" class="mkv-btn mkv-btn-secondary"><i class="hgi-stroke hgi-filter"></i> <?php echo esc_html(mkv__('Lọc dữ liệu')); ?></button>
         </div>
     </form>
 </div>
@@ -149,7 +149,7 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
             </div>
             <div class="mkv-modal-footer">
                 <button type="button" class="mkv-btn mkv-btn-secondary" onclick="document.getElementById('mkv-modal-thu').style.display='none'"><?php echo esc_html(mkv__('Hủy')); ?></button>
-                <button type="submit" class="mkv-btn mkv-btn-success"><i class="hgi-stroke hgi-save-01"></i> <?php echo esc_html(mkv__('Lưu phiếu thu')); ?></button>
+                <button type="submit" class="mkv-btn mkv-btn-success"><i class="hgi-stroke hgi-floppy-disk"></i> <?php echo esc_html(mkv__('Lưu phiếu thu')); ?></button>
             </div>
         </form>
     </div>
@@ -194,7 +194,7 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
             </div>
             <div class="mkv-modal-footer">
                 <button type="button" class="mkv-btn mkv-btn-secondary" onclick="document.getElementById('mkv-modal-chi').style.display='none'"><?php echo esc_html(mkv__('Hủy')); ?></button>
-                <button type="submit" class="mkv-btn mkv-btn-danger"><i class="hgi-stroke hgi-save-01"></i> <?php echo esc_html(mkv__('Lưu phiếu chi')); ?></button>
+                <button type="submit" class="mkv-btn mkv-btn-danger"><i class="hgi-stroke hgi-floppy-disk"></i> <?php echo esc_html(mkv__('Lưu phiếu chi')); ?></button>
             </div>
         </form>
     </div>

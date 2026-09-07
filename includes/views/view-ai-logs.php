@@ -20,13 +20,14 @@ $logs = $wpdb->get_results($wpdb->prepare(
 require_once MKV_DIR . 'includes/views/header-kiotviet.php';
 ?>
 
-<div class="wrap mkv-wrap">
+<div class="wrap mkv-wrap mkv-ai-logs-page">
     <div class="mkv-header">
         <h1 class="wp-heading-inline"><?php echo mkv__('Lịch sử Trợ lý AI (Audit Logs)'); ?></h1>
         <p><?php echo mkv__('Bảng ghi chú toàn bộ hoạt động tương tác giữa nhân viên và Trợ lý AI.'); ?></p>
     </div>
 
-    <div class="mkv-card">
+    <div class="mkv-card mkv-ai-logs-card">
+        <div class="mkv-ai-logs-table-wrap">
         <table class="wp-list-table widefat fixed striped">
             <thead>
                 <tr>
@@ -73,6 +74,7 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
                 <?php endif; ?>
             </tbody>
         </table>
+        </div>
 
         <?php if ($total_pages > 1) : ?>
             <div class="tablenav bottom">

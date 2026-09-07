@@ -3,7 +3,7 @@ if (!defined('ABSPATH')) exit;
 
 class MKV_DB_Schema
 {
-    const DB_VERSION = '2.5.0';
+    const DB_VERSION = '3.0.0';
 
     public static function init()
     {
@@ -94,6 +94,7 @@ class MKV_DB_Schema
             customer_id    bigint(20)     DEFAULT NULL,
             warehouse_id   bigint(20)     DEFAULT 1,
             status         varchar(50)    NOT NULL DEFAULT 'pending',
+            payment_status varchar(30)    NOT NULL DEFAULT 'unpaid',
             payment_method varchar(50)    DEFAULT 'cash',
             subtotal       decimal(15,2)  DEFAULT 0.00,
             discount       decimal(15,2)  DEFAULT 0.00,
@@ -103,22 +104,93 @@ class MKV_DB_Schema
             total_amount   decimal(15,2)  NOT NULL DEFAULT 0.00,
             paid_amount    decimal(15,2)  DEFAULT 0.00,
             debt_amount    decimal(15,2)  DEFAULT 0.00,
+            customer_debt_amount decimal(15,2) DEFAULT 0.00,
             cost_total     decimal(15,2)  DEFAULT 0.00,
             note           text,
             shipping_provider varchar(50) DEFAULT NULL,
             tracking_code  varchar(100)   DEFAULT NULL,
             shipping_fee   decimal(15,2)  DEFAULT 0.00,
             customer_address text,
+            sales_channel  varchar(30)    NOT NULL DEFAULT 'pos',
+            fulfillment_status varchar(30) NOT NULL DEFAULT 'pending',
+            cod_amount     decimal(15,2)  DEFAULT 0.00,
+            cod_settled_at datetime       DEFAULT NULL,
+            cod_settlement_ref varchar(100) DEFAULT NULL,
+            shipping_phone varchar(50)    DEFAULT NULL,
             created_by     bigint(20),
             created_at     datetime       DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY  (id),
             UNIQUE KEY order_code (order_code),
             KEY status     (status),
+            KEY payment_status (payment_status),
             KEY created_at (created_at),
             KEY customer_id (customer_id),
-            KEY tracking_code (tracking_code)
+            KEY tracking_code (tracking_code),
+            KEY sales_channel (sales_channel),
+            KEY fulfillment_status (fulfillment_status),
+            KEY cod_settled_at (cod_settled_at)
         ) $charset;";
         dbDelta($sql);
+
+        // Migration 1: Reclassify COD orders - if COD is pending or COD amount > 0, debt_amount & customer_debt_amount must be 0
+        $wpdb->query(
+            "UPDATE {$wpdb->prefix}mkv_orders
+             SET customer_debt_amount = 0,
+                 debt_amount = 0
+             WHERE cod_amount > 0 AND payment_status = 'cod_pending'"
+        );
+
+        // Migration 2: Older delivery orders stored unpaid COD as customer debt. Reclassify.
+        $wpdb->query(
+            "UPDATE {$wpdb->prefix}mkv_orders
+             SET cod_amount = GREATEST(0, total_amount - paid_amount),
+                 debt_amount = 0,
+                 customer_debt_amount = 0,
+                 payment_status = 'cod_pending'
+             WHERE sales_channel <> 'pos'
+               AND shipping_provider IS NOT NULL
+               AND shipping_provider <> ''
+               AND total_amount > paid_amount
+               AND (cod_amount = 0 OR cod_amount IS NULL)"
+        );
+
+        // Migration 3: Populate customer_debt_amount on older POS / counter orders
+        $wpdb->query(
+            "UPDATE {$wpdb->prefix}mkv_orders
+             SET debt_amount = GREATEST(0, total_amount - paid_amount),
+                 customer_debt_amount = GREATEST(0, total_amount - paid_amount),
+                 payment_status = CASE WHEN paid_amount > 0 THEN 'partially_paid' ELSE 'unpaid' END
+             WHERE status NOT IN ('cancelled', 'draft')
+               AND total_amount > paid_amount
+               AND (cod_amount = 0 OR cod_amount IS NULL)
+               AND (customer_debt_amount = 0 OR customer_debt_amount IS NULL)
+               AND (shipping_provider IS NULL OR shipping_provider = '')"
+        );
+
+        // Migration 4: Assign correct payment state to all orders
+        $wpdb->query(
+            "UPDATE {$wpdb->prefix}mkv_orders
+             SET payment_status = CASE
+                 WHEN status = 'draft' THEN 'unpaid'
+                 WHEN cod_amount > 0 THEN 'cod_pending'
+                 WHEN paid_amount >= total_amount AND total_amount > 0 THEN 'paid'
+                 WHEN paid_amount > 0 THEN 'partially_paid'
+                 ELSE 'unpaid'
+             END
+             WHERE payment_status IN ('unpaid', 'pending', '')"
+        );
+
+        // Migration 5: Resynchronize customer total_debt to match actual unpaid orders
+        $wpdb->query(
+            "UPDATE {$wpdb->prefix}mkv_customers c
+             SET c.total_debt = COALESCE(
+                 (SELECT SUM(o.customer_debt_amount)
+                  FROM {$wpdb->prefix}mkv_orders o
+                  WHERE o.customer_id = c.id
+                    AND o.status <> 'cancelled'
+                    AND o.payment_status IN ('unpaid', 'partially_paid')), 0
+             )"
+        );
 
         // ===== 6. Chi tiết đơn hàng =====
         $sql = "CREATE TABLE {$wpdb->prefix}mkv_order_items (
@@ -200,6 +272,7 @@ class MKV_DB_Schema
             id             bigint(20)    NOT NULL AUTO_INCREMENT,
             code           varchar(50)   NOT NULL,
             supplier_id    bigint(20)    DEFAULT NULL,
+            location_id    bigint(20)    DEFAULT 1,
             total_amount   decimal(15,2) NOT NULL DEFAULT 0.00,
             paid_amount    decimal(15,2) NOT NULL DEFAULT 0.00,
             status         varchar(50)   NOT NULL DEFAULT 'completed',
@@ -207,7 +280,10 @@ class MKV_DB_Schema
             created_by     bigint(20),
             created_at     datetime      DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
-            UNIQUE KEY code (code)
+            UNIQUE KEY code (code),
+            KEY supplier_id (supplier_id),
+            KEY location_id (location_id),
+            KEY created_at (created_at)
         ) $charset;";
         dbDelta($sql);
 
@@ -219,7 +295,9 @@ class MKV_DB_Schema
             qty        int(11)       NOT NULL,
             price      decimal(15,2) NOT NULL,
             subtotal   decimal(15,2) NOT NULL,
-            PRIMARY KEY (id)
+            PRIMARY KEY (id),
+            KEY po_id (po_id),
+            KEY product_id (product_id)
         ) $charset;";
         dbDelta($sql);
 

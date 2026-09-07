@@ -14,25 +14,36 @@ class MKV_Analytics_Service
         $prev_start = $dates['prev_start'];
         $prev_end   = $dates['prev_end'];
 
-        // --- 1. Hóa đơn (Thành công) ---
-        $current_orders = self::get_orders_count($start_date, $end_date, array('paid', 'shipping', 'completed'));
-        $prev_orders = self::get_orders_count($prev_start, $prev_end, array('paid', 'shipping', 'completed'));
+        // --- 1. Hóa đơn (Hoàn thành / Đã thanh toán) ---
+        $current_orders = self::get_orders_count($start_date, $end_date, array('paid', 'completed'));
+        $prev_orders    = self::get_orders_count($prev_start, $prev_end, array('paid', 'completed'));
         
-        // --- 2. Trả hàng (Đã hủy) ---
-        $current_returns = self::get_orders_count($start_date, $end_date, array('cancelled'));
+        // --- 2. Trả hàng (Khách trả lại hàng) ---
+        $current_returns = self::get_orders_count($start_date, $end_date, array('returned'));
 
-        // --- 3. Doanh thu thuần ---
-        $current_revenue = self::get_revenue($start_date, $end_date, array('paid', 'shipping', 'completed'));
-        $prev_revenue = self::get_revenue($prev_start, $prev_end, array('paid', 'shipping', 'completed'));
+        // --- 3. Doanh thu bán hàng thuần ---
+        $current_revenue = self::get_revenue($start_date, $end_date, array('paid', 'completed'));
+        $prev_revenue    = self::get_revenue($prev_start, $prev_end, array('paid', 'completed'));
 
-        // --- 4. Khách hàng mới ---
+        // --- 4. Dòng tiền Thực thu (Cash Inflow vào Quỹ) ---
+        $current_collected = self::get_actual_collected($start_date, $end_date);
+        $prev_collected    = self::get_actual_collected($prev_start, $prev_end);
+
+        // --- 5. Chưa thu (Công nợ mới + COD chờ đối soát) ---
+        $current_pending_debt = self::get_pending_receivables($start_date, $end_date);
+
+        // --- 6. Đang giao hàng ---
+        $shipping_stats = self::get_shipping_stats($start_date, $end_date);
+
+        // --- 7. Khách hàng mới ---
         $current_new_customers = self::get_new_customers_count($start_date, $end_date);
-        $prev_new_customers = self::get_new_customers_count($prev_start, $prev_end);
+        $prev_new_customers    = self::get_new_customers_count($prev_start, $prev_end);
         
         // Tính % thay đổi
-        $orders_change = $prev_orders > 0 ? round((($current_orders - $prev_orders) / $prev_orders) * 100, 2) : ($current_orders > 0 ? 100 : 0);
-        $revenue_change = $prev_revenue > 0 ? round((($current_revenue - $prev_revenue) / $prev_revenue) * 100, 2) : ($current_revenue > 0 ? 100 : 0);
-        $customers_change = $prev_new_customers > 0 ? round((($current_new_customers - $prev_new_customers) / $prev_new_customers) * 100, 2) : ($current_new_customers > 0 ? 100 : 0);
+        $orders_change     = $prev_orders > 0 ? round((($current_orders - $prev_orders) / $prev_orders) * 100, 2) : ($current_orders > 0 ? 100 : 0);
+        $revenue_change    = $prev_revenue > 0 ? round((($current_revenue - $prev_revenue) / $prev_revenue) * 100, 2) : ($current_revenue > 0 ? 100 : 0);
+        $collected_change  = $prev_collected > 0 ? round((($current_collected - $prev_collected) / $prev_collected) * 100, 2) : ($current_collected > 0 ? 100 : 0);
+        $customers_change  = $prev_new_customers > 0 ? round((($current_new_customers - $prev_new_customers) / $prev_new_customers) * 100, 2) : ($current_new_customers > 0 ? 100 : 0);
 
         // Biểu đồ doanh thu
         $chart_data = self::get_revenue_chart_data($period, $start_date, $end_date);
@@ -52,28 +63,39 @@ class MKV_Analytics_Service
         // Tỷ trọng đơn hàng theo trạng thái (cho biểu đồ tròn Doughnut)
         $order_status_map = self::get_order_status_distribution();
 
-        $total_products  = (int) wp_count_posts('mkv_product')->publish;
-        $total_customers = (int) $wpdb->get_var("SELECT COUNT(id) FROM {$wpdb->prefix}mkv_customers");
-        $total_revenue   = (float) $wpdb->get_var("SELECT SUM(total_amount) FROM {$wpdb->prefix}mkv_orders WHERE status IN ('paid', 'shipping', 'completed')");
+        $total_products      = (int) wp_count_posts('mkv_product')->publish;
+        $total_customers     = (int) $wpdb->get_var("SELECT COUNT(id) FROM {$wpdb->prefix}mkv_customers");
+        $total_revenue       = (float) $wpdb->get_var("SELECT SUM(GREATEST(0, total_amount - shipping_fee)) FROM {$wpdb->prefix}mkv_orders WHERE status IN ('paid', 'completed')");
+        $total_returns_rev   = (float) $wpdb->get_var("SELECT SUM(GREATEST(0, total_amount - shipping_fee)) FROM {$wpdb->prefix}mkv_orders WHERE status = 'returned'");
+        $net_total_revenue   = max(0.0, $total_revenue - $total_returns_rev);
+        $total_cash_balance  = (float) $wpdb->get_var("SELECT SUM(CASE WHEN type='thu' THEN amount ELSE -amount END) FROM {$wpdb->prefix}mkv_cashbook");
+        $total_customer_debt = (float) $wpdb->get_var("SELECT SUM(total_debt) FROM {$wpdb->prefix}mkv_customers WHERE total_debt > 0");
 
         return array(
-            'today_orders'      => (int) $current_orders,
-            'today_returns'     => (int) $current_returns,
-            'today_revenue'     => (float) $current_revenue,
-            'today_customers'   => (int) $current_new_customers,
-            'orders_change'     => $orders_change,
-            'revenue_change'    => $revenue_change,
-            'customers_change'  => $customers_change,
-            'total_products'    => $total_products,
-            'total_customers'   => $total_customers,
-            'total_revenue'     => $total_revenue,
-            'chart_labels'      => $chart_data['labels'],
-            'chart_data'        => $chart_data['data'],
-            'order_status'      => $order_status_map,
-            'top_products'      => $top_products,
-            'top_customers'     => $top_customers,
-            'low_stock'         => $low_stock,
-            'recent_activities' => $recent_activities,
+            'today_orders'            => (int) $current_orders,
+            'today_returns'           => (int) $current_returns,
+            'today_revenue'           => (float) $current_revenue,
+            'today_actual_collected'  => (float) $current_collected,
+            'today_pending_debt'      => (float) $current_pending_debt,
+            'today_shipping_count'    => (int) $shipping_stats['count'],
+            'today_shipping_total'    => (float) $shipping_stats['total'],
+            'today_customers'         => (int) $current_new_customers,
+            'orders_change'           => $orders_change,
+            'revenue_change'          => $revenue_change,
+            'collected_change'        => $collected_change,
+            'customers_change'        => $customers_change,
+            'total_products'          => $total_products,
+            'total_customers'         => $total_customers,
+            'total_revenue'           => $net_total_revenue,
+            'total_cash_balance'      => $total_cash_balance,
+            'total_customer_debt'     => $total_customer_debt,
+            'chart_labels'            => $chart_data['labels'],
+            'chart_data'              => $chart_data['data'],
+            'order_status'            => $order_status_map,
+            'top_products'            => $top_products,
+            'top_customers'           => $top_customers,
+            'low_stock'               => $low_stock,
+            'recent_activities'       => $recent_activities,
         );
     }
 
@@ -147,14 +169,60 @@ class MKV_Analytics_Service
         ));
     }
 
-    public static function get_revenue($start_date, $end_date, $statuses = array())
+    public static function get_revenue($start_date, $end_date, $statuses = array('paid', 'completed'))
     {
         global $wpdb;
         $status_in = "'" . implode("','", array_map('esc_sql', $statuses)) . "'";
-        return (float) $wpdb->get_var($wpdb->prepare(
-            "SELECT SUM(total_amount) FROM {$wpdb->prefix}mkv_orders WHERE created_at >= %s AND created_at <= %s AND status IN ($status_in)",
+        $gross_sales = (float) $wpdb->get_var($wpdb->prepare(
+            "SELECT SUM(GREATEST(0, total_amount - shipping_fee)) FROM {$wpdb->prefix}mkv_orders WHERE created_at >= %s AND created_at <= %s AND status IN ($status_in)",
             $start_date, $end_date
         ));
+        $returns = (float) $wpdb->get_var($wpdb->prepare(
+            "SELECT SUM(GREATEST(0, total_amount - shipping_fee)) FROM {$wpdb->prefix}mkv_orders WHERE created_at >= %s AND created_at <= %s AND status = 'returned'",
+            $start_date, $end_date
+        ));
+        return max(0.0, $gross_sales - $returns);
+    }
+
+    public static function get_actual_collected($start_date, $end_date)
+    {
+        global $wpdb;
+        $total_thu = (float) $wpdb->get_var($wpdb->prepare(
+            "SELECT SUM(amount) FROM {$wpdb->prefix}mkv_cashbook WHERE type = 'thu' AND created_at >= %s AND created_at <= %s",
+            $start_date, $end_date
+        ));
+        $order_refunds = (float) $wpdb->get_var($wpdb->prepare(
+            "SELECT SUM(amount) FROM {$wpdb->prefix}mkv_cashbook WHERE type = 'chi' AND (note LIKE '%%trả hàng%%' OR note LIKE '%%Hoàn tiền%%') AND created_at >= %s AND created_at <= %s",
+            $start_date, $end_date
+        ));
+        return max(0.0, $total_thu - $order_refunds);
+    }
+
+    public static function get_pending_receivables($start_date, $end_date)
+    {
+        global $wpdb;
+        return (float) $wpdb->get_var($wpdb->prepare(
+            "SELECT SUM(COALESCE(customer_debt_amount, debt_amount, 0) + CASE WHEN payment_status = 'cod_pending' THEN COALESCE(cod_amount, total_amount, 0) ELSE 0 END)
+             FROM {$wpdb->prefix}mkv_orders
+             WHERE created_at >= %s AND created_at <= %s
+               AND status NOT IN ('cancelled', 'draft', 'returned')",
+            $start_date, $end_date
+        ));
+    }
+
+    public static function get_shipping_stats($start_date, $end_date)
+    {
+        global $wpdb;
+        $row = $wpdb->get_row($wpdb->prepare(
+            "SELECT COUNT(id) as count, SUM(total_amount) as total
+             FROM {$wpdb->prefix}mkv_orders
+             WHERE status = 'shipping' AND created_at >= %s AND created_at <= %s",
+            $start_date, $end_date
+        ));
+        return array(
+            'count' => (int) ($row->count ?? 0),
+            'total' => (float) ($row->total ?? 0.0),
+        );
     }
 
     public static function get_new_customers_count($start_date, $end_date)
@@ -179,7 +247,7 @@ class MKV_Analytics_Service
                 $hour = str_pad($i, 2, '0', STR_PAD_LEFT);
                 $chart_labels[] = $hour . ':00';
                 $rev = $wpdb->get_var($wpdb->prepare(
-                    "SELECT SUM(total_amount) FROM {$wpdb->prefix}mkv_orders WHERE DATE(created_at) = %s AND HOUR(created_at) = %d AND status IN ('paid', 'shipping', 'completed')",
+                    "SELECT SUM(GREATEST(0, total_amount - shipping_fee)) FROM {$wpdb->prefix}mkv_orders WHERE DATE(created_at) = %s AND HOUR(created_at) = %d AND status IN ('paid', 'completed')",
                     $yest, $i
                 ));
                 $chart_data[] = $rev ? (float) $rev : 0;
@@ -190,7 +258,7 @@ class MKV_Analytics_Service
                 $d = date('Y-m-d', strtotime("-{$i} days", $now));
                 $chart_labels[] = date('d/m', strtotime($d));
                 $rev = $wpdb->get_var($wpdb->prepare(
-                    "SELECT SUM(total_amount) FROM {$wpdb->prefix}mkv_orders WHERE DATE(created_at) = %s AND status IN ('paid', 'shipping', 'completed')",
+                    "SELECT SUM(GREATEST(0, total_amount - shipping_fee)) FROM {$wpdb->prefix}mkv_orders WHERE DATE(created_at) = %s AND status IN ('paid', 'completed')",
                     $d
                 ));
                 $chart_data[] = $rev ? (float) $rev : 0;
@@ -202,7 +270,7 @@ class MKV_Analytics_Service
                 $chart_labels[] = $days[$i];
                 $date = date('Y-m-d', strtotime($week_start . " +{$i} days"));
                 $rev = $wpdb->get_var($wpdb->prepare(
-                    "SELECT SUM(total_amount) FROM {$wpdb->prefix}mkv_orders WHERE DATE(created_at) = %s AND status IN ('paid', 'shipping', 'completed')",
+                    "SELECT SUM(GREATEST(0, total_amount - shipping_fee)) FROM {$wpdb->prefix}mkv_orders WHERE DATE(created_at) = %s AND status IN ('paid', 'completed')",
                     $date
                 ));
                 $chart_data[] = $rev ? (float) $rev : 0;
@@ -214,7 +282,7 @@ class MKV_Analytics_Service
                 $chart_labels[] = str_pad($i, 2, '0', STR_PAD_LEFT);
                 $date = $month . '-' . str_pad($i, 2, '0', STR_PAD_LEFT);
                 $rev = $wpdb->get_var($wpdb->prepare(
-                    "SELECT SUM(total_amount) FROM {$wpdb->prefix}mkv_orders WHERE DATE(created_at) = %s AND status IN ('paid', 'shipping', 'completed')",
+                    "SELECT SUM(GREATEST(0, total_amount - shipping_fee)) FROM {$wpdb->prefix}mkv_orders WHERE DATE(created_at) = %s AND status IN ('paid', 'completed')",
                     $date
                 ));
                 $chart_data[] = $rev ? (float) $rev : 0;
@@ -227,7 +295,7 @@ class MKV_Analytics_Service
                 $chart_labels[] = str_pad($i, 2, '0', STR_PAD_LEFT);
                 $date = $month . '-' . str_pad($i, 2, '0', STR_PAD_LEFT);
                 $rev = $wpdb->get_var($wpdb->prepare(
-                    "SELECT SUM(total_amount) FROM {$wpdb->prefix}mkv_orders WHERE DATE(created_at) = %s AND status IN ('paid', 'shipping', 'completed')",
+                    "SELECT SUM(GREATEST(0, total_amount - shipping_fee)) FROM {$wpdb->prefix}mkv_orders WHERE DATE(created_at) = %s AND status IN ('paid', 'completed')",
                     $date
                 ));
                 $chart_data[] = $rev ? (float) $rev : 0;
@@ -238,16 +306,16 @@ class MKV_Analytics_Service
                 $chart_labels[] = mkv__('Th') . $i;
                 $month = str_pad($i, 2, '0', STR_PAD_LEFT);
                 $rev = $wpdb->get_var($wpdb->prepare(
-                    "SELECT SUM(total_amount) FROM {$wpdb->prefix}mkv_orders WHERE YEAR(created_at) = %s AND MONTH(created_at) = %s AND status IN ('paid', 'shipping', 'completed')",
+                    "SELECT SUM(GREATEST(0, total_amount - shipping_fee)) FROM {$wpdb->prefix}mkv_orders WHERE YEAR(created_at) = %s AND MONTH(created_at) = %s AND status IN ('paid', 'completed')",
                     $year, $month
                 ));
                 $chart_data[] = $rev ? (float) $rev : 0;
             }
         } elseif ($period === 'all') {
             $months_data = $wpdb->get_results(
-                "SELECT DATE_FORMAT(created_at, '%m/%Y') as label, SUM(total_amount) as rev 
+                "SELECT DATE_FORMAT(created_at, '%m/%Y') as label, SUM(GREATEST(0, total_amount - shipping_fee)) as rev 
                  FROM {$wpdb->prefix}mkv_orders 
-                 WHERE status IN ('paid', 'shipping', 'completed')
+                 WHERE status IN ('paid', 'completed')
                  GROUP BY DATE_FORMAT(created_at, '%Y-%m')
                  ORDER BY created_at ASC
                  LIMIT 12"
@@ -267,7 +335,7 @@ class MKV_Analytics_Service
                 $hour = str_pad($i, 2, '0', STR_PAD_LEFT);
                 $chart_labels[] = $hour . ':00';
                 $rev = $wpdb->get_var($wpdb->prepare(
-                    "SELECT SUM(total_amount) FROM {$wpdb->prefix}mkv_orders WHERE DATE(created_at) = %s AND HOUR(created_at) = %d AND status IN ('paid', 'shipping', 'completed')",
+                    "SELECT SUM(GREATEST(0, total_amount - shipping_fee)) FROM {$wpdb->prefix}mkv_orders WHERE DATE(created_at) = %s AND HOUR(created_at) = %d AND status IN ('paid', 'completed')",
                     $today, $i
                 ));
                 $chart_data[] = $rev ? (float) $rev : 0;
@@ -284,7 +352,7 @@ class MKV_Analytics_Service
              FROM {$wpdb->prefix}mkv_order_items i
              JOIN {$wpdb->prefix}posts p ON i.product_id = p.ID
              JOIN {$wpdb->prefix}mkv_orders o ON i.order_id = o.id
-             WHERE p.post_type = 'mkv_product' AND o.status IN ('paid', 'shipping', 'completed')
+             WHERE p.post_type = 'mkv_product' AND o.status IN ('paid', 'completed')
              AND o.created_at >= %s AND o.created_at <= %s
              GROUP BY i.product_id
              ORDER BY total_sold DESC
@@ -297,10 +365,10 @@ class MKV_Analytics_Service
     {
         global $wpdb;
         return $wpdb->get_results($wpdb->prepare(
-            "SELECT c.name, SUM(o.total_amount) as spent
+            "SELECT c.name, SUM(o.total_amount - o.shipping_fee) as spent
              FROM {$wpdb->prefix}mkv_customers c
              JOIN {$wpdb->prefix}mkv_orders o ON c.id = o.customer_id
-             WHERE o.status IN ('paid', 'shipping', 'completed')
+             WHERE o.status IN ('paid', 'completed')
              AND o.created_at >= %s AND o.created_at <= %s
              GROUP BY c.id
              ORDER BY spent DESC
@@ -312,14 +380,21 @@ class MKV_Analytics_Service
     public static function get_recent_activities($limit = 15)
     {
         global $wpdb;
-        return $wpdb->get_results($wpdb->prepare(
+        $activities = $wpdb->get_results($wpdb->prepare(
             "SELECT o.order_code, o.total_amount, o.status, o.created_at as time, c.name as customer_name
              FROM {$wpdb->prefix}mkv_orders o
              LEFT JOIN {$wpdb->prefix}mkv_customers c ON o.customer_id = c.id
              ORDER BY o.created_at DESC
              LIMIT %d", $limit
         ));
+        if (!empty($activities)) {
+            foreach ($activities as &$item) {
+                $item->total_amount = round((float) $item->total_amount);
+            }
+        }
+        return $activities;
     }
+
 
     public static function get_low_stock_products($limit = 5)
     {

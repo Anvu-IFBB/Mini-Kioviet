@@ -141,7 +141,7 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
             <input type="date" name="end_date" class="mkv-input" value="<?php echo esc_attr($end_date); ?>" style="width:150px;">
         </div>
         <div class="mkv-form-group" style="margin-bottom:0;">
-            <button type="submit" class="mkv-btn mkv-btn-secondary"><i class="hgi-stroke hgi-filter-01"></i> <?php echo esc_html(mkv__('Lọc')); ?></button>
+            <button type="submit" class="mkv-btn mkv-btn-secondary"><i class="hgi-stroke hgi-filter"></i> <?php echo esc_html(mkv__('Lọc')); ?></button>
         </div>
     </form>
 </div>

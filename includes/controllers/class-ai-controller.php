@@ -569,7 +569,7 @@ class MKV_AI_Controller
             'address' => $customer->address ? $customer->address : 'Không có',
             'total_orders' => (int)$stats->total_orders,
             'total_spent' => number_format((float)$stats->total_spent, 0, ',', '.') . ' VNĐ',
-            'debt' => number_format((float)$customer->debt, 0, ',', '.') . ' VNĐ'
+            'debt' => number_format((float)$customer->total_debt, 0, ',', '.') . ' VNĐ'
         );
     }
 

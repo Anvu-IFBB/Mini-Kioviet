@@ -549,7 +549,7 @@ class MKV_Products
                 break;
             case 'mkv_price_in':
                 if (!current_user_can('mkv_view_cost_price')) {
-                    echo '<span style="color:var(--mkv-text-muted);font-size:12px;">🔒 Ẩn</span>';
+                    echo '<span style="color:var(--mkv-text-muted);font-size:12px;display:inline-flex;align-items:center;gap:4px;"><i class="hgi-stroke hgi-circle-lock-01"></i> ' . esc_html(mkv__('Ẩn')) . '</span>';
                     break;
                 }
                 $price = get_post_meta($post_id, '_mkv_price_in', true);
@@ -559,9 +559,9 @@ class MKV_Products
                 $stock     = (int) get_post_meta($post_id, '_mkv_stock', true);
                 $min_stock = (int) get_post_meta($post_id, '_mkv_min_stock', true) ?: (int) get_option('mkv_min_stock_threshold', 5);
                 if ($stock <= 0) {
-                    echo '<span style="display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-weight:600;font-size:12px;background:#fee2e2;color:#dc2626;border:1px solid #fecaca;">Hết hàng</span>';
+                    echo '<span style="display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-weight:600;font-size:12px;background:#fee2e2;color:#dc2626;border:1px solid #fecaca;">' . esc_html(mkv__('Hết hàng')) . '</span>';
                 } elseif ($stock <= $min_stock) {
-                    echo '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-weight:600;font-size:12px;background:#fef3c7;color:#d97706;border:1px solid #fde68a;">⚠ ' . number_format($stock, 0, ',', '.') . '</span>';
+                    echo '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-weight:600;font-size:12px;background:#fef3c7;color:#d97706;border:1px solid #fde68a;"><i class="hgi-stroke hgi-alert-02"></i> ' . number_format($stock, 0, ',', '.') . '</span>';
                 } else {
                     echo '<span style="display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-weight:600;font-size:12px;background:#dcfce7;color:#16a34a;border:1px solid #bbf7d0;">' . number_format($stock, 0, ',', '.') . '</span>';
                 }
@@ -597,10 +597,10 @@ class MKV_Products
         }
         
         // Export button
-        echo '<button type="submit" name="mkv_export_csv" value="1" class="button button-secondary" style="margin-left:8px; display:inline-flex; align-items:center; gap:4px;"><span class="dashicons dashicons-download"></span> Xuất CSV</button>';
+        echo '<button type="submit" name="mkv_export_csv" value="1" class="button button-secondary" style="margin-left:8px; display:inline-flex; align-items:center; gap:6px;"><i class="hgi-stroke hgi-download-02" style="font-size:15px;"></i> ' . esc_html(mkv__('Xuất CSV')) . '</button>';
         
         // Import button and hidden form
-        echo '<button type="button" class="button button-secondary" style="margin-left:8px; display:inline-flex; align-items:center; gap:4px;" onclick="document.getElementById(\'mkv_import_file\').click();"><span class="dashicons dashicons-upload"></span> Nhập CSV</button>';
+        echo '<button type="button" class="button button-secondary" style="margin-left:8px; display:inline-flex; align-items:center; gap:6px;" onclick="document.getElementById(\'mkv_import_file\').click();"><i class="hgi-stroke hgi-upload-02" style="font-size:15px;"></i> ' . esc_html(mkv__('Nhập CSV')) . '</button>';
         
         // Add JS and Hidden Form to body via footer
         add_action('admin_footer', function() {
@@ -664,9 +664,15 @@ class MKV_Products
 
     public function import_csv_action()
     {
+        global $wpdb;
+
         if (!isset($_POST['mkv_import_submit']) || !isset($_FILES['mkv_import_csv'])) return;
         if (!isset($_POST['mkv_import_nonce_val']) || !wp_verify_nonce($_POST['mkv_import_nonce_val'], 'mkv_import_nonce')) return;
         if (!current_user_can('mkv_manage_products')) return;
+
+        if ($_FILES['mkv_import_csv']['error'] !== UPLOAD_ERR_OK) {
+            wp_die('Không thể tải lên file CSV.');
+        }
 
         $file = $_FILES['mkv_import_csv']['tmp_name'];
         if (!$file) return;

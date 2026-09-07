@@ -1,21 +1,72 @@
-# Dependencies
-node_modules/
+# =============================================================================
+# Mini KiotViet - Git Ignore Configuration
+# =============================================================================
 
-# Local environment and secrets
+# 1. Dependencies & Package Managers
+node_modules/
+vendor/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# 2. Local Environment & Secret Keys
 .env
 .env.*
 !.env.example
+*.key
+*.pem
+*.cert
+*.crt
 
-# Runtime and debug logs
+# 3. Runtime, Debug & Error Logs
 *.log
 mkv_request.log
+debug.log
+error_log
 
-# Local test/debug output
-scratch/log.txt
-scratch/test_output.txt
+# 4. Scratch, Temporary & Diagnostic Scripts
+scratch/
+*.tmp
+*.temp
 
-# OS/editor files
-.DS_Store
-Thumbs.db
+# 5. Database Dumps & Local Backups
+*.sql
+*.sqlite
+*.sqlite3
+*.dump
+*.bak
+*.backup
+
+# 6. Archives & Distribution Packages
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# 7. IDE, Code Editors & Workspaces
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
 *.swp
-npm-debug.log*
+*.swo
+
+# 8. Operating System Generated Files
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+ehthumbs_vista.db
+desktop.ini
+$RECYCLE.BIN/

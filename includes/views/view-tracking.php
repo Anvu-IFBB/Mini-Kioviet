@@ -5,6 +5,7 @@ if (!defined('ABSPATH')) exit;
 <style>
 /* Premium Modern Tracking Design */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://cdn.hugeicons.com/font/hgi-stroke-rounded.css');
 
 .mkv-tracking-wrapper {
     font-family: 'Inter', sans-serif;
@@ -362,19 +363,19 @@ if (!defined('ABSPATH')) exit;
                 <div class="mkv-timeline-progress" id="res-timeline-progress" style="width: 0%;"></div>
                 <div class="mkv-timeline-steps">
                     <div class="mkv-timeline-step" id="step-1">
-                        <div class="mkv-timeline-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+                        <div class="mkv-timeline-icon"><i class="hgi-stroke hgi-invoice-01"></i></div>
                         <div class="mkv-timeline-label">Chờ duyệt</div>
                     </div>
                     <div class="mkv-timeline-step" id="step-2">
-                        <div class="mkv-timeline-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div>
+                        <div class="mkv-timeline-icon"><i class="hgi-stroke hgi-package-process"></i></div>
                         <div class="mkv-timeline-label">Đóng gói</div>
                     </div>
                     <div class="mkv-timeline-step" id="step-3">
-                        <div class="mkv-timeline-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>
+                        <div class="mkv-timeline-icon"><i class="hgi-stroke hgi-truck-delivery"></i></div>
                         <div class="mkv-timeline-label">Đang giao</div>
                     </div>
                     <div class="mkv-timeline-step" id="step-4">
-                        <div class="mkv-timeline-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+                        <div class="mkv-timeline-icon"><i class="hgi-stroke hgi-checkmark-circle-02"></i></div>
                         <div class="mkv-timeline-label">Thành công</div>
                     </div>
                 </div>
@@ -382,7 +383,7 @@ if (!defined('ABSPATH')) exit;
 
             <div class="mkv-shipping-info" id="res-shipping-wrap" style="display:none;">
                 <div class="mkv-shipping-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                    <i class="hgi-stroke hgi-truck-delivery" style="font-size:24px;"></i>
                 </div>
                 <div class="mkv-shipping-details">
                     <h4>Mã vận đơn (<span id="res-provider"></span>)</h4>
@@ -517,16 +518,31 @@ document.addEventListener('DOMContentLoaded', function() {
             const providerName = data.shipping_provider ? data.shipping_provider.toUpperCase() : 'Giao hàng';
             document.getElementById('res-provider').innerText = providerName;
             
-            let shipText = '';
+            const trackingEl = document.getElementById('res-tracking-code');
+            trackingEl.replaceChildren();
             if (data.tracking_code) {
-                shipText += `<span style="color:#2563eb; font-weight:700;">${data.tracking_code}</span>`;
+                const trackingLabel = document.createElement('span');
+                trackingLabel.style.cssText = 'color:#2563eb; font-weight:700;';
+                trackingLabel.textContent = data.tracking_code;
+                trackingEl.appendChild(trackingLabel);
             } else {
-                shipText += `<span style="color:#64748b; font-size:13px; font-weight:500;">(Đang chuẩn bị hàng, chưa có mã vận đơn)</span>`;
+                const pendingLabel = document.createElement('span');
+                pendingLabel.style.cssText = 'color:#64748b; font-size:13px; font-weight:500;';
+                pendingLabel.textContent = '(Đang chuẩn bị hàng, chưa có mã vận đơn)';
+                trackingEl.appendChild(pendingLabel);
             }
             if (data.customer_address) {
-                shipText += `<div style="font-size:13px; font-weight:normal; color:#475569; margin-top:4px;"><i style="font-style:normal;">📍 Địa chỉ:</i> ${data.customer_address}</div>`;
+                const addressEl = document.createElement('div');
+                addressEl.style.cssText = 'font-size:13px; font-weight:normal; color:#475569; margin-top:4px; display:flex; align-items:center; gap:6px;';
+                const locIcon = document.createElement('i');
+                locIcon.className = 'hgi-stroke hgi-location-01';
+                locIcon.style.cssText = 'color:#4f46e5; font-size:15px; flex-shrink:0;';
+                addressEl.appendChild(locIcon);
+                const locText = document.createElement('span');
+                locText.textContent = 'Địa chỉ: ' + data.customer_address;
+                addressEl.appendChild(locText);
+                trackingEl.appendChild(addressEl);
             }
-            document.getElementById('res-tracking-code').innerHTML = shipText;
         } else {
             document.getElementById('res-shipping-wrap').style.display = 'none';
         }
@@ -537,16 +553,26 @@ document.addEventListener('DOMContentLoaded', function() {
         let subTotalRaw = 0;
         data.items.forEach(item => {
             subTotalRaw += item.subtotal;
-            itemsWrap.innerHTML += `
-                <div class="mkv-item-row">
-                    <img src="${item.image}" class="mkv-item-image" alt="">
-                    <div class="mkv-item-info">
-                        <h4 class="mkv-item-name">${item.name}</h4>
-                        <div class="mkv-item-meta">SL: ${item.qty} x ${formatMoney(item.price)}</div>
-                    </div>
-                    <div class="mkv-item-price">${formatMoney(item.subtotal)}</div>
-                </div>
-            `;
+            const row = document.createElement('div');
+            row.className = 'mkv-item-row';
+            const image = document.createElement('img');
+            image.className = 'mkv-item-image';
+            image.alt = '';
+            image.src = typeof item.image === 'string' && /^https?:\/\//i.test(item.image) ? item.image : '';
+            const info = document.createElement('div');
+            info.className = 'mkv-item-info';
+            const name = document.createElement('h4');
+            name.className = 'mkv-item-name';
+            name.textContent = item.name || '';
+            const meta = document.createElement('div');
+            meta.className = 'mkv-item-meta';
+            meta.textContent = 'SL: ' + (item.qty || 0) + ' x ' + formatMoney(item.price);
+            info.append(name, meta);
+            const price = document.createElement('div');
+            price.className = 'mkv-item-price';
+            price.textContent = formatMoney(item.subtotal);
+            row.append(image, info, price);
+            itemsWrap.appendChild(row);
         });
 
         // Summary

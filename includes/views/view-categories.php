@@ -21,12 +21,12 @@ $categories = get_terms(array(
 ?>
 <div class="mkv-page-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
     <div>
-        <h1 class="mkv-page-title"><i class="hgi-stroke hgi-folder-open-01"></i> Quản Lý Danh Mục</h1>
-        <p style="color:var(--mkv-text-muted); font-size:13px; margin:4px 0 0 0;">Quản lý phân loại sản phẩm của cửa hàng</p>
+        <h1 class="mkv-page-title"><i class="hgi-stroke hgi-folder-02"></i> <?php echo esc_html(mkv__('Quản Lý Danh Mục')); ?></h1>
+        <p style="color:var(--mkv-text-muted); font-size:13px; margin:4px 0 0 0;"><?php echo esc_html(mkv__('Quản lý phân loại sản phẩm của cửa hàng')); ?></p>
     </div>
     <div style="display:flex; gap:10px;">
         <a href="<?php echo admin_url('edit.php?post_type=mkv_product'); ?>" class="mkv-btn mkv-btn-secondary">
-            <i class="hgi-stroke hgi-box-02"></i> Quay lại Sản phẩm
+            <i class="hgi-stroke hgi-package"></i> <?php echo esc_html(mkv__('Quay lại Sản phẩm')); ?>
         </a>
     </div>
 </div>
@@ -147,14 +147,14 @@ $categories = get_terms(array(
                 <div style="display:flex; gap:10px;">
                     <?php if ($editing_term): ?>
                         <button type="submit" class="mkv-btn mkv-btn-primary" style="flex:1; justify-content:center; height:38px; border-radius:8px;">
-                            <i class="hgi-stroke hgi-check-mark-circle-02"></i> Lưu thay đổi
+                            <i class="hgi-stroke hgi-checkmark-circle-02"></i> <?php echo esc_html(mkv__('Lưu thay đổi')); ?>
                         </button>
                         <a href="<?php echo admin_url('admin.php?page=mkv-categories'); ?>" class="mkv-btn mkv-btn-secondary" style="justify-content:center; height:38px; border-radius:8px;">
-                            Hủy
+                            <?php echo esc_html(mkv__('Hủy')); ?>
                         </a>
                     <?php else: ?>
                         <button type="submit" class="mkv-btn mkv-btn-primary" style="width:100%; justify-content:center; height:38px; border-radius:8px;">
-                            <i class="hgi-stroke hgi-save-01"></i> Thêm danh mục
+                            <i class="hgi-stroke hgi-floppy-disk"></i> <?php echo esc_html(mkv__('Thêm danh mục')); ?>
                         </button>
                     <?php endif; ?>
                 </div>
@@ -166,29 +166,30 @@ $categories = get_terms(array(
     <div class="mkv-card" style="padding:0; flex:1; overflow:hidden;">
         <div style="padding:14px 18px; border-bottom:1px solid var(--mkv-border); background:var(--mkv-border-light); display:flex; justify-content:space-between; align-items:center;">
             <strong style="font-size:13.5px; color:var(--mkv-text-main);">
-                <i class="hgi-stroke hgi-folder-favourite"></i> Danh sách phân loại
+                <i class="hgi-stroke hgi-folder-favourite"></i> <?php echo esc_html(mkv__('Danh sách phân loại')); ?>
             </strong>
             <span class="mkv-badge mkv-badge-gray">
-                Tổng cộng: <?php echo (!is_wp_error($categories)) ? count($categories) : 0; ?>
+                <?php echo esc_html(mkv__('Tổng cộng:')); ?> <?php echo (!is_wp_error($categories)) ? count($categories) : 0; ?>
             </span>
         </div>
 
-        <table class="mkv-table" style="margin:0;">
+        <div class="mkv-table-wrap" style="border:none; box-shadow:none; border-radius:0; margin-bottom:0; max-height:calc(100vh - 280px);">
+            <table class="mkv-table" style="margin:0; min-width:580px;">
             <thead>
                 <tr>
-                    <th style="width:30%;">Tên danh mục</th>
-                    <th style="width:30%;">Mô tả</th>
-                    <th style="width:20%;">Chuỗi đường dẫn (Slug)</th>
-                    <th style="width:100px; text-align:center;">Số sản phẩm</th>
-                    <th style="width:100px; text-align:center;">Hành động</th>
+                    <th style="width:30%;"><?php echo esc_html(mkv__('Tên danh mục')); ?></th>
+                    <th style="width:30%;"><?php echo esc_html(mkv__('Mô tả')); ?></th>
+                    <th style="width:20%;"><?php echo esc_html(mkv__('Chuỗi đường dẫn (Slug)')); ?></th>
+                    <th style="width:100px; text-align:center;"><?php echo esc_html(mkv__('Số sản phẩm')); ?></th>
+                    <th style="width:100px; text-align:center;"><?php echo esc_html(mkv__('Hành động')); ?></th>
                 </tr>
             </thead>
             <tbody>
             <?php if (empty($categories) || is_wp_error($categories)): ?>
                 <tr>
                     <td colspan="5" style="text-align:center; padding:40px; color:var(--mkv-text-muted);">
-                        <i class="hgi-stroke hgi-folder-open-01" style="font-size:32px; display:block; margin-bottom:8px; opacity:0.5;"></i>
-                        Chưa có danh mục nào. Hãy thêm danh mục đầu tiên bên trái!
+                        <i class="hgi-stroke hgi-folder-02" style="font-size:32px; display:block; margin-bottom:8px; opacity:0.5;"></i>
+                        <?php echo esc_html(mkv__('Chưa có danh mục nào. Hãy thêm danh mục đầu tiên bên trái!')); ?>
                     </td>
                 </tr>
             <?php else: ?>
@@ -207,7 +208,7 @@ $categories = get_terms(array(
                                             <?php if ($level > 0): ?>
                                                 <span style="color:#94a3b8; font-weight:400;"><?php echo $prefix; ?></span>
                                             <?php endif; ?>
-                                            <i class="hgi-stroke <?php echo $level > 0 ? 'hgi-folder-02' : 'hgi-folder-open-01'; ?>" style="color:var(--mkv-primary); font-size:15px;"></i>
+                                            <i class="hgi-stroke <?php echo $level > 0 ? 'hgi-folder-02' : 'hgi-folder-01'; ?>" style="color:var(--mkv-primary); font-size:15px;"></i>
                                             <strong style="color:var(--mkv-text-main); font-size:13.5px;">
                                                 <?php echo esc_html($cat->name); ?>
                                             </strong>
@@ -262,6 +263,7 @@ $categories = get_terms(array(
             <?php endif; ?>
             </tbody>
         </table>
+        </div>
     </div>
 </div>
 
