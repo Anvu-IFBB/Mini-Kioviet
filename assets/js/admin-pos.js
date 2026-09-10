@@ -52,7 +52,22 @@ jQuery(document).ready(function($) {
 
     const customerSelect = document.getElementById('pos-customer-select');
     if (customerSelect) onCustomerChange(customerSelect);
+    ensurePosOrderCode();
 });
+
+function ensurePosOrderCode() {
+    const codeInput = document.getElementById('pos_order_code');
+    if (codeInput && !codeInput.value) {
+        codeInput.value = 'DH' + Math.floor(Date.now() / 1000) + Math.floor(10 + Math.random() * 90);
+    }
+}
+
+function resetPosOrderCode() {
+    const codeInput = document.getElementById('pos_order_code');
+    if (codeInput) {
+        codeInput.value = 'DH' + Math.floor(Date.now() / 1000) + Math.floor(10 + Math.random() * 90);
+    }
+}
 
 function addToCart(el) {
     const id    = el.dataset.id;
@@ -143,13 +158,13 @@ function renderCart() {
                 <input type="hidden" name="products[${id}][price]" value="${item.price}">
             </div>
             <div style="display:flex; align-items:center; gap:2px; background:#f1f5f9; border-radius:8px; padding:4px;">
-                <button type="button" class="cart-qty-btn" onclick="changeQty('${id}', -1)">−</button>
-                <input type="number" class="pos-qty-input" name="products[${id}][qty]" value="${item.qty}" min="1" max="${item.stock}"
+                <button type="button" class="cart-qty-btn" aria-label="Giảm số lượng" onclick="changeQty('${id}', -1)">−</button>
+                <input type="number" class="pos-qty-input" aria-label="Số lượng" name="products[${id}][qty]" value="${item.qty}" min="1" max="${item.stock}"
                     onchange="updateQty('${id}', this.value)">
-                <button type="button" class="cart-qty-btn" onclick="changeQty('${id}', 1)">+</button>
+                <button type="button" class="cart-qty-btn" aria-label="Tăng số lượng" onclick="changeQty('${id}', 1)">+</button>
             </div>
             <div style="width:40px; text-align:right;">
-                <button type="button" style="color:#ef4444; width:36px; height:36px; background:#fee2e2; border:none; border-radius:8px; margin-left:auto; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:0.2s;" onclick="removeItem('${id}')" onmouseover="this.style.background='#fecaca'" onmouseout="this.style.background='#fee2e2'">
+                <button type="button" style="color:#ef4444; width:36px; height:36px; background:#fee2e2; border:none; border-radius:8px; margin-left:auto; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:0.2s;" aria-label="Xóa sản phẩm" title="Xóa sản phẩm" onclick="removeItem('${id}')" onmouseover="this.style.background='#fecaca'" onmouseout="this.style.background='#fee2e2'">
                     <i class="hgi-stroke hgi-delete-02"></i>
                 </button>
             </div>
@@ -165,12 +180,24 @@ function renderCart() {
     const pointsInput = parseInt(document.getElementById('pos-points-used').value || 0);
     const pointValue  = window.mkv_point_value || 1;
     const vatRate = window.mkv_pos_vat_rate || 0;
-    const vatAmount = subtotal * vatRate;
-    if (vatEl) vatEl.textContent = vatAmount.toLocaleString('vi-VN') + ' ₫';
+    const isVatIncluded = parseInt(window.mkv_vat_included || 0) === 1;
+
+    let vatAmount = 0;
+    let baseTotalBeforeDiscount = subtotal;
+
+    if (isVatIncluded) {
+        vatAmount = vatRate > 0 ? Math.round(subtotal - (subtotal / (1 + vatRate))) : 0;
+        baseTotalBeforeDiscount = subtotal;
+        if (vatEl) vatEl.textContent = `(Đã gồm: ${vatAmount.toLocaleString('vi-VN')} ₫)`;
+    } else {
+        vatAmount = Math.round(subtotal * vatRate);
+        baseTotalBeforeDiscount = subtotal + vatAmount;
+        if (vatEl) vatEl.textContent = vatAmount.toLocaleString('vi-VN') + ' ₫';
+    }
 
     // Số điểm dùng không được vượt quá số điểm khách có, 
-    // và (số điểm * giá trị) không được vượt quá tổng tiền hàng + thuế.
-    const maxPointsForSubtotal = Math.ceil((subtotal + vatAmount) / pointValue);
+    // và (số điểm * giá trị) không được vượt quá tổng tiền hàng + thuế (nếu thuế chưa gồm).
+    const maxPointsForSubtotal = Math.ceil(baseTotalBeforeDiscount / pointValue);
     const pointsUsed  = Math.min(pointsInput, window.currentCustomerPoints || 0, maxPointsForSubtotal);
     document.getElementById('pos-points-used').value = pointsUsed;
 
@@ -183,7 +210,7 @@ function renderCart() {
         discRow.style.display = 'none';
     }
 
-    const afterDiscount = Math.max(0, subtotal + vatAmount - discountAmount);
+    const afterDiscount = Math.max(0, baseTotalBeforeDiscount - discountAmount);
 
     // Shipping fee
     let shippingFee = 0;
@@ -242,6 +269,7 @@ function removeItem(id) {
 
 function clearCart() {
     cart = {};
+    resetPosOrderCode();
     renderCart();
 }
 
@@ -367,15 +395,30 @@ function previewReceipt() {
         shippingFee = parseInt(document.getElementById('pos-shipping-fee')?.value) || 0;
     }
 
-    const vatAmount = total * (window.mkv_pos_vat_rate || 0);
-    let finalTotal = Math.max(0, total - discountAmount + vatAmount) + shippingFee;
+    const isVatIncluded = parseInt(window.mkv_vat_included || 0) === 1;
+    let vatAmount = 0;
+    let baseBeforeDiscount = total;
+
+    if (isVatIncluded) {
+        vatAmount = (window.mkv_pos_vat_rate || 0) > 0 ? Math.round(total - (total / (1 + (window.mkv_pos_vat_rate || 0)))) : 0;
+        baseBeforeDiscount = total;
+    } else {
+        vatAmount = Math.round(total * (window.mkv_pos_vat_rate || 0));
+        baseBeforeDiscount = total + vatAmount;
+    }
+
+    let finalTotal = Math.max(0, baseBeforeDiscount - discountAmount) + shippingFee;
     
     let totalHtml = '';
     if (discountAmount > 0) {
         totalHtml += `<span style="font-size:11px; font-weight:normal; display:block; color:#059669;">Giảm trừ điểm: -${discountAmount.toLocaleString('vi-VN')} ₫</span>`;
     }
     if (vatAmount > 0) {
-        totalHtml += `<span style="font-size:11px; font-weight:normal; display:block;">VAT (${window.mkv_pos_vat_rate * 100}%): +${vatAmount.toLocaleString('vi-VN')} ₫</span>`;
+        if (isVatIncluded) {
+            totalHtml += `<span style="font-size:11px; font-weight:normal; display:block; color:#6b7280;">(Đã gồm VAT ${window.mkv_pos_vat_rate * 100}%: ${vatAmount.toLocaleString('vi-VN')} ₫)</span>`;
+        } else {
+            totalHtml += `<span style="font-size:11px; font-weight:normal; display:block;">VAT (${window.mkv_pos_vat_rate * 100}%): +${vatAmount.toLocaleString('vi-VN')} ₫</span>`;
+        }
     }
     if (shippingFee > 0) {
         totalHtml += `<span style="font-size:11px; font-weight:normal; display:block; color:#2563eb;">Phí vận chuyển: +${shippingFee.toLocaleString('vi-VN')} ₫</span>`;
@@ -494,6 +537,7 @@ document.getElementById('pos-form').addEventListener('submit', function(e) {
         btn.innerHTML = oldText;
         if (res.success) {
             window.mkv_receipt_is_completed = true;
+            resetPosOrderCode();
             // Hiển thị QR Code nếu là thanh toán chuyển khoản
             const pmInput = document.querySelector('input[name="payment_method"]:checked');
             const pm = pmInput ? pmInput.value : '';
@@ -548,4 +592,15 @@ document.getElementById('pos-form').addEventListener('submit', function(e) {
             mkvToast('Lỗi hệ thống: Vui lòng kiểm tra Console (F12).', 'error');
         }
     });
+});
+
+// Keyboard accessibility for product selection in POS catalog
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+        const item = e.target.closest('.pos-product-item');
+        if (item && document.activeElement === item) {
+            e.preventDefault();
+            item.click();
+        }
+    }
 });

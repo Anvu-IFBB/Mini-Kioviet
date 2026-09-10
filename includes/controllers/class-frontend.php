@@ -41,9 +41,9 @@ class MKV_Frontend
 
         global $wpdb;
 
-        // 1. Tìm đơn hàng (Không phân biệt hoa thường)
+        // 1. Tìm đơn hàng (Tận dụng UNIQUE index order_code)
         $order = $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM {$wpdb->prefix}mkv_orders WHERE UPPER(order_code) = UPPER(%s)",
+            "SELECT * FROM {$wpdb->prefix}mkv_orders WHERE order_code = %s",
             $order_code
         ));
 

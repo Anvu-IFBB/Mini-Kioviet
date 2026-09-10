@@ -1,5 +1,5 @@
 # =============================================================================
-# Mini KiotViet - Git Ignore Configuration
+# Mini KiotViet (MKV) — Git Ignore Configuration
 # =============================================================================
 
 # 1. Dependencies & Package Managers
@@ -10,7 +10,7 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# 2. Local Environment & Secret Keys
+# 2. Local Environment, Keys & Secrets
 .env
 .env.*
 !.env.example
@@ -18,17 +18,23 @@ yarn-error.log*
 *.pem
 *.cert
 *.crt
+*.pfx
+*.p12
 
 # 3. Runtime, Debug & Error Logs
 *.log
-mkv_request.log
 debug.log
 error_log
+mkv_request.log
+wp-content/debug.log
 
-# 4. Scratch, Temporary & Diagnostic Scripts
+# 4. Scratch, Diagnostics & Automated Test Artifacts
 scratch/
+test_profile*/
+chrome_profile*/
 *.tmp
 *.temp
+update*.md
 
 # 5. Database Dumps & Local Backups
 *.sql
@@ -40,7 +46,9 @@ scratch/
 
 # 6. Archives & Distribution Packages
 *.zip
+*.tar
 *.tar.gz
+*.tgz
 *.rar
 *.7z
 
@@ -55,6 +63,7 @@ scratch/
 *.sln
 *.swp
 *.swo
+*~
 
 # 8. Operating System Generated Files
 # macOS
@@ -70,3 +79,7 @@ ehthumbs.db
 ehthumbs_vista.db
 desktop.ini
 $RECYCLE.BIN/
+
+# Linux
+*~
+.directory

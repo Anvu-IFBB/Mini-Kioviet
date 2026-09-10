@@ -253,13 +253,28 @@ jQuery(document).ready(function ($) {
                                 : (orderDate.getDate().toString().padStart(2, '0') + '/' + (orderDate.getMonth() + 1).toString().padStart(2, '0') + ' ' + timeDigits);
                         }
 
-                        const activityTemplate = ((typeof mkv_i18n !== 'undefined' && mkv_i18n.activity_template) || 'vừa mua đơn hàng <strong>{order_code}</strong> với giá trị <strong style="color:var(--mkv-primary);">{amount}</strong>');
+                        let activityTemplate = '';
+                        let amountColor = 'var(--mkv-primary)';
+                        let statusClass = '';
+
+                        if (o.status === 'cancelled') {
+                            activityTemplate = 'vừa <span style="color:var(--mkv-red); font-weight:600;">hủy</span> đơn hàng <strong>{order_code}</strong> trị giá <strong>{amount}</strong>';
+                            amountColor = 'var(--mkv-red)';
+                            statusClass = 'mkv-timeline-cancelled';
+                        } else if (o.status === 'returned') {
+                            activityTemplate = 'vừa <span style="color:var(--mkv-orange); font-weight:600;">hoàn trả</span> đơn hàng <strong>{order_code}</strong> trị giá <strong>{amount}</strong>';
+                            amountColor = 'var(--mkv-orange)';
+                            statusClass = 'mkv-timeline-returned';
+                        } else {
+                            activityTemplate = ((typeof mkv_i18n !== 'undefined' && mkv_i18n.activity_template) || 'vừa mua đơn hàng <strong>{order_code}</strong> với giá trị <strong style="color:var(--mkv-primary);">{amount}</strong>');
+                        }
+
                         const activityText = activityTemplate
                             .replace('{order_code}', escapeHtml(o.order_code))
                             .replace('{amount}', amount);
 
                         html += `
-                        <div class="mkv-timeline-item">
+                        <div class="mkv-timeline-item ${statusClass}">
                             <div class="mkv-timeline-time">${timeStr}</div>
                             <div class="mkv-timeline-content">
                                 <strong>${escapeHtml(customer)}</strong> ${activityText}
@@ -289,7 +304,8 @@ jQuery(document).ready(function ($) {
             },
             error: function (err) {
                 console.error('MKV API Error:', err);
-                $('#mkv-today-orders-count, #mkv-today-returns-count, #mkv-today-net-revenue').text('Lỗi').css('color', 'var(--mkv-red)');
+                var errText = (typeof mkv_i18n !== 'undefined' && mkv_i18n.error) ? mkv_i18n.error : 'Lỗi';
+                $('#mkv-today-orders-count, #mkv-today-returns-count, #mkv-today-net-revenue').text(errText).css('color', 'var(--mkv-red)');
             }
         });
     }

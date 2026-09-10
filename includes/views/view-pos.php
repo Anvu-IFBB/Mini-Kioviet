@@ -20,25 +20,34 @@ $sales_channels = array(
 if (!isset($sales_channels[$default_sales_channel])) {
     $default_sales_channel = 'pos';
 }
+require_once MKV_DIR . 'includes/views/header-kiotviet.php';
 ?>
 
-
-<div class="mkv-pos-container" style="padding-bottom: 60px;">
-    <div class="mkv-pos-header">
-        <div style="display:flex; align-items:center; gap: 16px;">
-            <a href="javascript:history.back()" class="button" style="display:inline-flex; align-items:center; gap:4px; padding:4px 12px; border-radius:6px;">
+<div class="mkv-pos-container">
+    <div class="mkv-page-header" style="margin-bottom: 20px;">
+        <h1 class="mkv-page-title" style="display:flex; align-items:center; gap:12px;">
+            <a href="javascript:history.back()" class="mkv-btn mkv-btn-outline" style="display:inline-flex; align-items:center; gap:4px; padding:6px 12px; border-radius:8px; text-decoration:none;">
                 <i class="hgi-stroke hgi-arrow-left-01"></i> <?php echo esc_html(mkv__('Quay lại')); ?>
             </a>
-            <h1 style="margin:0; font-size:22px; font-weight:700; color:#1e293b;"><i class="hgi-stroke hgi-shopping-cart-01" style="color:var(--mkv-primary);"></i> <?php echo esc_html(mkv__('Bán Hàng (POS)')); ?></h1>
-        </div>
-        <div style="display:flex; gap:10px;">
-            <button onclick="window.mkvOpenAIChat && window.mkvOpenAIChat()" class="button" style="padding: 6px 16px; border-radius: 8px; font-weight: 600; color: #8b5cf6; border-color: #8b5cf6;"><i class="hgi-stroke hgi-ai-chat-02"></i> <?php echo esc_html(mkv__('Trợ lý AI')); ?></button>
-            <a href="<?php echo admin_url('admin.php?page=mkv-orders'); ?>" class="button button-primary" style="padding: 6px 16px; border-radius: 8px; font-weight: 600;"><i class="hgi-stroke hgi-invoice-01"></i> <?php echo esc_html(mkv__('Danh sách đơn hàng')); ?></a>
+            <i class="hgi-stroke hgi-shopping-cart-01" style="color:var(--mkv-primary);"></i>
+            <span><?php echo esc_html(mkv__('Bán Hàng Tại Quầy (POS)')); ?></span>
+        </h1>
+        <div class="mkv-page-actions" style="display:flex; gap:10px; align-items:center;">
+            <button type="button" onclick="mkvTogglePosFullscreen()" id="mkv-pos-fullscreen-btn" class="mkv-btn mkv-btn-outline" style="display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border-radius:8px; font-weight:600; cursor:pointer;" title="<?php echo esc_attr(mkv__('Chế độ Thu Ngân (Toàn Màn Hình)')); ?>">
+                <i class="hgi-stroke hgi-arrow-expand" id="mkv-pos-fullscreen-icon"></i>
+                <span id="mkv-pos-fullscreen-text"><?php echo esc_html(mkv__('Toàn màn hình')); ?></span>
+            </button>
+            <button type="button" onclick="window.mkvOpenAIChat && window.mkvOpenAIChat()" class="mkv-btn mkv-btn-outline" style="display:inline-flex; align-items:center; gap:6px; padding: 8px 14px; border-radius: 8px; font-weight: 600; color: #8b5cf6; border-color: #8b5cf6; cursor:pointer;">
+                <i class="hgi-stroke hgi-ai-chat-02"></i> <?php echo esc_html(mkv__('Trợ lý AI')); ?>
+            </button>
+            <a href="<?php echo admin_url('admin.php?page=mkv-orders'); ?>" class="mkv-btn mkv-btn-primary" style="display:inline-flex; align-items:center; gap:6px; padding: 8px 16px; border-radius: 8px; font-weight: 600; text-decoration:none;">
+                <i class="hgi-stroke hgi-invoice-01"></i> <?php echo esc_html(mkv__('Danh sách đơn hàng')); ?>
+            </a>
         </div>
     </div>
 
     <?php if (isset($_GET['created'])): ?>
-        <div class="notice notice-success is-dismissible"><p><?php echo esc_html(mkv__('Đơn hàng đã được thanh toán và lưu thành công!')); ?></p></div>
+        <div class="mkv-alert mkv-alert-success is-dismissible" style="margin-bottom: 20px;"><p><i class="hgi-stroke hgi-checkmark-circle-02"></i> <?php echo esc_html(mkv__('Đơn hàng đã được thanh toán và lưu thành công!')); ?></p></div>
     <?php endif; ?>
 
     <div class="mkv-pos-layout" style="align-items:start;">
@@ -60,7 +69,7 @@ if (!isset($sales_channels[$default_sales_channel])) {
                 </div>
             </div>
 
-            <div id="pos-product-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); gap:20px; max-height:calc(100vh - 240px); overflow-y:auto; padding:4px;">
+            <div id="pos-product-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); gap:16px; padding:4px;">
                 <?php foreach ($products as $p):
                     $price   = (float) get_post_meta($p->ID, '_mkv_price_out', true);
                     $stock   = (int) get_post_meta($p->ID, '_mkv_stock', true);
@@ -69,6 +78,10 @@ if (!isset($sales_channels[$default_sales_channel])) {
                     $search_text = strtolower($p->post_title . ' ' . $sku . ' ' . $barcode);
                 ?>
                 <div class="pos-product-item <?php echo $stock <= 0 ? 'out-of-stock' : ''; ?>"
+                    role="button"
+                    tabindex="0"
+                    aria-disabled="<?php echo $stock <= 0 ? 'true' : 'false'; ?>"
+                    aria-label="<?php echo esc_attr($p->post_title . ' - ' . number_format($price, 0, ',', '.') . ' ₫' . ($stock <= 0 ? ' - ' . mkv__('Hết hàng') : '')); ?>"
                     style="padding: 16px; border: 1px solid #e2e8f0; border-radius: 12px; transition: all 0.2s; background: #fff;"
                     data-id="<?php echo $p->ID; ?>"
                     data-name="<?php echo esc_attr($p->post_title); ?>"
@@ -111,10 +124,11 @@ if (!isset($sales_channels[$default_sales_channel])) {
         </div>
 
         <!-- Cột phải: Giỏ hàng & Thanh toán -->
-        <div class="mkv-card" style="position:sticky; top:20px; padding:24px; max-height:calc(100vh - 40px); overflow-y:auto;">
+        <div class="mkv-card" style="padding:20px;">
             <h3 style="margin-top:0;"><i class="hgi-stroke hgi-shopping-basket-01"></i> <?php echo esc_html(mkv__('Đơn Hàng Mới')); ?></h3>
             <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" id="pos-form">
                 <input type="hidden" name="action" value="mkv_create_order">
+                <input type="hidden" name="order_code" id="pos_order_code" value="">
                 <?php wp_nonce_field('mkv_create_order_nonce', '_wpnonce'); ?>
 
                 <div style="margin-bottom:12px;">
@@ -128,7 +142,7 @@ if (!isset($sales_channels[$default_sales_channel])) {
 
                 <!-- Chọn kho bán -->
                 <div style="margin-bottom:12px;">
-                    <label style="font-size:12px; font-weight:600; color:var(--mkv-text-muted); text-transform:uppercase;"><?php echo esc_html(mkv__('Kho xuất bán')); ?></label>
+                    <label for="pos-warehouse-select" style="font-size:12px; font-weight:600; color:var(--mkv-text-muted); text-transform:uppercase;"><?php echo esc_html(mkv__('Kho xuất bán')); ?></label>
                     <select name="location_id" id="pos-warehouse-select" class="mkv-select" style="width:100%; margin-top:4px;">
                         <?php foreach ($locations as $loc): ?>
                             <option value="<?php echo $loc->id; ?>"><?php echo esc_html($loc->name); ?></option>
@@ -138,7 +152,7 @@ if (!isset($sales_channels[$default_sales_channel])) {
 
                 <!-- Chọn khách hàng -->
                 <div style="margin-bottom:12px;">
-                    <label style="font-size:12px; font-weight:600; color:var(--mkv-text-muted); text-transform:uppercase;"><?php echo esc_html(mkv__('Khách hàng')); ?></label>
+                    <label for="pos-customer-select" style="font-size:12px; font-weight:600; color:var(--mkv-text-muted); text-transform:uppercase;"><?php echo esc_html(mkv__('Khách hàng')); ?></label>
                     <select name="customer_id" id="pos-customer-select" class="mkv-select" style="width:100%; margin-top:4px;" onchange="onCustomerChange(this)">
                         <option value="0" data-points="0"><?php echo esc_html(mkv__('— Khách lẻ (Không tích điểm) —')); ?></option>
                         <?php foreach ($customers as $c): ?>
@@ -160,7 +174,7 @@ if (!isset($sales_channels[$default_sales_channel])) {
                         <button type="button" class="mkv-btn mkv-btn-outline" style="padding:6px 12px; font-size:13px;" onclick="useAllPoints()"><?php echo esc_html(mkv__('Dùng hết')); ?></button>
                     </div>
                     <div style="font-size: 11px; color: var(--mkv-text-muted); margin-top: 4px;">
-                        <?php echo esc_html(mkv__('Tỷ giá hiện tại: 1 điểm = ' . number_format(get_option('mkv_point_value', 1), 0, ',', '.') . ' ₫')); ?>
+                        <?php echo esc_html(sprintf(mkv__('Tỷ giá hiện tại: 1 điểm = %s ₫'), number_format(get_option('mkv_point_value', 1), 0, ',', '.'))); ?>
                     </div>
                 </div>
 
@@ -332,11 +346,11 @@ if (!isset($sales_channels[$default_sales_channel])) {
 </div>
 
 <!-- Modal xem trước hóa đơn in -->
-<div id="mkv-receipt-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:99999; align-items:center; justify-content:center;">
-    <div style="background:#fff; border-radius:12px; width:340px; padding:20px; max-height:90vh; overflow-y:auto; box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+<div id="mkv-receipt-modal" class="mkv-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="mkv-receipt-modal-title" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:99999; align-items:center; justify-content:center;">
+    <div class="mkv-modal" style="background:#fff; border-radius:12px; width:340px; padding:20px; max-height:90vh; overflow-y:auto; box-shadow:0 10px 40px rgba(0,0,0,0.2);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <h4 style="margin:0;"><?php echo esc_html(mkv__('Hóa đơn in (80mm)')); ?></h4>
-            <button onclick="closeReceiptModal()" style="background:none; border:none; font-size:18px; cursor:pointer;">×</button>
+            <h4 id="mkv-receipt-modal-title" class="mkv-modal-title" style="margin:0;"><?php echo esc_html(mkv__('Hóa đơn in (80mm)')); ?></h4>
+            <button type="button" class="mkv-modal-close" aria-label="<?php echo esc_attr(mkv__('Đóng')); ?>" onclick="closeReceiptModal()" style="background:none; border:none; font-size:18px; cursor:pointer;">×</button>
         </div>
         <div id="mkv-printable-receipt" style="font-family:monospace; font-size:12px; padding:12px; border:1px dashed #ccc; background:#fafafa;">
             <div style="text-align:center;"><?php echo wp_kses_post($print_hdr); ?></div>
@@ -368,14 +382,14 @@ if (!isset($sales_channels[$default_sales_channel])) {
 </div>
 
 <!-- Modal phóng to VietQR cho khách hàng quét từ xa -->
-<div id="mkv-pos-qr-zoom-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.65); z-index:999999; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
-    <div style="background:#ffffff; border-radius:16px; width:380px; max-width:92vw; padding:24px; text-align:center; box-shadow:0 20px 50px rgba(0,0,0,0.3); animation:fadeIn 0.2s ease;">
+<div id="mkv-pos-qr-zoom-modal" class="mkv-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="mkv-pos-qr-zoom-title" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.65); z-index:999999; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+    <div class="mkv-modal" style="background:#ffffff; border-radius:16px; width:380px; max-width:92vw; padding:24px; text-align:center; box-shadow:0 20px 50px rgba(0,0,0,0.3); animation:fadeIn 0.2s ease;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
             <div style="text-align:left;">
-                <h3 style="margin:0; font-size:16px; font-weight:800; color:var(--mkv-primary);"><i class="hgi-stroke hgi-qr-code"></i> Quét Mã VietQR</h3>
-                <span style="font-size:12px; color:#64748b;">Mở ứng dụng ngân hàng hoặc ví điện tử để quét</span>
+                <h3 id="mkv-pos-qr-zoom-title" class="mkv-modal-title" style="margin:0; font-size:16px; font-weight:800; color:var(--mkv-primary);"><i class="hgi-stroke hgi-qr-code"></i> <?php echo esc_html(mkv__('Quét Mã VietQR')); ?></h3>
+                <span style="font-size:12px; color:#64748b;"><?php echo esc_html(mkv__('Mở ứng dụng ngân hàng hoặc ví điện tử để quét')); ?></span>
             </div>
-            <button onclick="mkvCloseZoomQr()" style="background:none; border:none; font-size:24px; color:#94a3b8; cursor:pointer; line-height:1;">×</button>
+            <button type="button" class="mkv-modal-close" aria-label="<?php echo esc_attr(mkv__('Đóng')); ?>" onclick="mkvCloseZoomQr()" style="background:none; border:none; font-size:24px; color:#94a3b8; cursor:pointer; line-height:1;">×</button>
         </div>
         <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:16px; margin-bottom:16px;">
             <img id="pos-qr-zoom-img" src="" style="width:250px; height:250px; object-fit:contain; display:block; margin:0 auto; background:#fff; border-radius:8px; padding:8px; box-shadow:0 2px 8px rgba(0,0,0,0.06);" alt="VietQR Zoom" />
@@ -394,6 +408,7 @@ if (!isset($sales_channels[$default_sales_channel])) {
 
 <script>
 window.mkv_pos_vat_rate = <?php echo $vat_rate; ?> / 100;
+window.mkv_vat_included = <?php echo (int) get_option('mkv_vat_included', 0); ?>;
 window.mkv_point_value  = <?php echo (float) get_option('mkv_point_value', 1); ?>;
 window.mkv_allow_negative_stock = <?php echo (int) get_option('mkv_allow_negative_stock', 0); ?>;
 window.mkv_enable_pos_qr = <?php echo $enable_pos_qr; ?>;
@@ -443,4 +458,26 @@ function mkvCopyPosDesc() {
         mkvCopyText(descEl.textContent, 'Đã copy nội dung chuyển khoản');
     }
 }
+
+function mkvTogglePosFullscreen() {
+    var isFull = document.body.classList.toggle('mkv-pos-fullscreen');
+    var icon = document.getElementById('mkv-pos-fullscreen-icon');
+    var text = document.getElementById('mkv-pos-fullscreen-text');
+    if (isFull) {
+        if (icon) icon.className = 'hgi-stroke hgi-arrow-shrink';
+        if (text) text.textContent = '<?php echo esc_js(mkv__('Thu nhỏ')); ?>';
+    } else {
+        if (icon) icon.className = 'hgi-stroke hgi-arrow-expand';
+        if (text) text.textContent = '<?php echo esc_js(mkv__('Toàn màn hình')); ?>';
+    }
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && document.body.classList.contains('mkv-pos-fullscreen')) {
+        mkvTogglePosFullscreen();
+    }
+});
+
+document.getElementById('mkv-topbar-title') && (document.getElementById('mkv-topbar-title').textContent = '<?php echo esc_js(mkv__('Bán hàng tại quầy (POS)')); ?>');
 </script>
+<?php require_once MKV_DIR . 'includes/views/footer-kiotviet.php'; ?>

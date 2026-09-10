@@ -11,6 +11,10 @@ class MKV_Shipping_Service
             return new WP_Error('not_found', 'Đơn hàng không tồn tại.');
         }
 
+        if (!empty($order->tracking_code) || in_array($order->status, array('cancelled', 'returned', 'completed'), true)) {
+            return new WP_Error('invalid_order_status', 'Đơn hàng đã có mã vận đơn hoặc ở trạng thái không thể đẩy vận chuyển.');
+        }
+
         if (empty($order->customer_address)) {
             return new WP_Error('no_address', 'Đơn hàng chưa có địa chỉ giao hàng.');
         }
@@ -103,18 +107,18 @@ class MKV_Shipping_Service
         ));
 
         if (is_wp_error($response)) {
-            return $response;
+            return new WP_Error('shipping_connection_failed', 'Không thể kết nối dịch vụ vận chuyển.');
         }
 
         $status_code = (int) wp_remote_retrieve_response_code($response);
         if ($status_code < 200 || $status_code >= 300) {
-            return new WP_Error('provider_http_error', 'GHTK không phản hồi thành công (HTTP ' . $status_code . ').');
+            return new WP_Error('provider_http_error', 'Không thể kết nối dịch vụ vận chuyển.');
         }
 
         $body = wp_remote_retrieve_body($response);
         $result = json_decode($body, true);
         if (!is_array($result)) {
-            return new WP_Error('invalid_provider_response', 'GHTK trả về dữ liệu không hợp lệ.');
+            return new WP_Error('invalid_provider_response', 'Không thể kết nối dịch vụ vận chuyển.');
         }
 
         if (isset($result['success']) && $result['success']) {

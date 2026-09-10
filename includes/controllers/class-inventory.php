@@ -31,9 +31,11 @@ class MKV_Inventory
         $logs      = array();
 
         if ($active_tab === 'stock') {
-            $products = get_posts(array('post_type' => 'mkv_product', 'numberposts' => -1, 'post_status' => 'publish'));
+            // P4-003b: Safety cap of 2000 products to prevent memory exhaustion on large catalogs
+            $products = get_posts(array('post_type' => 'mkv_product', 'numberposts' => 2000, 'post_status' => 'publish'));
         } elseif ($active_tab === 'logs') {
-            $all_products = get_posts(array('post_type' => 'mkv_product', 'numberposts' => -1, 'post_status' => 'publish', 'orderby' => 'title', 'order' => 'ASC'));
+            // P4-003b: Safety cap of 2000 products for log filter dropdown
+            $all_products = get_posts(array('post_type' => 'mkv_product', 'numberposts' => 2000, 'post_status' => 'publish', 'orderby' => 'title', 'order' => 'ASC'));
             
             $filter_product_id  = isset($_GET['product_id']) ? intval($_GET['product_id']) : 0;
             $filter_location_id = isset($_GET['location_id']) ? intval($_GET['location_id']) : 0;
@@ -95,7 +97,8 @@ class MKV_Inventory
         } elseif ($active_tab === 'transfer') {
             // data for transfer form already in $locations
         } elseif ($active_tab === 'stocktake') {
-            $products = get_posts(array('post_type' => 'mkv_product', 'numberposts' => -1, 'post_status' => 'publish'));
+            // P4-003b: Safety cap of 2000 products for stocktake form
+            $products = get_posts(array('post_type' => 'mkv_product', 'numberposts' => 2000, 'post_status' => 'publish'));
             $stocktakes = $wpdb->get_results(
                 "SELECT s.*, l.name as loc_name, u.display_name as user_name
                  FROM {$wpdb->prefix}mkv_stocktakes s
@@ -173,8 +176,10 @@ class MKV_Inventory
                 $wpdb->query('COMMIT');
             } else {
                 $wpdb->query('ROLLBACK');
-                $error_msg = $wpdb->last_error ? $wpdb->last_error : 'Không thể thực thi CSDL';
-                wp_die('Lỗi hệ thống: ' . $error_msg);
+                if (!empty($wpdb->last_error)) {
+                    error_log('[Mini-KiotViet] Inventory transaction error: ' . $wpdb->last_error);
+                }
+                wp_die('Đã xảy ra lỗi trong quá trình cập nhật kho. Vui lòng thử lại.');
             }
             $wpdb->suppress_errors(false);
         }
@@ -339,8 +344,10 @@ class MKV_Inventory
             $wpdb->query('COMMIT');
         } else {
             $wpdb->query('ROLLBACK');
-            $error_msg = $wpdb->last_error ? $wpdb->last_error : 'Không thể thực thi CSDL';
-            wp_die('Lỗi hệ thống: ' . $error_msg);
+            if (!empty($wpdb->last_error)) {
+                error_log('[Mini-KiotViet] Inventory stocktake error: ' . $wpdb->last_error);
+            }
+            wp_die('Đã xảy ra lỗi trong quá trình cân bằng kho. Vui lòng thử lại.');
         }
         $wpdb->suppress_errors(false);
 

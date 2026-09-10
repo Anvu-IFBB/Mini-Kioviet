@@ -158,37 +158,123 @@ body.taxonomy-mkv_product_cat form#edittag {
 /* =====================================================
    CPT Back Button (Product & Taxonomy Edit Screens)
    ===================================================== */
+/* =====================================================
+   CPT Action Header Bar (Product Add / Edit Screens)
+   ===================================================== */
 .mkv-cpt-back-bar {
-    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 28px;
+    background: var(--mkv-surface, #ffffff);
+    border-bottom: 1px solid var(--mkv-border, #e2e8f0);
+    margin: 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    box-sizing: border-box;
+    width: 100%;
+}
+.mkv-cpt-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+.mkv-cpt-divider {
+    width: 1px;
+    height: 24px;
+    background: var(--mkv-border, #cbd5e1);
+    display: inline-block;
+}
+.mkv-cpt-title-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.mkv-cpt-page-title {
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    color: var(--mkv-text-main, #0f172a) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1.2 !important;
+}
+.mkv-cpt-product-name {
+    font-size: 14px;
+    color: var(--mkv-text-muted, #64748b);
+    font-weight: 500;
+}
+.mkv-cpt-status-badge {
+    padding: 3px 10px;
+    border-radius: 9999px;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+}
+.mkv-cpt-status-badge.badge-draft {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+}
+.mkv-cpt-status-badge.badge-publish {
+    background: #ecfdf5;
+    color: #059669;
+    border: 1px solid #a7f3d0;
+}
+.mkv-cpt-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.mkv-cpt-bar-right .mkv-btn-save-draft {
+    background: #f8fafc !important;
+    border: 1px solid var(--mkv-border, #cbd5e1) !important;
+    color: var(--mkv-text-main, #334155) !important;
+    height: 38px;
+    padding: 0 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    font-size: 13px;
+    border-radius: 8px;
+    transition: var(--mkv-transition, 0.2s);
+    cursor: pointer;
+}
+.mkv-cpt-bar-right .mkv-btn-save-draft:hover {
+    background: #f1f5f9 !important;
+    border-color: var(--mkv-primary, #0072bc) !important;
+    color: var(--mkv-primary, #0072bc) !important;
 }
 .mkv-cpt-back-btn {
     background: #ffffff !important;
-    border: 1px solid var(--mkv-border) !important;
-    color: var(--mkv-text-main) !important;
-    padding: 8px 18px !important;
-    border-radius: var(--mkv-radius-lg) !important;
-    font-size: 13.5px !important;
+    border: 1px solid var(--mkv-border, #cbd5e1) !important;
+    color: var(--mkv-text-main, #334155) !important;
+    padding: 7px 16px !important;
+    border-radius: var(--mkv-radius, 8px) !important;
+    font-size: 13px !important;
     font-weight: 600 !important;
     text-decoration: none !important;
     display: inline-flex !important;
     align-items: center !important;
-    gap: 8px !important;
-    box-shadow: var(--mkv-shadow-sm) !important;
-    transition: var(--mkv-transition) !important;
+    gap: 6px !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03) !important;
+    transition: var(--mkv-transition, 0.2s) !important;
 }
 .mkv-cpt-back-btn:hover {
-    background: var(--mkv-primary-light) !important;
-    color: var(--mkv-primary) !important;
-    border-color: var(--mkv-primary) !important;
-    transform: translateX(-3px);
+    background: var(--mkv-primary-light, #eff6ff) !important;
+    color: var(--mkv-primary, #0072bc) !important;
+    border-color: var(--mkv-primary, #0072bc) !important;
+    transform: translateX(-2px);
 }
 .mkv-cpt-back-btn i {
-    font-size: 16px;
+    font-size: 15px;
 }
 
 /* ========== PRODUCT LIST (EDIT.PHP?POST_TYPE=MKV_PRODUCT) ========== */
-body.post-type-mkv_product .wrap {
-    margin: 20px 24px 40px 24px !important;
+body.post-type-mkv_product.edit-php .wrap {
+    padding: 24px !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
     display: flow-root !important;
 }
 
@@ -235,17 +321,30 @@ body.post-type-mkv_product .wrap hr.wp-header-end {
     visibility: hidden !important;
 }
 
+/* ========== PRODUCT LIST MODERN SUBBAR & TOOLBAR ========== */
+
+/* Subbar container: Status pills on left, Search box on right (Same Row) */
+body.post-type-mkv_product .mkv-product-subbar {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: wrap !important;
+    gap: 16px !important;
+    margin: 0 0 16px 0 !important;
+    clear: both !important;
+}
+
 /* Subsubsub status filter badges - Completely eliminate WP raw pipe '|' */
 body.post-type-mkv_product .subsubsub {
     font-size: 0 !important;
     line-height: 0 !important;
     color: transparent !important;
-    margin: 0 0 18px 0 !important;
+    margin: 0 !important;
     padding: 0 !important;
     float: none !important;
-    display: flex !important;
+    display: inline-flex !important;
     align-items: center !important;
-    gap: 10px !important;
+    gap: 8px !important;
 }
 body.post-type-mkv_product .subsubsub li {
     font-size: 0 !important;
@@ -292,19 +391,86 @@ body.post-type-mkv_product .subsubsub a .count {
     font-size: 13px !important;
 }
 
-/* Unified Toolbar (.tablenav.top) */
+/* Search Box: positioned cleanly on the subbar right */
+body.post-type-mkv_product .search-box {
+    margin: 0 !important;
+    padding: 0 !important;
+    float: none !important;
+    position: static !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+body.post-type-mkv_product .search-box input[type="search"] {
+    width: 280px !important;
+    height: 38px !important;
+    border-radius: var(--mkv-radius) !important;
+    border: 1px solid var(--mkv-border) !important;
+    padding: 0 14px !important;
+    font-size: 13.5px !important;
+    color: var(--mkv-text-main) !important;
+    background: var(--mkv-surface) !important;
+    box-shadow: none !important;
+    outline: none !important;
+    transition: var(--mkv-transition) !important;
+}
+body.post-type-mkv_product .search-box input[type="search"]:focus {
+    border-color: var(--mkv-primary) !important;
+    box-shadow: 0 0 0 3px rgba(0,82,204,0.15) !important;
+}
+body.post-type-mkv_product .search-box .button,
+body.post-type-mkv_product .search-box input[type="submit"] {
+    height: 38px !important;
+    border-radius: var(--mkv-radius) !important;
+    border: 1px solid var(--mkv-border) !important;
+    padding: 0 16px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    background: var(--mkv-surface) !important;
+    color: var(--mkv-text-main) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: var(--mkv-transition) !important;
+    box-shadow: none !important;
+    cursor: pointer !important;
+}
+body.post-type-mkv_product .search-box .button:hover,
+body.post-type-mkv_product .search-box input[type="submit"]:hover {
+    background: var(--mkv-primary) !important;
+    color: #ffffff !important;
+    border-color: var(--mkv-primary) !important;
+}
+
+/* Pure CSS fallback when JS has not wrapped elements */
+@media (min-width: 783px) {
+    body.post-type-mkv_product:not(:has(.mkv-product-subbar)) .subsubsub {
+        float: left !important;
+        margin-bottom: 16px !important;
+    }
+    body.post-type-mkv_product:not(:has(.mkv-product-subbar)) .search-box {
+        float: right !important;
+        margin-bottom: 16px !important;
+    }
+    body.post-type-mkv_product:not(:has(.mkv-product-subbar)) form#posts-filter {
+        clear: both !important;
+    }
+}
+
+/* Unified & Balanced Toolbar (.tablenav.top) */
 body.post-type-mkv_product .tablenav.top {
     height: auto !important;
+    min-height: 56px !important;
     margin: 0 0 16px 0 !important;
-    padding: 12px 18px !important;
+    padding: 10px 16px !important;
     background: var(--mkv-surface) !important;
     border: 1px solid var(--mkv-border) !important;
     border-radius: var(--mkv-radius-lg) !important;
     display: flex !important;
     align-items: center !important;
-    justify-content: flex-start !important;
+    justify-content: space-between !important;
     flex-wrap: wrap !important;
-    gap: 10px !important;
+    gap: 12px !important;
     clear: both !important;
     box-shadow: var(--mkv-shadow-sm) !important;
 }
@@ -313,34 +479,26 @@ body.post-type-mkv_product .tablenav.bottom {
     display: none !important;
 }
 
-/* Integrated Search Box inside Toolbar */
-body.post-type-mkv_product .search-box,
-body.post-type-mkv_product .tablenav.top .search-box {
-    margin: 0 12px 0 0 !important;
-    padding: 0 !important;
-    float: none !important;
-    display: inline-flex !important;
+body.post-type-mkv_product .tablenav.top .mkv-toolbar-left {
+    display: flex !important;
     align-items: center !important;
-    gap: 8px !important;
+    gap: 10px !important;
+    flex-wrap: wrap !important;
+}
+body.post-type-mkv_product .tablenav.top .mkv-toolbar-right {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    margin-left: auto !important;
+    flex-wrap: wrap !important;
 }
 
-body.post-type-mkv_product .search-box input[type="search"],
-body.post-type-mkv_product .tablenav.top .search-box input[type="search"] {
-    width: 240px !important;
-    height: 38px !important;
-    border-radius: var(--mkv-radius) !important;
-    border: 1px solid var(--mkv-border) !important;
-    padding: 0 12px !important;
-    font-size: 13px !important;
-    color: var(--mkv-text-main) !important;
-    background: var(--mkv-surface) !important;
-    box-shadow: none !important;
-    transition: var(--mkv-transition) !important;
-}
-body.post-type-mkv_product .search-box input[type="search"]:focus,
-body.post-type-mkv_product .tablenav.top .search-box input[type="search"]:focus {
-    border-color: var(--mkv-primary) !important;
-    box-shadow: 0 0 0 3px rgba(0,82,204,0.15) !important;
+body.post-type-mkv_product .mkv-toolbar-divider {
+    width: 1px !important;
+    height: 24px !important;
+    background: var(--mkv-border) !important;
+    margin: 0 4px !important;
+    display: inline-block !important;
 }
 
 /* Toolbar Filters & Action Elements */
@@ -363,10 +521,14 @@ body.post-type-mkv_product .tablenav select {
     background: var(--mkv-surface) !important;
     box-shadow: none !important;
     max-width: 200px !important;
+    cursor: pointer !important;
+}
+body.post-type-mkv_product .tablenav select:focus {
+    border-color: var(--mkv-primary) !important;
+    box-shadow: 0 0 0 3px rgba(0,82,204,0.15) !important;
 }
 
-body.post-type-mkv_product .tablenav .button,
-body.post-type-mkv_product .search-box .button {
+body.post-type-mkv_product .tablenav .button {
     height: 38px !important;
     border-radius: var(--mkv-radius) !important;
     border: 1px solid var(--mkv-border) !important;
@@ -383,19 +545,46 @@ body.post-type-mkv_product .search-box .button {
     box-shadow: none !important;
     cursor: pointer !important;
 }
-
-body.post-type-mkv_product .tablenav .button:hover,
-body.post-type-mkv_product .search-box .button:hover {
+body.post-type-mkv_product .tablenav .button:hover {
     background: var(--mkv-border-light) !important;
     color: var(--mkv-primary) !important;
     border-color: var(--mkv-primary) !important;
 }
 
+/* CSV Buttons on Toolbar Right */
+body.post-type-mkv_product .button.mkv-btn-csv {
+    background: #ffffff !important;
+    border: 1px solid var(--mkv-border) !important;
+    color: var(--mkv-text-main) !important;
+    font-weight: 500 !important;
+    height: 38px !important;
+    padding: 0 14px !important;
+    border-radius: var(--mkv-radius) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    transition: var(--mkv-transition) !important;
+}
+body.post-type-mkv_product .button.mkv-btn-csv:hover {
+    background: var(--mkv-primary-light) !important;
+    border-color: var(--mkv-primary) !important;
+    color: var(--mkv-primary) !important;
+}
+
+/* Displaying Items Count */
 body.post-type-mkv_product .tablenav-pages {
-    margin: 0 0 0 auto !important; /* Push item counter to the right */
-    padding: 0 !important;
+    margin: 0 !important;
+    padding: 4px 12px !important;
     font-size: 13px !important;
+    font-weight: 500 !important;
     color: var(--mkv-text-muted) !important;
+    background: #f8fafc !important;
+    border: 1px solid var(--mkv-border) !important;
+    border-radius: var(--mkv-radius) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    height: 36px !important;
+    box-sizing: border-box !important;
 }
 
 /* ========== PRODUCT LIST TABLE STYLING ========== */
@@ -555,12 +744,11 @@ body.post-type-mkv_product #mkv_product_details {
     background: var(--mkv-surface);
 }
 body.post-type-mkv_product #mkv_product_details .hndle {
-    border-bottom: 1px solid var(--mkv-border-light) !important;
-    background: var(--mkv-border-light);
-    border-radius: var(--mkv-radius-lg) var(--mkv-radius-lg) 0 0;
-    padding: 12px 16px !important;
-    font-size: 13.5px !important;
-    font-weight: 600 !important;
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    font-size: 14.5px !important;
+    font-weight: 700 !important;
     color: var(--mkv-text-main) !important;
 }
 body.post-type-mkv_product #mkv_product_details .inside {
@@ -1016,3 +1204,761 @@ html.dark #poststuff select {
     border-color: #334155 !important;
     color: #f1f5f9 !important;
 }
+
+/* ==========================================================================
+   PRODUCT ADD / EDIT PAGE (POST-NEW.PHP & POST.PHP?POST_TYPE=MKV_PRODUCT)
+   TÁI THIẾT KẾ BỐ CỤC CHUẨN KIOTVIET (UI/UX CHUYÊN NGHIỆP)
+   ========================================================================== */
+body.post-type-mkv_product.post-php,
+body.post-type-mkv_product.post-new-php {
+    background: var(--mkv-bg, #f1f5f9) !important;
+}
+
+body.post-type-mkv_product.post-php #wpbody-content,
+body.post-type-mkv_product.post-new-php #wpbody-content {
+    padding: 20px 28px 60px 28px !important;
+}
+
+body.post-type-mkv_product.post-php .wrap,
+body.post-type-mkv_product.post-new-php .wrap {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Hide WP Default Redundant Headings & Actions to eliminate the awkward gap */
+body.post-type-mkv_product.post-php .wrap > h1.wp-heading-inline,
+body.post-type-mkv_product.post-new-php .wrap > h1.wp-heading-inline,
+body.post-type-mkv_product.post-php .wrap > .page-title-action,
+body.post-type-mkv_product.post-new-php .wrap > .page-title-action,
+body.post-type-mkv_product.post-php hr.wp-header-end,
+body.post-type-mkv_product.post-new-php hr.wp-header-end {
+    display: none !important;
+}
+
+/* ==========================================================================
+   CSS GRID LAYOUT: EXPAND SIDEBAR (360PX) & ELIMINATE EMPTY GAPS
+   ========================================================================== */
+body.post-type-mkv_product.post-php #poststuff,
+body.post-type-mkv_product.post-new-php #poststuff {
+    padding-top: 0 !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+}
+
+body.post-type-mkv_product.post-php #poststuff #post-body,
+body.post-type-mkv_product.post-new-php #poststuff #post-body {
+    margin-right: 0 !important;
+    padding: 0 !important;
+}
+
+body.post-type-mkv_product.post-php #poststuff #post-body.columns-2,
+body.post-type-mkv_product.post-new-php #poststuff #post-body.columns-2 {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 360px !important;
+    gap: 24px !important;
+    margin-right: 0 !important;
+    float: none !important;
+    align-items: start !important;
+}
+
+/* Left Column: holds Title, Details, Description in one unified column */
+body.post-type-mkv_product.post-php #post-body-content,
+body.post-type-mkv_product.post-new-php #post-body-content {
+    grid-column: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    float: none !important;
+}
+
+/* Right Column: holds Submit, Category, Image in one unified column */
+body.post-type-mkv_product.post-php #postbox-container-1,
+body.post-type-mkv_product.post-new-php #postbox-container-1 {
+    grid-column: 2 !important;
+    float: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+body.post-type-mkv_product.post-php #side-sortables,
+body.post-type-mkv_product.post-new-php #side-sortables {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Hide empty #postbox-container-2 when #mkv_product_details is moved to #post-body-content */
+body.post-type-mkv_product.post-php #postbox-container-2,
+body.post-type-mkv_product.post-new-php #postbox-container-2 {
+    display: none !important;
+}
+
+body.post-type-mkv_product.post-php #titlediv,
+body.post-type-mkv_product.post-new-php #titlediv {
+    margin: 0 !important;
+    background: var(--mkv-surface, #ffffff) !important;
+    border: 1px solid var(--mkv-border, #e2e8f0) !important;
+    border-radius: var(--mkv-radius-lg, 12px) !important;
+    padding: 20px 24px !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03) !important;
+    position: relative !important;
+}
+
+body.post-type-mkv_product.post-php #postdivrich,
+body.post-type-mkv_product.post-new-php #postdivrich {
+    margin: 0 !important;
+    background: var(--mkv-surface, #ffffff) !important;
+    border: 1px solid var(--mkv-border, #e2e8f0) !important;
+    border-radius: var(--mkv-radius-lg, 12px) !important;
+    padding: 20px 24px !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03) !important;
+}
+
+/* Title Input Redesign */
+body.post-type-mkv_product.post-php #titlewrap,
+body.post-type-mkv_product.post-new-php #titlewrap {
+    position: relative !important;
+}
+body.post-type-mkv_product.post-php #titlewrap::before,
+body.post-type-mkv_product.post-new-php #titlewrap::before {
+    content: "Tên sản phẩm *";
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--mkv-text-main, #0f172a);
+    margin-bottom: 8px;
+}
+body.post-type-mkv_product.post-php #title,
+body.post-type-mkv_product.post-new-php #title {
+    height: 44px !important;
+    border: 1.5px solid var(--mkv-border, #cbd5e1) !important;
+    border-radius: 8px !important;
+    padding: 0 14px !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    color: var(--mkv-text-main, #0f172a) !important;
+    background: var(--mkv-surface, #ffffff) !important;
+    box-shadow: none !important;
+    transition: var(--mkv-transition, 0.2s) !important;
+    width: 100% !important;
+}
+body.post-type-mkv_product.post-php #title:focus,
+body.post-type-mkv_product.post-new-php #title:focus {
+    border-color: var(--mkv-primary, #0072bc) !important;
+    box-shadow: 0 0 0 3px rgba(0, 114, 188, 0.15) !important;
+    outline: none !important;
+}
+body.post-type-mkv_product.post-php #title-prompt-text,
+body.post-type-mkv_product.post-new-php #title-prompt-text {
+    top: 36px !important;
+    left: 14px !important;
+    font-size: 14px !important;
+    color: #94a3b8 !important;
+    font-weight: 400 !important;
+    padding: 0 !important;
+}
+
+/* Description Editor Heading */
+body.post-type-mkv_product.post-php #postdivrich::before,
+body.post-type-mkv_product.post-new-php #postdivrich::before {
+    content: "Mô tả chi tiết sản phẩm";
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--mkv-text-main, #0f172a);
+    margin-bottom: 12px;
+}
+
+/* Metabox Container */
+body.post-type-mkv_product.post-php #mkv_product_details,
+body.post-type-mkv_product.post-new-php #mkv_product_details {
+    border: 1px solid var(--mkv-border, #e2e8f0) !important;
+    border-radius: var(--mkv-radius-lg, 12px) !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03) !important;
+    background: var(--mkv-surface, #ffffff) !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+}
+
+/* All Postbox Headers: keep title & icon pinned on the left */
+body.post-type-mkv_product.post-php .postbox-header,
+body.post-type-mkv_product.post-new-php .postbox-header {
+    background: var(--mkv-border-light, #f8fafc) !important;
+    border-bottom: 1px solid var(--mkv-border, #e2e8f0) !important;
+    padding: 12px 20px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+}
+
+body.post-type-mkv_product.post-php .postbox-header h2,
+body.post-type-mkv_product.post-new-php .postbox-header h2,
+body.post-type-mkv_product.post-php .postbox-header .hndle,
+body.post-type-mkv_product.post-new-php .postbox-header .hndle {
+    font-size: 14.5px !important;
+    font-weight: 700 !important;
+    color: var(--mkv-text-main, #0f172a) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    cursor: default !important;
+}
+
+.mkv-postbox-title {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    font-size: 14.5px !important;
+    font-weight: 700 !important;
+    color: var(--mkv-text-main, #0f172a) !important;
+}
+
+.mkv-postbox-title i {
+    font-size: 16px !important;
+    color: var(--mkv-primary, #0072bc) !important;
+    flex-shrink: 0 !important;
+}
+
+/* Hide WP's clumsy up/down sort arrows */
+body.post-type-mkv_product.post-php .handle-order-higher,
+body.post-type-mkv_product.post-new-php .handle-order-higher,
+body.post-type-mkv_product.post-php .handle-order-lower,
+body.post-type-mkv_product.post-new-php .handle-order-lower {
+    display: none !important;
+}
+
+body.post-type-mkv_product.post-php #mkv_product_details .inside,
+body.post-type-mkv_product.post-new-php #mkv_product_details .inside {
+    padding: 20px 24px !important;
+    margin: 0 !important;
+}
+
+/* Form Styles inside Metabox */
+.mkv-product-form-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.mkv-form-section {
+    padding-bottom: 18px;
+    border-bottom: 1px dashed var(--mkv-border, #e2e8f0);
+}
+.mkv-form-section:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+.mkv-form-section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--mkv-primary, #0072bc);
+    margin-bottom: 14px;
+}
+.mkv-form-section-title i {
+    font-size: 18px;
+}
+.mkv-form-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+.mkv-form-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+.mkv-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.mkv-field-label {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: var(--mkv-text-main, #1e293b) !important;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.mkv-field-label .required {
+    color: #ef4444;
+    font-weight: 700;
+}
+.mkv-field-hint {
+    font-size: 11.5px;
+    color: var(--mkv-text-muted, #64748b);
+    line-height: 1.3;
+}
+.mkv-input-prefix-wrap {
+    display: flex;
+    align-items: center;
+    border: 1.5px solid var(--mkv-border, #cbd5e1);
+    border-radius: 8px;
+    background: var(--mkv-surface, #ffffff);
+    overflow: hidden;
+    transition: var(--mkv-transition, 0.2s);
+}
+.mkv-input-prefix-wrap:focus-within {
+    border-color: var(--mkv-primary, #0072bc);
+    box-shadow: 0 0 0 3px rgba(0, 114, 188, 0.12);
+}
+.mkv-input-prefix {
+    padding: 0 12px;
+    color: var(--mkv-text-muted, #64748b);
+    background: var(--mkv-border-light, #f8fafc);
+    border-right: 1px solid var(--mkv-border, #cbd5e1);
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+.mkv-form-control {
+    border: none !important;
+    background: transparent !important;
+    padding: 8px 12px !important;
+    font-size: 13.5px !important;
+    color: var(--mkv-text-main, #1e293b) !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    outline: none !important;
+    height: 38px !important;
+}
+.mkv-barcode-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.mkv-barcode-input-row .mkv-btn {
+    height: 38px !important;
+    padding: 0 14px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    border-radius: 8px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+}
+.mkv-barcode-preview-box {
+    margin-top: 14px;
+    padding: 14px;
+    background: #f8fafc;
+    border: 1px solid var(--mkv-border, #e2e8f0);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.mkv-barcode-svg-wrap {
+    background: #ffffff;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+}
+.mkv-barcode-note {
+    font-size: 11.5px;
+    color: var(--mkv-text-muted, #64748b);
+    margin-top: 8px;
+}
+.mkv-price-input-wrap {
+    display: flex;
+    align-items: center;
+    border: 1.5px solid var(--mkv-border, #cbd5e1);
+    border-radius: 8px;
+    background: var(--mkv-surface, #ffffff);
+    overflow: hidden;
+    transition: var(--mkv-transition, 0.2s);
+}
+.mkv-price-input-wrap:focus-within {
+    border-color: var(--mkv-primary, #0072bc);
+    box-shadow: 0 0 0 3px rgba(0, 114, 188, 0.12);
+}
+.mkv-price-input-wrap .price-out-input {
+    font-weight: 700 !important;
+    color: var(--mkv-primary, #0072bc) !important;
+    font-size: 15px !important;
+}
+.mkv-currency-badge {
+    padding: 0 14px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--mkv-border-light, #f8fafc);
+    border-left: 1px solid var(--mkv-border, #cbd5e1);
+    font-weight: 700;
+    color: var(--mkv-text-muted, #64748b);
+}
+.mkv-price-formatted-hint {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--mkv-primary, #0072bc);
+    padding-left: 2px;
+}
+.mkv-shield-notice {
+    padding: 10px 14px;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    font-weight: 500;
+}
+.mkv-shield-notice i {
+    font-size: 18px;
+    color: #94a3b8;
+}
+
+/* ==========================================================================
+   SIDEBAR METABOXES (PUBLISH, CATEGORY, FEATURED IMAGE) — 360PX SAAS CARDS
+   ========================================================================== */
+body.post-type-mkv_product.post-php #postbox-container-1 .postbox,
+body.post-type-mkv_product.post-new-php #postbox-container-1 .postbox {
+    border: 1px solid var(--mkv-border, #e2e8f0) !important;
+    border-radius: var(--mkv-radius-lg, 12px) !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03) !important;
+    background: var(--mkv-surface, #ffffff) !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+}
+
+body.post-type-mkv_product.post-php #postbox-container-1 .postbox-header,
+body.post-type-mkv_product.post-new-php #postbox-container-1 .postbox-header {
+    background: var(--mkv-border-light, #f8fafc) !important;
+    border-bottom: 1px solid var(--mkv-border, #e2e8f0) !important;
+    padding: 14px 18px !important;
+}
+
+body.post-type-mkv_product.post-php #postbox-container-1 .postbox-header h2,
+body.post-type-mkv_product.post-new-php #postbox-container-1 .postbox-header h2 {
+    font-size: 14.5px !important;
+    font-weight: 700 !important;
+    color: var(--mkv-text-main, #0f172a) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+body.post-type-mkv_product.post-php #postbox-container-1 .inside,
+body.post-type-mkv_product.post-new-php #postbox-container-1 .inside {
+    padding: 18px !important;
+    margin: 0 !important;
+}
+
+/* ==========================================================================
+   SUBMIT CARD (#submitdiv) — REDESIGNED
+   ========================================================================== */
+body.post-type-mkv_product.post-php #submitdiv #minor-publishing,
+body.post-type-mkv_product.post-new-php #submitdiv #minor-publishing {
+    padding: 0 !important;
+}
+
+body.post-type-mkv_product.post-php #minor-publishing-actions,
+body.post-type-mkv_product.post-new-php #minor-publishing-actions {
+    padding: 0 0 14px 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    border-bottom: 1px dashed var(--mkv-border, #e2e8f0) !important;
+    margin-bottom: 12px !important;
+}
+
+body.post-type-mkv_product.post-php #minor-publishing-actions #save-post,
+body.post-type-mkv_product.post-new-php #minor-publishing-actions #save-post {
+    background: #f8fafc !important;
+    border: 1px solid var(--mkv-border, #cbd5e1) !important;
+    color: var(--mkv-text-main, #334155) !important;
+    border-radius: 8px !important;
+    padding: 6px 14px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: var(--mkv-transition, 0.2s) !important;
+}
+body.post-type-mkv_product.post-php #minor-publishing-actions #save-post:hover,
+body.post-type-mkv_product.post-new-php #minor-publishing-actions #save-post:hover {
+    background: var(--mkv-border-light, #f1f5f9) !important;
+    border-color: var(--mkv-primary, #0072bc) !important;
+    color: var(--mkv-primary, #0072bc) !important;
+}
+
+body.post-type-mkv_product.post-php #preview-action a.preview,
+body.post-type-mkv_product.post-new-php #preview-action a.preview {
+    font-size: 13px !important;
+    color: var(--mkv-primary, #0072bc) !important;
+    text-decoration: none !important;
+    font-weight: 500 !important;
+}
+body.post-type-mkv_product.post-php #preview-action a.preview:hover,
+body.post-type-mkv_product.post-new-php #preview-action a.preview:hover {
+    text-decoration: underline !important;
+}
+
+/* Status rows inside misc-publishing-actions */
+body.post-type-mkv_product.post-php #misc-publishing-actions,
+body.post-type-mkv_product.post-new-php #misc-publishing-actions {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+body.post-type-mkv_product.post-php .misc-pub-section,
+body.post-type-mkv_product.post-new-php .misc-pub-section {
+    padding: 11px 0 !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    font-size: 13px !important;
+    color: var(--mkv-text-main, #334155) !important;
+    line-height: 1.6 !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+}
+body.post-type-mkv_product.post-php .misc-pub-section:last-child,
+body.post-type-mkv_product.post-new-php .misc-pub-section:last-child {
+    border-bottom: none !important;
+}
+
+body.post-type-mkv_product.post-php .misc-pub-section::before,
+body.post-type-mkv_product.post-new-php .misc-pub-section::before {
+    display: none !important;
+}
+
+body.post-type-mkv_product.post-php .misc-pub-section a.edit-post-status,
+body.post-type-mkv_product.post-new-php .misc-pub-section a.edit-post-status,
+body.post-type-mkv_product.post-php .misc-pub-section a.edit-visibility,
+body.post-type-mkv_product.post-new-php .misc-pub-section a.edit-visibility,
+body.post-type-mkv_product.post-php .misc-pub-section a.edit-timestamp,
+body.post-type-mkv_product.post-new-php .misc-pub-section a.edit-timestamp {
+    color: var(--mkv-primary, #0072bc) !important;
+    text-decoration: none !important;
+    font-weight: 600 !important;
+    font-size: 12.5px !important;
+    padding: 3px 8px !important;
+    border-radius: 6px !important;
+    background: var(--mkv-primary-light, #eff6ff) !important;
+    transition: var(--mkv-transition, 0.2s) !important;
+}
+
+body.post-type-mkv_product.post-php .misc-pub-section a:hover,
+body.post-type-mkv_product.post-new-php .misc-pub-section a:hover {
+    background: #dbeafe !important;
+}
+
+/* Major publishing actions: full-width primary publish button */
+body.post-type-mkv_product.post-php #major-publishing-actions,
+body.post-type-mkv_product.post-new-php #major-publishing-actions {
+    background: transparent !important;
+    border-top: 1px solid var(--mkv-border, #e2e8f0) !important;
+    padding: 16px 0 0 0 !important;
+    margin-top: 14px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+}
+
+body.post-type-mkv_product.post-php #publishing-action,
+body.post-type-mkv_product.post-new-php #publishing-action {
+    float: none !important;
+    width: 100% !important;
+    text-align: center !important;
+    margin: 0 !important;
+}
+
+body.post-type-mkv_product.post-php #publishing-action input#publish,
+body.post-type-mkv_product.post-new-php #publishing-action input#publish {
+    width: 100% !important;
+    height: 44px !important;
+    background: var(--mkv-primary, #0072bc) !important;
+    border: none !important;
+    color: #ffffff !important;
+    border-radius: 8px !important;
+    font-size: 14.5px !important;
+    font-weight: 700 !important;
+    box-shadow: 0 4px 10px rgba(0, 114, 188, 0.25) !important;
+    transition: var(--mkv-transition, 0.2s) !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+body.post-type-mkv_product.post-php #publishing-action input#publish:hover,
+body.post-type-mkv_product.post-new-php #publishing-action input#publish:hover {
+    background: var(--mkv-primary-dark, #005a96) !important;
+    box-shadow: 0 6px 14px rgba(0, 114, 188, 0.35) !important;
+    transform: translateY(-1px);
+}
+
+body.post-type-mkv_product.post-php #delete-action,
+body.post-type-mkv_product.post-new-php #delete-action {
+    float: none !important;
+    text-align: center !important;
+    margin: 0 !important;
+    order: 2 !important;
+    display: block !important;
+}
+
+body.post-type-mkv_product.post-php #delete-action a.submitdelete,
+body.post-type-mkv_product.post-new-php #delete-action a.submitdelete {
+    color: #ef4444 !important;
+    font-size: 12.5px !important;
+    text-decoration: none !important;
+    font-weight: 500 !important;
+    padding: 4px 10px !important;
+    display: inline-block !important;
+    border-radius: 6px !important;
+    transition: var(--mkv-transition, 0.2s) !important;
+}
+body.post-type-mkv_product.post-php #delete-action a.submitdelete:hover,
+body.post-type-mkv_product.post-new-php #delete-action a.submitdelete:hover {
+    background: #fef2f2 !important;
+    text-decoration: underline !important;
+}
+
+/* Category Metabox */
+body.post-type-mkv_product.post-php #mkv_product_catdiv .inside,
+body.post-type-mkv_product.post-new-php #mkv_product_catdiv .inside {
+    padding: 16px !important;
+}
+body.post-type-mkv_product.post-php #mkv_product_cat-all,
+body.post-type-mkv_product.post-new-php #mkv_product_cat-all {
+    max-height: 220px !important;
+    border: 1px solid var(--mkv-border, #e2e8f0) !important;
+    border-radius: 8px !important;
+    padding: 10px 12px !important;
+    background: #f8fafc !important;
+}
+body.post-type-mkv_product.post-php #mkv_product_cat-adder,
+body.post-type-mkv_product.post-new-php #mkv_product_cat-adder {
+    margin-top: 12px !important;
+}
+body.post-type-mkv_product.post-php #mkv_product_cat-add-toggle,
+body.post-type-mkv_product.post-new-php #mkv_product_cat-add-toggle {
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+    color: var(--mkv-primary, #0072bc) !important;
+    text-decoration: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+}
+
+/* Featured Image Metabox */
+body.post-type-mkv_product.post-php #postimagediv .inside,
+body.post-type-mkv_product.post-new-php #postimagediv .inside {
+    text-align: center !important;
+    padding: 20px 16px !important;
+}
+body.post-type-mkv_product.post-php #postimagediv img,
+body.post-type-mkv_product.post-new-php #postimagediv img {
+    border-radius: 8px !important;
+    border: 1px solid var(--mkv-border, #e2e8f0) !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06) !important;
+    max-width: 100% !important;
+    height: auto !important;
+}
+body.post-type-mkv_product.post-php #set-post-thumbnail,
+body.post-type-mkv_product.post-new-php #set-post-thumbnail {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 24px 16px !important;
+    border: 2px dashed var(--mkv-border, #cbd5e1) !important;
+    border-radius: 10px !important;
+    background: #f8fafc !important;
+    color: var(--mkv-primary, #0072bc) !important;
+    font-weight: 600 !important;
+    font-size: 13.5px !important;
+    text-decoration: none !important;
+    transition: var(--mkv-transition, 0.2s) !important;
+    gap: 8px !important;
+}
+body.post-type-mkv_product.post-php #set-post-thumbnail:hover,
+body.post-type-mkv_product.post-new-php #set-post-thumbnail:hover {
+    border-color: var(--mkv-primary, #0072bc) !important;
+    background: var(--mkv-primary-light, #eff6ff) !important;
+}
+body.post-type-mkv_product.post-php #remove-post-thumbnail,
+body.post-type-mkv_product.post-new-php #remove-post-thumbnail {
+    color: #ef4444 !important;
+    font-size: 12.5px !important;
+    text-decoration: none !important;
+    margin-top: 10px !important;
+    display: inline-block !important;
+    font-weight: 500 !important;
+}
+
+/* Responsive tweaks for Product Add/Edit page */
+@media screen and (max-width: 1100px) {
+    body.post-type-mkv_product.post-php #poststuff #post-body.columns-2,
+    body.post-type-mkv_product.post-new-php #poststuff #post-body.columns-2 {
+        grid-template-columns: 1fr !important;
+    }
+    .mkv-form-grid-3,
+    .mkv-form-grid-2 {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* Dark mode enhancements */
+html.dark body.post-type-mkv_product.post-php .mkv-cpt-back-bar,
+html.dark body.post-type-mkv_product.post-new-php .mkv-cpt-back-bar {
+    background: #1e293b !important;
+    border-bottom-color: #334155 !important;
+}
+html.dark body.post-type-mkv_product.post-php .mkv-cpt-page-title,
+html.dark body.post-type-mkv_product.post-new-php .mkv-cpt-page-title {
+    color: #f1f5f9 !important;
+}
+html.dark body.post-type-mkv_product.post-php #postbox-container-1 .postbox,
+html.dark body.post-type-mkv_product.post-new-php #postbox-container-1 .postbox,
+html.dark body.post-type-mkv_product.post-php #titlediv,
+html.dark body.post-type-mkv_product.post-new-php #titlediv,
+html.dark body.post-type-mkv_product.post-php #postdivrich,
+html.dark body.post-type-mkv_product.post-new-php #postdivrich {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+html.dark body.post-type-mkv_product.post-php #postbox-container-1 .postbox-header,
+html.dark body.post-type-mkv_product.post-new-php #postbox-container-1 .postbox-header {
+    background: #0f172a !important;
+    border-bottom-color: #334155 !important;
+}
+html.dark body.post-type-mkv_product.post-php #postbox-container-1 .postbox-header h2,
+html.dark body.post-type-mkv_product.post-new-php #postbox-container-1 .postbox-header h2 {
+    color: #f1f5f9 !important;
+}
+html.dark body.post-type-mkv_product.post-php #mkv_product_cat-all,
+html.dark body.post-type-mkv_product.post-new-php #mkv_product_cat-all,
+html.dark body.post-type-mkv_product.post-php #set-post-thumbnail,
+html.dark body.post-type-mkv_product.post-new-php #set-post-thumbnail {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+

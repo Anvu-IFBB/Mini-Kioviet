@@ -12,6 +12,7 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
             <form action="<?php echo admin_url('admin-post.php'); ?>" method="POST">
                 <input type="hidden" name="action" value="mkv_employee_checkin">
                 <input type="hidden" name="check_action" value="checkin">
+                <input type="hidden" name="redirect_tab" value="<?php echo esc_attr($current_tab); ?>">
                 <?php wp_nonce_field('mkv_checkin_action'); ?>
                 <button type="submit" class="mkv-btn mkv-btn-success">
                     <i class="hgi-stroke hgi-time-02"></i> <?php echo esc_html(mkv__('Check-in Ngay')); ?>
@@ -21,6 +22,7 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
             <form action="<?php echo admin_url('admin-post.php'); ?>" method="POST">
                 <input type="hidden" name="action" value="mkv_employee_checkin">
                 <input type="hidden" name="check_action" value="checkout">
+                <input type="hidden" name="redirect_tab" value="<?php echo esc_attr($current_tab); ?>">
                 <?php wp_nonce_field('mkv_checkin_action'); ?>
                 <button type="submit" class="mkv-btn mkv-btn-danger">
                     <i class="hgi-stroke hgi-logout-02"></i> <?php echo esc_html(mkv__('Check-out')); ?>
@@ -72,6 +74,31 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
 
 <!-- Tab: Danh sách nhân viên -->
 <?php if ($current_tab === 'list'): ?>
+
+<!-- KPI Status Summary Cards -->
+<div class="mkv-stats-grid" style="margin-bottom:16px;">
+    <div class="mkv-stat-card blue">
+        <h3><?php echo esc_html(mkv__('Tổng nhân sự')); ?></h3>
+        <p><?php echo intval($total_staff ?? count($users)); ?></p>
+        <i class="hgi-stroke hgi-user-group stat-icon"></i>
+    </div>
+    <div class="mkv-stat-card green">
+        <h3><?php echo esc_html(mkv__('Đang trong ca')); ?></h3>
+        <p><?php echo intval($count_working ?? 0); ?></p>
+        <i class="hgi-stroke hgi-time-02 stat-icon"></i>
+    </div>
+    <div class="mkv-stat-card yellow">
+        <h3><?php echo esc_html(mkv__('Chưa vào ca')); ?></h3>
+        <p><?php echo intval($count_not_checked_in ?? 0); ?></p>
+        <i class="hgi-stroke hgi-clock-01 stat-icon"></i>
+    </div>
+    <div class="mkv-stat-card purple">
+        <h3><?php echo esc_html(mkv__('Đã tan ca')); ?></h3>
+        <p><?php echo intval($count_completed ?? 0); ?></p>
+        <i class="hgi-stroke hgi-checkmark-circle-02 stat-icon"></i>
+    </div>
+</div>
+
 <div class="mkv-table-wrap">
     <table class="mkv-table">
         <thead>
@@ -80,7 +107,7 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
                 <th><?php echo esc_html(mkv__('Email')); ?></th>
                 <th><?php echo esc_html(mkv__('Chức vụ')); ?></th>
                 <th><?php echo esc_html(mkv__('Trạng thái')); ?></th>
-                <th style="width:120px; text-align:right;"><?php echo esc_html(mkv__('Hành động')); ?></th>
+                <th style="width:220px; text-align:right;"><?php echo esc_html(mkv__('Hành động')); ?></th>
             </tr>
         </thead>
         <tbody>
@@ -97,28 +124,102 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
                     foreach ($u->roles as $role) {
                         if (isset($role_names[$role])) $u_roles[] = $role_names[$role];
                     }
+                    $emp_status = get_user_meta($u->ID, 'mkv_employee_status', true) ?: 'active';
+                    $today_rec  = $today_attendance[$u->ID] ?? null;
                     ?>
                     <tr>
                         <td><strong><?php echo esc_html($u->display_name); ?></strong></td>
                         <td style="color:#6b7280;"><?php echo esc_html($u->user_email); ?></td>
                         <td><?php echo !empty($u_roles) ? implode(', ', $u_roles) : '<span style="color:#9ca3af">'.esc_html(mkv__('Khác')).'</span>'; ?></td>
-                        <td><span class="mkv-badge mkv-badge-green"><?php echo esc_html(mkv__('Đang làm việc')); ?></span></td>
-                        <td style="text-align:right;">
-                            <?php if ($u->ID != get_current_user_id()): ?>
-                            <a href="#" class="mkv-btn mkv-btn-sm mkv-btn-secondary" onclick="editEmployee(<?php echo $u->ID; ?>, '<?php echo esc_js($u->display_name); ?>', '<?php echo esc_js($u->user_email); ?>', '<?php echo isset($u->roles[0]) ? esc_js($u->roles[0]) : ''; ?>'); return false;">
-                                <i class="hgi-stroke hgi-edit-01"></i> <?php echo esc_html(mkv__('Sửa')); ?>
-                            </a>
-                            <a href="<?php echo wp_nonce_url(admin_url('admin-post.php?action=mkv_delete_employee&user_id='.$u->ID), 'mkv_delete_employee_action'); ?>" class="mkv-btn mkv-btn-sm mkv-btn-danger" onclick="return confirm('<?php echo esc_js(mkv__('Bạn có chắc muốn xóa nhân viên này? Toàn bộ phiếu thu, hóa đơn của họ sẽ được tự động gán cho bạn.')); ?>');">
-                                <i class="hgi-stroke hgi-delete-02"></i>
-                            </a>
+                        <td>
+                            <?php if ($emp_status === 'inactive'): ?>
+                                <div class="mkv-emp-status-cell">
+                                    <span class="mkv-badge mkv-badge-red">
+                                        <i class="hgi-stroke hgi-cancel-circle"></i> <?php echo esc_html(mkv__('Đã nghỉ việc')); ?>
+                                    </span>
+                                    <span class="mkv-emp-status-meta meta-muted">
+                                        <?php echo esc_html(mkv__('Tài khoản đã khóa')); ?>
+                                    </span>
+                                </div>
+                            <?php elseif ($today_rec && $today_rec->check_in_time && !$today_rec->check_out_time): ?>
+                                <div class="mkv-emp-status-cell">
+                                    <span class="mkv-badge mkv-badge-green">
+                                        <span class="mkv-pulse-dot"></span> <?php echo esc_html(mkv__('Đang trong ca')); ?>
+                                    </span>
+                                    <span class="mkv-emp-status-meta meta-green">
+                                        <i class="hgi-stroke hgi-time-02"></i> <?php echo esc_html(mkv__('Vào:')); ?> <?php echo date('H:i', strtotime($today_rec->check_in_time)); ?>
+                                    </span>
+                                </div>
+                            <?php elseif ($today_rec && $today_rec->check_in_time && $today_rec->check_out_time): ?>
+                                <div class="mkv-emp-status-cell">
+                                    <span class="mkv-badge mkv-badge-blue">
+                                        <i class="hgi-stroke hgi-checkmark-circle-02"></i> <?php echo esc_html(mkv__('Đã tan ca')); ?>
+                                    </span>
+                                    <span class="mkv-emp-status-meta meta-blue">
+                                        <?php
+                                        $diff = strtotime($today_rec->check_out_time) - strtotime($today_rec->check_in_time);
+                                        $h = floor($diff / 3600);
+                                        $m = floor(($diff / 60) % 60);
+                                        $dur = "{$h}h" . ($m > 0 ? " {$m}m" : "");
+                                        ?>
+                                        <i class="hgi-stroke hgi-logout-02"></i> <?php echo esc_html(mkv__('Ra:')); ?> <?php echo date('H:i', strtotime($today_rec->check_out_time)); ?> (<?php echo $dur; ?>)
+                                    </span>
+                                </div>
                             <?php else: ?>
-                            <span style="color:#9ca3af; font-size:12px;"><?php echo esc_html(mkv__('Tài khoản của bạn')); ?></span>
+                                <div class="mkv-emp-status-cell">
+                                    <span class="mkv-badge mkv-badge-gray">
+                                        <i class="hgi-stroke hgi-clock-01"></i> <?php echo esc_html(mkv__('Chưa vào ca')); ?>
+                                    </span>
+                                    <span class="mkv-emp-status-meta meta-muted">
+                                        <?php echo esc_html(mkv__('Chưa check-in')); ?>
+                                    </span>
+                                </div>
                             <?php endif; ?>
+                        </td>
+                        <td style="text-align:right;">
+                            <div style="display:inline-flex; align-items:center; gap:6px; justify-content:flex-end; flex-wrap:nowrap;">
+                                <?php if ($emp_status !== 'inactive' && (current_user_can('administrator') || current_user_can('mkv_manager'))): ?>
+                                    <?php if (!$today_rec || !$today_rec->check_in_time): ?>
+                                        <form action="<?php echo admin_url('admin-post.php'); ?>" method="POST" style="margin:0;">
+                                            <input type="hidden" name="action" value="mkv_employee_checkin">
+                                            <input type="hidden" name="check_action" value="checkin">
+                                            <input type="hidden" name="target_user_id" value="<?php echo $u->ID; ?>">
+                                            <input type="hidden" name="redirect_tab" value="list">
+                                            <?php wp_nonce_field('mkv_checkin_action'); ?>
+                                            <button type="submit" class="mkv-btn mkv-btn-sm" style="background:#ecfdf5; color:#047857; border:1px solid #a7f3d0; padding:4px 8px; font-size:12px;" title="<?php echo esc_attr(mkv__('Điểm danh vào ca')); ?>">
+                                                <i class="hgi-stroke hgi-time-02"></i> <?php echo esc_html(mkv__('Vào ca')); ?>
+                                            </button>
+                                        </form>
+                                    <?php elseif (!$today_rec->check_out_time): ?>
+                                        <form action="<?php echo admin_url('admin-post.php'); ?>" method="POST" style="margin:0;">
+                                            <input type="hidden" name="action" value="mkv_employee_checkin">
+                                            <input type="hidden" name="check_action" value="checkout">
+                                            <input type="hidden" name="target_user_id" value="<?php echo $u->ID; ?>">
+                                            <input type="hidden" name="redirect_tab" value="list">
+                                            <?php wp_nonce_field('mkv_checkin_action'); ?>
+                                            <button type="submit" class="mkv-btn mkv-btn-sm" style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; padding:4px 8px; font-size:12px;" title="<?php echo esc_attr(mkv__('Điểm danh tan ca')); ?>">
+                                                <i class="hgi-stroke hgi-logout-02"></i> <?php echo esc_html(mkv__('Tan ca')); ?>
+                                            </button>
+                                        </form>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+
+                                <?php if ($u->ID != get_current_user_id()): ?>
+                                <button type="button" class="mkv-btn mkv-btn-sm mkv-btn-secondary" aria-label="<?php echo esc_attr(mkv__('Sửa nhân viên')); ?>" onclick="editEmployee(<?php echo $u->ID; ?>, '<?php echo esc_js($u->display_name); ?>', '<?php echo esc_js($u->user_email); ?>', '<?php echo isset($u->roles[0]) ? esc_js($u->roles[0]) : ''; ?>', '<?php echo esc_js($emp_status); ?>');">
+                                    <i class="hgi-stroke hgi-edit-01"></i> <?php echo esc_html(mkv__('Sửa')); ?>
+                                </a>
+                                <a href="<?php echo wp_nonce_url(admin_url('admin-post.php?action=mkv_delete_employee&user_id='.$u->ID), 'mkv_delete_employee_action'); ?>" class="mkv-btn mkv-btn-sm mkv-btn-danger" aria-label="<?php echo esc_attr(mkv__('Xóa nhân viên')); ?>" onclick="return confirm('<?php echo esc_js(mkv__('Bạn có chắc muốn xóa nhân viên này? Toàn bộ phiếu thu, hóa đơn của họ sẽ được tự động gán cho bạn.')); ?>');">
+                                    <i class="hgi-stroke hgi-delete-02"></i>
+                                </a>
+                                <?php else: ?>
+                                <span style="color:#9ca3af; font-size:12px; white-space:nowrap;"><?php echo esc_html(mkv__('Tài khoản của bạn')); ?></span>
+                                <?php endif; ?>
+                            </div>
                         </td>
                     </tr>
                 <?php endforeach; ?>
             <?php else: ?>
-                <tr><td colspan="4"><div class="mkv-empty"><i class="hgi-stroke hgi-user-group"></i><p><?php echo esc_html(mkv__('Chưa có nhân viên nào.')); ?></p></div></td></tr>
+                <tr><td colspan="5"><div class="mkv-empty"><i class="hgi-stroke hgi-user-group"></i><p><?php echo esc_html(mkv__('Chưa có nhân viên nào.')); ?></p></div></td></tr>
             <?php endif; ?>
         </tbody>
     </table>
@@ -190,11 +291,11 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
 <?php endif; ?>
 
 <!-- Modal Thêm nhân viên -->
-<div id="mkv-add-employee-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:99999; align-items:center; justify-content:center;">
-    <div style="background:#fff; border-radius:12px; width:400px; padding:24px; box-shadow:0 10px 40px rgba(0,0,0,0.2);">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h3 style="margin:0; font-size:18px;"><i class="hgi-stroke hgi-user-add-01"></i> <?php echo esc_html(mkv__('Thêm nhân viên mới')); ?></h3>
-            <button onclick="document.getElementById('mkv-add-employee-modal').style.display='none'" style="background:none; border:none; font-size:24px; cursor:pointer; color:#6b7280;">&times;</button>
+<div id="mkv-add-employee-modal" class="mkv-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="mkv-add-employee-title" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:99999; align-items:center; justify-content:center;">
+    <div class="mkv-modal" style="background:#fff; border-radius:12px; width:400px; padding:24px; box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+        <div class="mkv-modal-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h3 id="mkv-add-employee-title" class="mkv-modal-title" style="margin:0; font-size:18px;"><i class="hgi-stroke hgi-user-add-01"></i> <?php echo esc_html(mkv__('Thêm nhân viên mới')); ?></h3>
+            <button type="button" class="mkv-modal-close" aria-label="<?php echo esc_attr(mkv__('Đóng')); ?>" onclick="document.getElementById('mkv-add-employee-modal').style.display='none'" style="background:none; border:none; font-size:24px; cursor:pointer; color:#6b7280;">&times;</button>
         </div>
         
         <form action="<?php echo admin_url('admin-post.php'); ?>" method="POST">
@@ -241,11 +342,11 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
 </div>
 
 <!-- Modal Sửa nhân viên -->
-<div id="mkv-edit-employee-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:99999; align-items:center; justify-content:center;">
-    <div style="background:#fff; border-radius:12px; width:400px; padding:24px; box-shadow:0 10px 40px rgba(0,0,0,0.2);">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h3 style="margin:0; font-size:18px;"><i class="hgi-stroke hgi-user-edit-01"></i> <?php echo esc_html(mkv__('Sửa thông tin nhân viên')); ?></h3>
-            <button onclick="document.getElementById('mkv-edit-employee-modal').style.display='none'" style="background:none; border:none; font-size:24px; cursor:pointer; color:#6b7280;">&times;</button>
+<div id="mkv-edit-employee-modal" class="mkv-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="mkv-edit-employee-title" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:99999; align-items:center; justify-content:center;">
+    <div class="mkv-modal" style="background:#fff; border-radius:12px; width:400px; padding:24px; box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+        <div class="mkv-modal-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h3 id="mkv-edit-employee-title" class="mkv-modal-title" style="margin:0; font-size:18px;"><i class="hgi-stroke hgi-user-edit-01"></i> <?php echo esc_html(mkv__('Sửa thông tin nhân viên')); ?></h3>
+            <button type="button" class="mkv-modal-close" aria-label="<?php echo esc_attr(mkv__('Đóng')); ?>" onclick="document.getElementById('mkv-edit-employee-modal').style.display='none'" style="background:none; border:none; font-size:24px; cursor:pointer; color:#6b7280;">&times;</button>
         </div>
         
         <form action="<?php echo admin_url('admin-post.php'); ?>" method="POST">
@@ -268,7 +369,7 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
                 <input type="password" name="password" class="mkv-input" placeholder="********">
             </div>
             
-            <div class="mkv-form-group" style="margin-bottom:24px;">
+            <div class="mkv-form-group" style="margin-bottom:16px;">
                 <label class="mkv-label"><?php echo esc_html(mkv__('Chức vụ (Role)')); ?> <span style="color:red">*</span></label>
                 <select name="role" id="edit_role" class="mkv-input" required>
                     <option value="mkv_sales"><?php echo esc_html(mkv__('Nhân viên Bán hàng (Xem POS, Đơn, Khách)')); ?></option>
@@ -277,6 +378,17 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
                     <option value="mkv_manager"><?php echo esc_html(mkv__('Cửa hàng trưởng (Quản lý chung)')); ?></option>
                     <?php endif; ?>
                 </select>
+            </div>
+
+            <div class="mkv-form-group" style="margin-bottom:24px;">
+                <label class="mkv-label"><?php echo esc_html(mkv__('Trạng thái nhân sự')); ?> <span style="color:red">*</span></label>
+                <select name="employee_status" id="edit_employee_status" class="mkv-input" required>
+                    <option value="active"><?php echo esc_html(mkv__('Đang làm việc (Hoạt động)')); ?></option>
+                    <option value="inactive"><?php echo esc_html(mkv__('Đã nghỉ việc / Tạm khóa tài khoản')); ?></option>
+                </select>
+                <span style="font-size:11.5px; color:#64748b; margin-top:4px; display:block;">
+                    <?php echo esc_html(mkv__('Khóa tài khoản sẽ chặn nhân viên đăng nhập POS/Quản trị nhưng bảo toàn lịch sử hóa đơn.')); ?>
+                </span>
             </div>
             
             <div style="display:flex; justify-content:flex-end; gap:12px;">
@@ -288,11 +400,14 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
 </div>
 
 <script>
-function editEmployee(id, name, email, role) {
+function editEmployee(id, name, email, role, status) {
     document.getElementById('edit_user_id').value = id;
     document.getElementById('edit_display_name').value = name;
     document.getElementById('edit_email').value = email;
     document.getElementById('edit_role').value = role;
+    if (document.getElementById('edit_employee_status')) {
+        document.getElementById('edit_employee_status').value = status || 'active';
+    }
     document.getElementById('mkv-edit-employee-modal').style.display = 'flex';
 }
 document.getElementById('mkv-topbar-title') && (document.getElementById('mkv-topbar-title').textContent = '<?php echo esc_js(mkv__('Nhân viên')); ?>');

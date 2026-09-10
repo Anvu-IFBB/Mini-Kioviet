@@ -24,7 +24,7 @@ class MKV_Cashbook
 
         $type   = sanitize_text_field($_POST['cb_type'] ?? 'thu');
         $method = sanitize_text_field($_POST['cb_method'] ?? 'cash');
-        $amount = floatval($_POST['cb_amount'] ?? 0);
+        $amount = round(MKV_Orders::sanitize_money($_POST['cb_amount'] ?? 0));
         $note   = sanitize_textarea_field($_POST['cb_note'] ?? '');
         $customer_id = intval($_POST['cb_customer_id'] ?? 0);
         $supplier_id = intval($_POST['cb_supplier_id'] ?? 0);
@@ -50,9 +50,39 @@ class MKV_Cashbook
             // Xử lý trừ nợ khách hàng (nếu là Phiếu Thu)
             if ($type === 'thu' && $customer_id > 0) {
                 $res2 = $wpdb->query($wpdb->prepare(
-                    "UPDATE {$wpdb->prefix}mkv_customers SET total_debt = total_debt - %f WHERE id = %d",
+                    "UPDATE {$wpdb->prefix}mkv_customers SET total_debt = GREATEST(0, total_debt - %f) WHERE id = %d",
                     $amount, $customer_id
                 ));
+
+                // Tự động phân bổ số tiền thu nợ vào các đơn hàng còn nợ của Khách hàng (FIFO)
+                $unpaid_orders = $wpdb->get_results($wpdb->prepare(
+                    "SELECT id, total_amount, paid_amount, debt_amount, customer_debt_amount 
+                     FROM {$wpdb->prefix}mkv_orders 
+                     WHERE customer_id = %d AND (debt_amount > 0 OR customer_debt_amount > 0) AND status NOT IN ('cancelled', 'draft', 'returned') 
+                     ORDER BY id ASC FOR UPDATE",
+                    $customer_id
+                ));
+                if (!empty($unpaid_orders)) {
+                    $rem_payment = (float) $amount;
+                    foreach ($unpaid_orders as $uord) {
+                        if ($rem_payment <= 0) break;
+                        $cur_debt = (float) ($uord->customer_debt_amount > 0 ? $uord->customer_debt_amount : $uord->debt_amount);
+                        if ($cur_debt <= 0) continue;
+
+                        $pay = min($rem_payment, $cur_debt);
+                        $new_paid = (float) $uord->paid_amount + $pay;
+                        $new_debt = max(0.0, (float) $uord->total_amount - $new_paid);
+                        $payment_status = ($new_paid >= (float) $uord->total_amount) ? 'paid' : 'partially_paid';
+
+                        $wpdb->query($wpdb->prepare(
+                            "UPDATE {$wpdb->prefix}mkv_orders 
+                             SET paid_amount = %f, debt_amount = %f, customer_debt_amount = %f, payment_status = %s 
+                             WHERE id = %d",
+                            $new_paid, $new_debt, $new_debt, $payment_status, $uord->id
+                        ));
+                        $rem_payment -= $pay;
+                    }
+                }
             }
             
             // Xử lý trừ nợ nhà cung cấp (nếu là Phiếu Chi)
@@ -67,7 +97,7 @@ class MKV_Cashbook
                     "SELECT id, total_amount, paid_amount 
                      FROM {$wpdb->prefix}mkv_purchase_orders 
                      WHERE supplier_id = %d AND paid_amount < total_amount 
-                     ORDER BY id ASC",
+                     ORDER BY id ASC FOR UPDATE",
                     $supplier_id
                 ));
                 if (!empty($unpaid_pos)) {
@@ -99,8 +129,10 @@ class MKV_Cashbook
                 $wpdb->query('COMMIT');
             } else {
                 $wpdb->query('ROLLBACK');
-                $error_msg = $wpdb->last_error ? $wpdb->last_error : 'Không thể thực thi CSDL';
-                wp_die('Lỗi hệ thống: ' . $error_msg);
+                if (!empty($wpdb->last_error)) {
+                    error_log('[Mini-KiotViet] Cashbook transaction error: ' . $wpdb->last_error);
+                }
+                wp_die('Đã xảy ra lỗi trong quá trình xử lý giao dịch. Vui lòng thử lại.');
             }
             
             $wpdb->suppress_errors(false);
@@ -119,6 +151,13 @@ class MKV_Cashbook
         $start_dt   = $start_date . ' 00:00:00';
         $end_dt     = $end_date   . ' 23:59:59';
 
+        $per_page = 20;
+        $paged = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
+        $offset = ($paged - 1) * $per_page;
+
+        $total_items = (int) $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->prefix}mkv_cashbook WHERE created_at BETWEEN %s AND %s", $start_dt, $end_dt));
+        $total_pages = ceil($total_items / $per_page);
+
         // Lấy danh sách giao dịch (nối thêm tên KH/NCC)
         $transactions = $wpdb->get_results($wpdb->prepare(
             "SELECT c.*, u.display_name, cust.name as customer_name, sup.name as supplier_name
@@ -127,8 +166,8 @@ class MKV_Cashbook
              LEFT JOIN {$wpdb->prefix}mkv_customers cust ON c.customer_id = cust.id
              LEFT JOIN {$wpdb->prefix}mkv_suppliers sup ON c.supplier_id = sup.id
              WHERE c.created_at BETWEEN %s AND %s
-             ORDER BY c.created_at DESC",
-            $start_dt, $end_dt
+             ORDER BY c.created_at DESC LIMIT %d OFFSET %d",
+            $start_dt, $end_dt, $per_page, $offset
         ));
 
         // Lấy danh sách KH và NCC để hiển thị trong dropdown lập phiếu

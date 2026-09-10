@@ -8,10 +8,10 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
         <i class="hgi-stroke hgi-wallet-02"></i> <?php echo esc_html(mkv__('Sổ quỹ Tiền mặt & Ngân hàng')); ?>
     </h1>
     <div class="mkv-page-actions">
-        <button class="mkv-btn mkv-btn-primary" onclick="document.getElementById('mkv-modal-thu').style.display='flex'">
+        <button type="button" class="mkv-btn mkv-btn-primary" onclick="document.getElementById('mkv-modal-thu').style.display='flex'">
             <i class="hgi-stroke hgi-add-circle"></i> <?php echo esc_html(mkv__('Lập phiếu thu')); ?>
         </button>
-        <button class="mkv-btn mkv-btn-danger" onclick="document.getElementById('mkv-modal-chi').style.display='flex'">
+        <button type="button" class="mkv-btn mkv-btn-danger" onclick="document.getElementById('mkv-modal-chi').style.display='flex'">
             <i class="hgi-stroke hgi-remove-circle"></i> <?php echo esc_html(mkv__('Lập phiếu chi')); ?>
         </button>
     </div>
@@ -22,7 +22,7 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
 <?php endif; ?>
 
 <!-- Summary Cards -->
-<div class="mkv-stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+<div class="mkv-stats-grid">
     <div class="mkv-stat-card blue">
         <h3><?php echo esc_html(mkv__('Tổng tồn quỹ')); ?></h3>
         <p><?php echo number_format($ton_quy); ?> ₫</p>
@@ -33,9 +33,9 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
         <p><?php echo number_format($ky_thu); ?> ₫</p>
         <i class="hgi-stroke hgi-money-receive-square stat-icon"></i>
     </div>
-    <div class="mkv-stat-card" style="border-left:3px solid var(--mkv-red);">
+    <div class="mkv-stat-card mkv-stat-card--danger">
         <h3><?php echo esc_html(mkv__('Tổng chi trong kỳ')); ?></h3>
-        <p style="color:var(--mkv-red) !important;"><?php echo number_format($ky_chi); ?> ₫</p>
+        <p><?php echo number_format($ky_chi); ?> ₫</p>
         <i class="hgi-stroke hgi-money-send-square stat-icon"></i>
     </div>
 </div>
@@ -44,13 +44,13 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
 <div class="mkv-filter-bar">
     <form method="GET" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; width:100%;">
         <input type="hidden" name="page" value="mkv-cashbook">
-        <div class="mkv-form-group">
-            <label class="mkv-label"><?php echo esc_html(mkv__('Từ ngày')); ?></label>
-            <input type="date" name="start_date" class="mkv-input" value="<?php echo esc_attr($start_date); ?>" style="width:150px;">
+        <div class="mkv-form-group" style="flex:1; min-width:140px;">
+            <label for="mkv-cb-start-date" class="mkv-label"><?php echo esc_html(mkv__('Từ ngày')); ?></label>
+            <input type="date" id="mkv-cb-start-date" name="start_date" class="mkv-input" value="<?php echo esc_attr($start_date); ?>" style="width:100%;">
         </div>
-        <div class="mkv-form-group">
-            <label class="mkv-label"><?php echo esc_html(mkv__('Đến ngày')); ?></label>
-            <input type="date" name="end_date" class="mkv-input" value="<?php echo esc_attr($end_date); ?>" style="width:150px;">
+        <div class="mkv-form-group" style="flex:1; min-width:140px;">
+            <label for="mkv-cb-end-date" class="mkv-label"><?php echo esc_html(mkv__('Đến ngày')); ?></label>
+            <input type="date" id="mkv-cb-end-date" name="end_date" class="mkv-input" value="<?php echo esc_attr($end_date); ?>" style="width:100%;">
         </div>
         <div class="mkv-form-group" style="margin-bottom:0;">
             <button type="submit" class="mkv-btn mkv-btn-secondary"><i class="hgi-stroke hgi-filter"></i> <?php echo esc_html(mkv__('Lọc dữ liệu')); ?></button>
@@ -110,12 +110,31 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
     </table>
 </div>
 
+<?php if (isset($total_pages) && $total_pages > 1): ?>
+<div class="mkv-pagination">
+    <?php
+    $base_url = admin_url('admin.php?page=mkv-cashbook');
+    if (!empty($_GET['start_date'])) $base_url .= '&start_date=' . urlencode($_GET['start_date']);
+    if (!empty($_GET['end_date'])) $base_url .= '&end_date=' . urlencode($_GET['end_date']);
+    echo paginate_links(array(
+        'base'      => add_query_arg('paged', '%#%', $base_url),
+        'format'    => '',
+        'prev_text' => '<i class="hgi-stroke hgi-arrow-left-01" aria-hidden="true"></i><span class="screen-reader-text">' . esc_html(mkv__('Trang trước')) . '</span>',
+        'next_text' => '<i class="hgi-stroke hgi-arrow-right-01" aria-hidden="true"></i><span class="screen-reader-text">' . esc_html(mkv__('Trang sau')) . '</span>',
+        'total'     => $total_pages,
+        'current'   => $paged,
+        'type'      => 'plain',
+    ));
+    ?>
+</div>
+<?php endif; ?>
+
 <!-- Modal Lập phiếu Thu -->
-<div class="mkv-modal-overlay" id="mkv-modal-thu" style="display:none;">
+<div class="mkv-modal-overlay" id="mkv-modal-thu" role="dialog" aria-modal="true" aria-labelledby="mkv-modal-thu-title" style="display:none;">
     <div class="mkv-modal">
         <div class="mkv-modal-header">
-            <h3 class="mkv-modal-title"><i class="hgi-stroke hgi-money-receive-square" style="color:var(--mkv-green);"></i> <?php echo esc_html(mkv__('Lập Phiếu Thu')); ?></h3>
-            <button class="mkv-modal-close" onclick="document.getElementById('mkv-modal-thu').style.display='none'">&times;</button>
+            <h3 class="mkv-modal-title" id="mkv-modal-thu-title"><i class="hgi-stroke hgi-money-receive-square" style="color:var(--mkv-green);"></i> <?php echo esc_html(mkv__('Lập Phiếu Thu')); ?></h3>
+            <button type="button" class="mkv-modal-close" aria-label="<?php echo esc_attr(mkv__('Đóng')); ?>" onclick="document.getElementById('mkv-modal-thu').style.display='none'">&times;</button>
         </div>
         <form action="<?php echo admin_url('admin-post.php'); ?>" method="POST">
             <div class="mkv-modal-body">
@@ -156,11 +175,11 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
 </div>
 
 <!-- Modal Lập phiếu Chi -->
-<div class="mkv-modal-overlay" id="mkv-modal-chi" style="display:none;">
+<div class="mkv-modal-overlay" id="mkv-modal-chi" role="dialog" aria-modal="true" aria-labelledby="mkv-modal-chi-title" style="display:none;">
     <div class="mkv-modal">
         <div class="mkv-modal-header">
-            <h3 class="mkv-modal-title"><i class="hgi-stroke hgi-money-send-square" style="color:var(--mkv-red);"></i> <?php echo esc_html(mkv__('Lập Phiếu Chi')); ?></h3>
-            <button class="mkv-modal-close" onclick="document.getElementById('mkv-modal-chi').style.display='none'">&times;</button>
+            <h3 class="mkv-modal-title" id="mkv-modal-chi-title"><i class="hgi-stroke hgi-money-send-square" style="color:var(--mkv-red);"></i> <?php echo esc_html(mkv__('Lập Phiếu Chi')); ?></h3>
+            <button type="button" class="mkv-modal-close" aria-label="<?php echo esc_attr(mkv__('Đóng')); ?>" onclick="document.getElementById('mkv-modal-chi').style.display='none'">&times;</button>
         </div>
         <form action="<?php echo admin_url('admin-post.php'); ?>" method="POST">
             <div class="mkv-modal-body">

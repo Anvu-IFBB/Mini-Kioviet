@@ -6,9 +6,11 @@
 window.mkvOpenAIChat = function() {
     var d = document.getElementById('mkv-ai-drawer');
     var o = document.getElementById('mkv-ai-overlay');
+    if (!d || !d.classList.contains('open')) window.mkvAiReturnFocus = document.activeElement;
     document.body.classList.add('mkv-ai-drawer-open');
     if (d) {
         d.classList.add('open');
+        d.setAttribute('aria-hidden', 'false');
         d.style.setProperty('right', '0', 'important');
         d.style.setProperty('display', 'flex', 'important');
         d.style.setProperty('visibility', 'visible', 'important');
@@ -34,12 +36,21 @@ window.mkvCloseAIChat = function() {
     document.body.classList.remove('mkv-ai-drawer-open');
     if (d) {
         d.classList.remove('open');
-        d.style.setProperty('right', '-450px', 'important');
+        d.setAttribute('aria-hidden', 'true');
+        d.style.setProperty('right', '-850px', 'important');
     }
     if (o) {
         o.classList.remove('show');
         o.style.setProperty('display', 'none', 'important');
         o.style.setProperty('opacity', '0', 'important');
+    }
+    var panel = document.getElementById('mkv-ai-history-panel');
+    if (panel) panel.classList.remove('open');
+    if (d) d.classList.remove('history-open');
+    var returnFocus = window.mkvAiReturnFocus || document.getElementById('mkv-ai-fab');
+    window.mkvAiReturnFocus = null;
+    if (returnFocus && document.contains(returnFocus)) {
+        setTimeout(function() { returnFocus.focus(); }, 50);
     }
 };
 
@@ -129,6 +140,37 @@ window.mkvCloseAIChat = function() {
             mkvCloseAIChat();
         });
 
+        $(document).on('keydown', function(event) {
+            var drawer = document.getElementById('mkv-ai-drawer');
+            if (!drawer || !drawer.classList.contains('open')) return;
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                mkvCloseAIChat();
+                return;
+            }
+            if (event.key !== 'Tab') return;
+            var focusables = Array.from(drawer.querySelectorAll('a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])')).filter(function(element) {
+                return element.offsetParent !== null;
+            });
+            if (!focusables.length) return;
+            var first = focusables[0];
+            var last = focusables[focusables.length - 1];
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        });
+
+        // Direct binding on FAB and any external trigger
+        $(document).on('click', '#mkv-ai-fab, .mkv-open-ai-trigger', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            window.mkvOpenAIChat();
+        });
+
         // Clear History
         $btnClear.on('click', function() {
             if (confirm('Bạn có chắc chắn muốn xóa lịch sử trò chuyện?')) {
@@ -176,11 +218,27 @@ window.mkvCloseAIChat = function() {
                     "Tìm sản phẩm 'Áo khoác'",
                     "Đơn hàng gần nhất là đơn nào?"
                 ];
-            } else if (postType === 'mkv_product' || pageParam === 'mkv-categories' || pageTitle.includes('sản phẩm') || pageTitle.includes('hàng hóa')) {
+            } else if (postType === 'mkv_product') {
+                // 1. Mục con: Quản lý Sản phẩm
                 chips = [
                     "Sản phẩm nào sắp hết hàng?",
-                    "Tìm sản phẩm theo từ khóa",
-                    "Doanh thu hôm nay bao nhiêu?"
+                    "Tìm kiếm sản phẩm 'Quần Jean'",
+                    "Doanh thu hôm nay bao nhiêu?",
+                    "Hướng dẫn tạo mã SKU chuẩn"
+                ];
+            } else if (pageParam === 'mkv-categories') {
+                // 2. Mục con: Danh mục hàng hóa
+                chips = [
+                    "Cách phân cấp danh mục cha - con?",
+                    "Sản phẩm nào chưa có danh mục?",
+                    "Sản phẩm nào sắp hết hàng?"
+                ];
+            } else if (pageParam === 'mkv-inventory') {
+                // 3. Mục con: Kho & Tồn kho
+                chips = [
+                    "Sản phẩm nào dưới định mức tồn?",
+                    "Hướng dẫn cân bằng kho",
+                    "Tổng tồn kho hiện tại bao nhiêu?"
                 ];
             } else if (pageParam === 'mkv-cashbook' || pageTitle.includes('sổ quỹ')) {
                 chips = [
@@ -244,9 +302,9 @@ window.mkvCloseAIChat = function() {
             $typing.css('display', 'flex');
             scrollToBottom();
 
-            // 3. Send AJAX with security nonce
-            var ajaxEndpoint = (typeof mkv_ai_data !== 'undefined' && mkv_ai_data.ajax_url) ? mkv_ai_data.ajax_url : (typeof ajaxurl !== 'undefined' ? ajaxurl : '/wp-admin/admin-ajax.php');
-            var nonceToken = (typeof mkv_ai_data !== 'undefined' && mkv_ai_data.nonce) ? mkv_ai_data.nonce : '';
+            // 3. Send AJAX with security nonce (with full resilient fallbacks)
+            var ajaxEndpoint = (typeof mkv_ai_data !== 'undefined' && mkv_ai_data.ajax_url) ? mkv_ai_data.ajax_url : (window.mkv_ai_data && window.mkv_ai_data.ajax_url ? window.mkv_ai_data.ajax_url : (typeof ajaxurl !== 'undefined' ? ajaxurl : '/wp-admin/admin-ajax.php'));
+            var nonceToken = (typeof mkv_ai_data !== 'undefined' && mkv_ai_data.nonce) ? mkv_ai_data.nonce : (window.mkv_ai_data && window.mkv_ai_data.nonce ? window.mkv_ai_data.nonce : '');
 
             $.ajax({
                 url: ajaxEndpoint,
@@ -278,6 +336,9 @@ window.mkvCloseAIChat = function() {
                             localStorage.setItem('mkv_ai_interaction_id', currentInteractionId);
                         } catch(e) {}
                         appendMessage('ai', response.data.text, response.data.function_data, response.data.function_executed);
+                        if (typeof window.mkvRefreshAIHistory === 'function') {
+                            window.mkvRefreshAIHistory();
+                        }
                     } else {
                         var errorMessage = typeof response.data === 'string'
                             ? response.data

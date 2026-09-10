@@ -27,7 +27,7 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
         <!-- Thống kê tổng quan -->
         <div class="mkv-card" style="margin-bottom: 20px;">
             <div class="mkv-card-body" style="padding: 15px;">
-                <div class="mkv-today-stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+                <div class="mkv-today-stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
                     <div class="mkv-dashboard-stat-col" style="border-right: 1px solid #ebecf0;">
                         <div class="mkv-dashboard-stat-label"><?php echo esc_html(mkv__('Tổng sản phẩm')); ?></div>
                         <div id="mkv-global-total-products" class="mkv-dashboard-stat-value mkv-text-blue" style="font-size: 20px;">0</div>
@@ -54,7 +54,7 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
                 <h3 class="mkv-card-title" id="mkv-main-stats-title">
                     <i class="hgi-stroke hgi-calendar-01"></i> <?php echo esc_html(mkv__('Kết quả bán hàng hôm nay')); ?>
                 </h3>
-                <select id="mkv-dashboard-period">
+                <select id="mkv-dashboard-period" aria-label="<?php echo esc_attr(mkv__('Khoảng thời gian')); ?>">
                     <option value="today"><?php echo esc_html(mkv__('Hôm nay')); ?></option>
                     <option value="yesterday"><?php echo esc_html(mkv__('Hôm qua')); ?></option>
                     <option value="7days"><?php echo esc_html(mkv__('7 ngày qua')); ?></option>
@@ -184,7 +184,7 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
                 </h3>
             </div>
             <div class="mkv-card-body">
-                <div class="mkv-timeline-scroll">
+                <div class="mkv-timeline-scroll" tabindex="0" role="region" aria-label="<?php echo esc_attr(mkv__('Hoạt động gần đây')); ?>">
                     <div class="mkv-timeline" id="mkv-recent-activities">
                         <div class="mkv-loading"><?php echo esc_html(mkv__('Đang tải...')); ?></div>
                     </div>
@@ -200,7 +200,7 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
                 </h3>
             </div>
             <div class="mkv-card-body" style="padding:0;">
-                <div class="mkv-card-scroll" style="max-height:380px;">
+                <div class="mkv-card-scroll" tabindex="0" role="region" aria-label="<?php echo esc_attr(mkv__('Hàng sắp hết')); ?>">
                     <ul id="mkv-low-stock" class="mkv-widget-list">
                         <li class="mkv-loading" style="padding:14px 20px;"><?php echo esc_html(mkv__('Đang tải...')); ?></li>
                     </ul>

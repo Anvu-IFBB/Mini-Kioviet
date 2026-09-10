@@ -1,76 +1,221 @@
 <?php
+/**
+ * View: Chi tiết sản phẩm (Metabox) - Tái thiết kế chuẩn KiotViet UI
+ */
 if (!defined('ABSPATH')) exit;
+
+$unit = isset($unit) && !empty($unit) ? $unit : (get_post_meta($post->ID, '_mkv_unit', true) ?: 'Cái');
 ?>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:15px;">
-    <div>
-        <label for="mkv_sku"><strong><?php echo esc_html(mkv__('Mã hàng (SKU)')); ?> <span style="color:red">*</span></strong></label>
-        <input type="text" id="mkv_sku" name="mkv_sku" value="<?php echo esc_attr($sku); ?>" style="width:100%;margin-top:6px;" required>
-    </div>
-    <div>
-        <label for="mkv_barcode"><strong><?php echo esc_html(mkv__('Mã vạch (Barcode)')); ?></strong> <em style="color:#888;font-weight:400;">(<?php echo esc_html(mkv__('để trống = tự sinh')); ?>)</em></label>
-        <div style="display:flex;gap:8px;margin-top:6px;">
-            <input type="text" id="mkv_barcode" name="mkv_barcode" value="<?php echo esc_attr($barcode); ?>" style="flex:1;">
-            <button type="button" onclick="mkvGenBarcode()" class="button" style="white-space:nowrap; display:inline-flex; align-items:center; gap:4px;">
-                <i class="hgi-stroke hgi-bar-code-01"></i> <?php echo esc_html(mkv__('Sinh mã')); ?>
-            </button>
+<div class="mkv-product-form-wrap">
+    <!-- SECTION 1: MÃ HÀNG & NHẬN DIỆN -->
+    <div class="mkv-form-section">
+        <div class="mkv-form-section-title">
+            <i class="hgi-stroke hgi-tag-01"></i>
+            <span><?php echo esc_html(mkv__('Mã hàng & Nhận diện')); ?></span>
         </div>
-        <?php if ($barcode): ?>
-        <div style="margin-top:10px;text-align:center;">
-            <svg id="mkv-barcode-preview"></svg>
+        
+        <div class="mkv-form-grid-3">
+            <div class="mkv-field-group">
+                <label for="mkv_sku" class="mkv-field-label">
+                    <?php echo esc_html(mkv__('Mã hàng (SKU)')); ?> <span class="required">*</span>
+                </label>
+                <div class="mkv-input-prefix-wrap">
+                    <span class="mkv-input-prefix"><i class="hgi-stroke hgi-bar-code-02"></i></span>
+                    <input type="text" id="mkv_sku" name="mkv_sku" value="<?php echo esc_attr($sku); ?>" 
+                           class="mkv-form-control" placeholder="VD: SP0001" required 
+                           oninput="this.value = this.value.toUpperCase()">
+                </div>
+                <span class="mkv-field-hint"><?php echo esc_html(mkv__('Mã định danh duy nhất của sản phẩm')); ?></span>
+            </div>
+
+            <div class="mkv-field-group">
+                <label for="mkv_barcode" class="mkv-field-label">
+                    <?php echo esc_html(mkv__('Mã vạch (Barcode)')); ?>
+                </label>
+                <div class="mkv-barcode-input-row">
+                    <div class="mkv-input-prefix-wrap" style="flex:1;">
+                        <span class="mkv-input-prefix"><i class="hgi-stroke hgi-bar-code-01"></i></span>
+                        <input type="text" id="mkv_barcode" name="mkv_barcode" value="<?php echo esc_attr($barcode); ?>" 
+                               class="mkv-form-control" placeholder="VD: 893601234567" oninput="mkvRenderBarcodePreview(this.value)">
+                    </div>
+                    <button type="button" onclick="mkvGenBarcode()" class="mkv-btn mkv-btn-secondary" title="<?php echo esc_attr(mkv__('Tự động sinh mã vạch ngẫu nhiên')); ?>">
+                        <i class="hgi-stroke hgi-refresh"></i> <?php echo esc_html(mkv__('Sinh mã')); ?>
+                    </button>
+                </div>
+                <span class="mkv-field-hint"><?php echo esc_html(mkv__('Để trống hệ thống sẽ tự sinh khi lưu')); ?></span>
+            </div>
+
+            <div class="mkv-field-group">
+                <label for="mkv_unit" class="mkv-field-label">
+                    <?php echo esc_html(mkv__('Đơn vị tính')); ?>
+                </label>
+                <div class="mkv-input-prefix-wrap">
+                    <span class="mkv-input-prefix"><i class="hgi-stroke hgi-package"></i></span>
+                    <input type="text" id="mkv_unit" name="mkv_unit" list="mkv-units-list" value="<?php echo esc_attr($unit); ?>" 
+                           class="mkv-form-control" placeholder="Cái, Chiếc, Bộ...">
+                    <datalist id="mkv-units-list">
+                        <option value="Cái">
+                        <option value="Chiếc">
+                        <option value="Bộ">
+                        <option value="Hộp">
+                        <option value="Chai">
+                        <option value="Thùng">
+                        <option value="Gói">
+                        <option value="Kg">
+                        <option value="Lon">
+                        <option value="Mét">
+                    </datalist>
+                </div>
+                <span class="mkv-field-hint"><?php echo esc_html(mkv__('Đơn vị bán hàng và tính tồn')); ?></span>
+            </div>
         </div>
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                JsBarcode('#mkv-barcode-preview', '<?php echo esc_js($barcode); ?>', {
-                    format: 'CODE128', lineColor: '#000', width: 1.5, height: 40,
-                    displayValue: true, fontSize: 11
-                });
-            });
-        </script>
-        <?php endif; ?>
+
+        <!-- Barcode Preview Container -->
+        <div id="mkv-barcode-preview-box" class="mkv-barcode-preview-box" style="<?php echo empty($barcode) ? 'display:none;' : ''; ?>">
+            <div class="mkv-barcode-svg-wrap">
+                <svg id="mkv-barcode-preview"></svg>
+            </div>
+            <span class="mkv-barcode-note"><?php echo esc_html(mkv__('Mã vạch chuẩn Code128 - Tương thích máy quét laser & camera POS')); ?></span>
+        </div>
     </div>
 
-    <?php if ($can_cost): ?>
-    <div>
-        <label for="mkv_price_in"><strong><?php echo esc_html(mkv__('Giá nhập')); ?> (VNĐ) <span style="color:red">*</span></strong></label>
-        <input type="number" id="mkv_price_in" name="mkv_price_in" value="<?php echo esc_attr($price_in); ?>" style="width:100%;margin-top:6px;" required min="0">
-    </div>
-    <?php else: ?>
-    <div><label><strong><?php echo esc_html(mkv__('Giá nhập')); ?></strong></label>
-        <p style="padding:8px 12px;background:#f0f0f1;border-radius:6px;margin-top:6px;color:#64748b;display:flex;align-items:center;gap:6px;"><i class="hgi-stroke hgi-circle-lock-01"></i> <?php echo esc_html(mkv__('Bạn không có quyền xem giá nhập')); ?></p>
-        <input type="hidden" name="mkv_price_in" value="<?php echo esc_attr($price_in); ?>">
-    </div>
-    <?php endif; ?>
+    <!-- SECTION 2: THIẾT LẬP GIÁ -->
+    <div class="mkv-form-section">
+        <div class="mkv-form-section-title">
+            <i class="hgi-stroke hgi-coins-01"></i>
+            <span><?php echo esc_html(mkv__('Thiết lập Giá & Doanh thu')); ?></span>
+        </div>
 
-    <div>
-        <label for="mkv_price_out"><strong><?php echo esc_html(mkv__('Giá bán')); ?> (VNĐ) <span style="color:red">*</span></strong></label>
-        <input type="number" id="mkv_price_out" name="mkv_price_out" value="<?php echo esc_attr($price_out); ?>" style="width:100%;margin-top:6px;" required min="0">
+        <div class="mkv-form-grid-2">
+            <div class="mkv-field-group">
+                <label for="mkv_price_out" class="mkv-field-label">
+                    <?php echo esc_html(mkv__('Giá bán')); ?> <span class="required">*</span>
+                </label>
+                <div class="mkv-price-input-wrap">
+                    <input type="number" id="mkv_price_out" name="mkv_price_out" value="<?php echo esc_attr($price_out); ?>" 
+                           class="mkv-form-control price-out-input" required min="0" step="1000"
+                           oninput="mkvFormatMoneyHint(this, 'mkv-price-out-hint')">
+                    <span class="mkv-currency-badge">₫</span>
+                </div>
+                <div class="mkv-price-formatted-hint" id="mkv-price-out-hint">
+                    <?php echo !empty($price_out) ? number_format((float)$price_out, 0, ',', '.') . ' ₫' : '0 ₫'; ?>
+                </div>
+            </div>
+
+            <?php if ($can_cost): ?>
+            <div class="mkv-field-group">
+                <label for="mkv_price_in" class="mkv-field-label">
+                    <?php echo esc_html(mkv__('Giá vốn (Giá nhập)')); ?> <span class="required">*</span>
+                </label>
+                <div class="mkv-price-input-wrap">
+                    <input type="number" id="mkv_price_in" name="mkv_price_in" value="<?php echo esc_attr($price_in); ?>" 
+                           class="mkv-form-control" required min="0" step="1000"
+                           oninput="mkvFormatMoneyHint(this, 'mkv-price-in-hint')">
+                    <span class="mkv-currency-badge">₫</span>
+                </div>
+                <div class="mkv-price-formatted-hint" id="mkv-price-in-hint">
+                    <?php echo !empty($price_in) ? number_format((float)$price_in, 0, ',', '.') . ' ₫' : '0 ₫'; ?>
+                </div>
+            </div>
+            <?php else: ?>
+            <div class="mkv-field-group">
+                <label class="mkv-field-label"><?php echo esc_html(mkv__('Giá vốn (Giá nhập)')); ?></label>
+                <div class="mkv-shield-notice">
+                    <i class="hgi-stroke hgi-shield-user"></i>
+                    <span><?php echo esc_html(mkv__('Thông tin bảo mật: Bạn không có quyền xem giá vốn')); ?></span>
+                </div>
+            </div>
+            <?php endif; ?>
+        </div>
     </div>
 
-    <div>
-        <label for="mkv_stock"><strong><?php echo esc_html(mkv__('Tồn kho ban đầu')); ?></strong></label>
-        <input type="number" id="mkv_stock" name="mkv_stock" value="<?php echo esc_attr($stock !== '' ? $stock : '0'); ?>" style="width:100%;margin-top:6px;" min="0">
-    </div>
-    <div>
-        <label for="mkv_min_stock"><strong><?php echo esc_html(mkv__('Ngưỡng cảnh báo hết hàng')); ?></strong></label>
-        <input type="number" id="mkv_min_stock" name="mkv_min_stock"
-            value="<?php echo esc_attr($min_stock !== '' ? $min_stock : get_option('mkv_min_stock_threshold', 5)); ?>"
-            style="width:100%;margin-top:6px;" min="0" placeholder="<?php echo esc_attr(mkv__('Mặc định từ Cài đặt')); ?>">
+    <!-- SECTION 3: TỒN KHO & ĐỊNH MỨC -->
+    <div class="mkv-form-section">
+        <div class="mkv-form-section-title">
+            <i class="hgi-stroke hgi-warehouse"></i>
+            <span><?php echo esc_html(mkv__('Quản lý Tồn kho & Định mức')); ?></span>
+        </div>
+
+        <div class="mkv-form-grid-2">
+            <div class="mkv-field-group">
+                <label for="mkv_stock" class="mkv-field-label">
+                    <?php echo esc_html(mkv__('Tồn kho ban đầu')); ?>
+                </label>
+                <div class="mkv-input-prefix-wrap">
+                    <span class="mkv-input-prefix"><i class="hgi-stroke hgi-package"></i></span>
+                    <input type="number" id="mkv_stock" name="mkv_stock" value="<?php echo esc_attr($stock !== '' ? $stock : '0'); ?>" 
+                           class="mkv-form-control" min="0">
+                </div>
+                <span class="mkv-field-hint"><?php echo esc_html(mkv__('Số lượng tồn tại kho chính khi bắt đầu tạo sản phẩm')); ?></span>
+            </div>
+
+            <div class="mkv-field-group">
+                <label for="mkv_min_stock" class="mkv-field-label">
+                    <?php echo esc_html(mkv__('Định mức tồn tối thiểu (Cảnh báo hết hàng)')); ?>
+                </label>
+                <div class="mkv-input-prefix-wrap">
+                    <span class="mkv-input-prefix"><i class="hgi-stroke hgi-alert-circle"></i></span>
+                    <input type="number" id="mkv_min_stock" name="mkv_min_stock" 
+                           value="<?php echo esc_attr($min_stock !== '' ? $min_stock : get_option('mkv_min_stock_threshold', 5)); ?>" 
+                           class="mkv-form-control" min="0" placeholder="<?php echo esc_attr(mkv__('Mặc định từ Cài đặt')); ?>">
+                </div>
+                <span class="mkv-field-hint"><?php echo esc_html(mkv__('Hệ thống sẽ báo động đỏ khi tồn kho giảm xuống dưới mức này')); ?></span>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
-function mkvGenBarcode() {
-    var id = '<?php echo isset($post->ID) ? intval($post->ID) : 0; ?>';
-    var prefix = '893';
-    var rand   = Math.floor(Math.random() * 900000000) + 100000000;
-    var code   = prefix + rand;
-    document.getElementById('mkv_barcode').value = code;
-    try {
-        JsBarcode('#mkv-barcode-preview', code, {
-            format: 'CODE128', lineColor: '#000', width: 1.5, height: 40,
-            displayValue: true, fontSize: 11
-        });
-        document.getElementById('mkv-barcode-preview').style.display = 'block';
-    } catch(e){}
+function mkvFormatMoneyHint(input, hintId) {
+    var val = parseFloat(input.value) || 0;
+    var hint = document.getElementById(hintId);
+    if (hint) {
+        hint.textContent = new Intl.NumberFormat('vi-VN').format(val) + ' ₫';
+    }
 }
+
+function mkvRenderBarcodePreview(code) {
+    var previewBox = document.getElementById('mkv-barcode-preview-box');
+    var svg = document.getElementById('mkv-barcode-preview');
+    if (!code || !code.trim()) {
+        if (previewBox) previewBox.style.display = 'none';
+        return;
+    }
+    if (previewBox) previewBox.style.display = 'flex';
+    try {
+        if (typeof JsBarcode === 'function' && svg) {
+            JsBarcode(svg, String(code).trim(), {
+                format: 'CODE128',
+                lineColor: '#0f172a',
+                width: 1.6,
+                height: 44,
+                displayValue: true,
+                fontSize: 12,
+                font: 'Inter, monospace',
+                margin: 6
+            });
+        }
+    } catch(e) {
+        console.warn('Invalid barcode for preview:', e);
+    }
+}
+
+function mkvGenBarcode() {
+    var prefix = '893';
+    var rand = Math.floor(Math.random() * 900000000) + 100000000;
+    var code = prefix + String(rand);
+    var input = document.getElementById('mkv_barcode');
+    if (input) {
+        input.value = code;
+        mkvRenderBarcodePreview(code);
+    }
+}
+
+// Render on DOM Ready
+document.addEventListener('DOMContentLoaded', function() {
+    var currentBarcode = '<?php echo esc_js($barcode); ?>';
+    if (currentBarcode) {
+        mkvRenderBarcodePreview(currentBarcode);
+    }
+});
 </script>

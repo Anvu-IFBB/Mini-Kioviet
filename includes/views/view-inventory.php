@@ -12,17 +12,18 @@
         <a href="?page=mkv-inventory&tab=logs"      class="mkv-tab-link <?php echo $active_tab==='logs'     ?'active':'';?>"><i class="hgi-stroke hgi-clipboard"></i> <?php echo esc_html(mkv__('Thẻ kho (Lịch sử)')); ?></a>
     </div>
 
-    <?php if (isset($_GET['added'])):    ?><div class="notice notice-success is-dismissible"><p><?php echo esc_html(mkv__('Đã thêm kho mới!')); ?></p></div><?php endif; ?>
-    <?php if (isset($_GET['updated'])):  ?><div class="notice notice-success is-dismissible"><p><?php echo esc_html(mkv__('Đã cập nhật tồn kho!')); ?></p></div><?php endif; ?>
-    <?php if (isset($_GET['success'])):  ?><div class="notice notice-success is-dismissible"><p><?php echo esc_html(mkv__('Chuyển kho thành công!')); ?></p></div><?php endif; ?>
+    <?php if (isset($_GET['added'])):   ?><div class="mkv-alert mkv-alert-success"><i class="hgi-stroke hgi-checkmark-circle-02"></i> <?php echo esc_html(mkv__('Đã thêm kho mới!')); ?></div><?php endif; ?>
+    <?php if (isset($_GET['updated'])): ?><div class="mkv-alert mkv-alert-success"><i class="hgi-stroke hgi-checkmark-circle-02"></i> <?php echo esc_html(mkv__('Đã cập nhật tồn kho!')); ?></div><?php endif; ?>
+    <?php if (isset($_GET['success'])): ?><div class="mkv-alert mkv-alert-success"><i class="hgi-stroke hgi-checkmark-circle-02"></i> <?php echo esc_html(mkv__('Chuyển kho thành công!')); ?></div><?php endif; ?>
     <?php if (isset($_GET['error'])):
         $err_map = array('invalid'=>mkv__('Thông tin không hợp lệ.'),'insufficient'=>mkv__('Kho nguồn không đủ tồn kho.'),'db'=>mkv__('Lỗi cơ sở dữ liệu, vui lòng thử lại.'));
         $err_msg = $err_map[$_GET['error']] ?? mkv__('Có lỗi xảy ra.'); ?>
-        <div class="notice notice-error is-dismissible"><p><?php echo esc_html($err_msg); ?></p></div>
+        <div class="mkv-alert mkv-alert-error"><i class="hgi-stroke hgi-alert-02"></i> <?php echo esc_html($err_msg); ?></div>
     <?php endif; ?>
 
+
     <?php /* ==== TAB: Locations ==== */ if ($active_tab === 'locations'): ?>
-    <div class="mkv-two-col-form" style="display:grid; grid-template-columns:350px 1fr; gap:20px; align-items:start;">
+    <div class="mkv-two-col-form">
         <div class="mkv-card">
             <div class="mkv-card-header">
                 <h3 class="mkv-card-title"><i class="hgi-stroke hgi-add-square"></i> <?php echo esc_html(mkv__('Thêm Kho / Chi Nhánh')); ?></h3>
@@ -70,17 +71,30 @@
                 <th style="width:350px;"><?php echo esc_html(mkv__('Điều chỉnh nhanh')); ?></th>
             </tr></thead>
             <tbody>
+            <?php 
+            if (!empty($products)) {
+                global $wpdb;
+                $p_ids = wp_list_pluck($products, 'ID');
+                $stock_map = array();
+                if (!empty($p_ids)) {
+                    $ids_in = implode(',', array_map('intval', $p_ids));
+                    $stock_rows = $wpdb->get_results("SELECT product_id, location_id, stock FROM {$wpdb->prefix}mkv_inventory_stock WHERE product_id IN ($ids_in)");
+                    if ($stock_rows) {
+                        foreach ($stock_rows as $sr) {
+                            $stock_map[$sr->product_id][$sr->location_id] = (int)$sr->stock;
+                        }
+                    }
+                    update_meta_cache('post', $p_ids);
+                }
+            }
+            ?>
             <?php if (empty($products)): ?>
                 <tr><td colspan="10" style="text-align:center;padding:30px;color:var(--mkv-text-muted);"><?php echo esc_html(mkv__('Chưa có sản phẩm.')); ?></td></tr>
             <?php else: foreach ($products as $p):
-                global $wpdb;
                 $stocks = array();
                 $total  = 0;
                 foreach ($locations as $loc) {
-                    $s = (int) $wpdb->get_var($wpdb->prepare(
-                        "SELECT stock FROM {$wpdb->prefix}mkv_inventory_stock WHERE product_id=%d AND location_id=%d",
-                        $p->ID, $loc->id
-                    ));
+                    $s = $stock_map[$p->ID][$loc->id] ?? 0;
                     $stocks[$loc->id] = $s;
                     $total += $s;
                 }

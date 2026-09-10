@@ -160,8 +160,10 @@ class MKV_Purchases
                 $wpdb->query('COMMIT');
             } else {
                 $wpdb->query('ROLLBACK');
-                $error_msg = $wpdb->last_error ? $wpdb->last_error : 'Không thể thực thi CSDL';
-                wp_die('Lỗi hệ thống: ' . $error_msg);
+                if (!empty($wpdb->last_error)) {
+                    error_log('[Mini-KiotViet] Purchases transaction error: ' . $wpdb->last_error);
+                }
+                wp_die('Đã xảy ra lỗi trong quá trình tạo phiếu nhập hàng. Vui lòng thử lại.');
             }
             $wpdb->suppress_errors(false);
         }
@@ -204,6 +206,13 @@ class MKV_Purchases
             }
         } else {
             // list POs với thông tin chi tiết: Nhà cung cấp, Kho, Người tạo
+            $per_page = 20;
+            $paged = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
+            $offset = ($paged - 1) * $per_page;
+
+            $total_items = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}mkv_purchase_orders");
+            $total_pages = ceil($total_items / $per_page);
+
             $pos = $wpdb->get_results(
                 "SELECT po.*, s.name as supplier_name, s.phone as supplier_phone, s.total_debt as supplier_debt,
                         loc.name as location_name, u.display_name as creator_name 
@@ -211,7 +220,7 @@ class MKV_Purchases
                  LEFT JOIN {$wpdb->prefix}mkv_suppliers s ON po.supplier_id = s.id
                  LEFT JOIN {$wpdb->prefix}mkv_locations loc ON po.location_id = loc.id
                  LEFT JOIN {$wpdb->users} u ON po.created_by = u.ID
-                 ORDER BY po.id DESC"
+                 ORDER BY po.id DESC LIMIT $per_page OFFSET $offset"
             );
 
             // Lấy danh sách sản phẩm trong từng phiếu nhập

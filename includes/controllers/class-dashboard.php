@@ -10,16 +10,41 @@ class MKV_Dashboard
         add_action('admin_init',            array($this, 'redirect_to_custom_dashboard'));
         add_action('rest_api_init',         array($this, 'register_rest_routes'));
         add_action('wp_dashboard_setup',    array($this, 'register_wp_dashboard_widget'));
+        add_action('wp_ajax_mkv_get_ai_history',    array($this, 'handle_get_ai_history'));
+        add_action('wp_ajax_mkv_delete_ai_history', array($this, 'handle_delete_ai_history'));
     }
 
     public function redirect_to_custom_dashboard()
     {
-        // Yêu cầu: Dashboard riêng (không dùng Dashboard mặc định của WP).
-        // Tuy nhiên vẫn đăng ký WP Dashboard Widget phòng khi truy cập được.
         global $pagenow;
-        if ($pagenow === 'index.php' && !isset($_GET['page']) && current_user_can('mkv_manage_dashboard')) {
-            wp_redirect(admin_url('admin.php?page=mini-kiotviet'));
-            exit;
+
+        // 1. Chuyển hướng khi người dùng truy cập trang chủ WP Admin (index.php)
+        if ($pagenow === 'index.php' && !isset($_GET['page'])) {
+            if (current_user_can('mkv_manage_reports') || current_user_can('manage_options')) {
+                wp_safe_redirect(admin_url('admin.php?page=mini-kiotviet'));
+                exit;
+            } elseif (current_user_can('mkv_manage_orders')) {
+                wp_safe_redirect(admin_url('admin.php?page=mkv-pos'));
+                exit;
+            } elseif (current_user_can('mkv_manage_inventory')) {
+                wp_safe_redirect(admin_url('admin.php?page=mkv-inventory'));
+                exit;
+            }
+        }
+
+        // 2. Chuyển hướng an toàn khi người dùng không có quyền xem báo cáo cố truy cập mini-kiotviet
+        if ($pagenow === 'admin.php' && isset($_GET['page']) && $_GET['page'] === 'mini-kiotviet') {
+            if (!current_user_can('mkv_manage_reports') && !current_user_can('manage_options')) {
+                if (current_user_can('mkv_manage_orders')) {
+                    wp_safe_redirect(admin_url('admin.php?page=mkv-pos'));
+                    exit;
+                } elseif (current_user_can('mkv_manage_inventory')) {
+                    wp_safe_redirect(admin_url('admin.php?page=mkv-inventory'));
+                    exit;
+                } else {
+                    wp_die(mkv__('Bạn không có quyền truy cập trang này.'));
+                }
+            }
         }
     }
 
@@ -65,18 +90,9 @@ class MKV_Dashboard
             'mini-kiotviet',
             mkv__('Tổng Quan') . ' Dashboard',
             mkv__('Tổng Quan'),
-            'mkv_manage_dashboard',
+            'mkv_manage_reports',
             'mini-kiotviet',
             array($this, 'render_dashboard_page')
-        );
-
-        add_submenu_page(
-            'mini-kiotviet',
-            'Lịch sử Trợ lý AI',
-            'Lịch sử AI',
-            'manage_options', // Only admins
-            'mkv-ai-logs',
-            array($this, 'render_ai_logs_page')
         );
     }
 
@@ -115,27 +131,105 @@ class MKV_Dashboard
 
     public function render_dashboard_page()
     {
-        if (!current_user_can('mkv_manage_reports')) {
-            if (current_user_can('mkv_manage_orders')) {
-                wp_redirect(admin_url('admin.php?page=mkv-pos'));
-                exit;
-            } elseif (current_user_can('mkv_manage_inventory')) {
-                wp_redirect(admin_url('admin.php?page=mkv-inventory'));
+        if (!current_user_can('mkv_manage_reports') && !current_user_can('manage_options')) {
+            $target = current_user_can('mkv_manage_orders')
+                ? admin_url('admin.php?page=mkv-pos')
+                : (current_user_can('mkv_manage_inventory') ? admin_url('admin.php?page=mkv-inventory') : admin_url());
+
+            if (!headers_sent()) {
+                wp_safe_redirect($target);
                 exit;
             } else {
-                echo '<div class="wrap"><h1>Xin chào, ' . wp_get_current_user()->display_name . '</h1><p>Bạn không có quyền xem Báo cáo doanh thu.</p></div>';
+                echo '<script>window.location.replace(' . json_encode($target) . ');</script>';
+                echo '<div class="wrap"><p>' . esc_html(mkv__('Đang chuyển hướng...')) . ' <a href="' . esc_url($target) . '">' . esc_html(mkv__('Bấm vào đây nếu trang không tự tải lại.')) . '</a></p></div>';
+                return;
             }
-            return;
         }
         
         require_once MKV_DIR . 'includes/views/view-dashboard.php';
     }
 
-    public function render_ai_logs_page()
+    public function handle_get_ai_history()
     {
-        if (!current_user_can('manage_options')) {
-            wp_die(mkv__('Bạn không có quyền truy cập trang này.'));
+        check_ajax_referer('mkv_ai_chat_nonce', 'nonce');
+
+        global $wpdb;
+        $table_logs = $wpdb->prefix . 'mkv_ai_logs';
+
+        $all_users   = isset($_POST['all_users']) && $_POST['all_users'] === '1' && current_user_can('manage_options');
+        $current_uid = get_current_user_id();
+
+        if ($all_users) {
+            $logs = $wpdb->get_results(
+                "SELECT l.id, l.user_id, l.interaction_id, l.message, l.message_type, l.created_at,
+                        u.display_name AS user_name,
+                        (SELECT a.message FROM $table_logs a 
+                         WHERE l.interaction_id != '' AND a.interaction_id = l.interaction_id AND a.message_type = 'ai' 
+                         LIMIT 1) AS ai_reply
+                 FROM $table_logs l
+                 LEFT JOIN {$wpdb->users} u ON u.ID = l.user_id
+                 WHERE l.message_type = 'user'
+                 ORDER BY l.created_at DESC
+                 LIMIT 200"
+            );
+        } else {
+            $logs = $wpdb->get_results($wpdb->prepare(
+                "SELECT l.id, l.user_id, l.interaction_id, l.message, l.message_type, l.created_at,
+                        NULL AS user_name,
+                        (SELECT a.message FROM $table_logs a 
+                         WHERE l.interaction_id != '' AND a.interaction_id = l.interaction_id AND a.message_type = 'ai' 
+                         LIMIT 1) AS ai_reply
+                 FROM $table_logs l
+                 WHERE l.user_id = %d AND l.message_type = 'user'
+                 ORDER BY l.created_at DESC
+                 LIMIT 200",
+                $current_uid
+            ));
         }
-        require_once MKV_DIR . 'includes/views/view-ai-logs.php';
+
+        if ($logs === null) {
+            wp_send_json_error('db_error');
+            return;
+        }
+
+        wp_send_json_success($logs);
+    }
+
+    public function handle_delete_ai_history()
+    {
+        check_ajax_referer('mkv_ai_chat_nonce', 'nonce');
+
+        global $wpdb;
+        $table_logs = $wpdb->prefix . 'mkv_ai_logs';
+        $log_id     = intval($_POST['log_id'] ?? 0);
+
+        if (!$log_id) {
+            wp_send_json_error('missing_id');
+            return;
+        }
+
+        $log = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_logs WHERE id = %d", $log_id));
+        if (!$log) {
+            wp_send_json_error('not_found');
+            return;
+        }
+
+        // Kiểm tra quyền: chỉ xóa được của chính mình trừ khi là quản trị viên
+        if (!current_user_can('manage_options') && intval($log->user_id) !== get_current_user_id()) {
+            wp_send_json_error('forbidden');
+            return;
+        }
+
+        // Xóa cả tin nhắn hỏi và câu trả lời tương ứng
+        if (!empty($log->interaction_id)) {
+            $wpdb->query($wpdb->prepare(
+                "DELETE FROM $table_logs WHERE interaction_id = %s",
+                $log->interaction_id
+            ));
+        } else {
+            $wpdb->delete($table_logs, array('id' => $log_id));
+        }
+
+        wp_send_json_success();
     }
 }

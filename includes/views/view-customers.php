@@ -19,7 +19,7 @@
     <?php endif; ?>
 
     <div class="mkv-card">
-        <div class="mkv-card-header" style="background:#fff; padding:16px 20px;">
+        <div class="mkv-card-header mkv-card-header--search">
             <form method="get" style="margin:0; width:100%;">
                 <input type="hidden" name="page" value="mkv-customers">
                 <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
@@ -46,8 +46,9 @@
             </form>
         </div>
 
-        <div class="mkv-card-body" style="padding:0;">
+        <div class="mkv-card-body mkv-card-body--flush">
             <div class="mkv-table-wrap" style="border:none; box-shadow:none; border-radius:0; margin-bottom:0;">
+
                 <table class="mkv-table" style="min-width: 950px;">
             <thead>
                 <tr>
@@ -83,7 +84,7 @@
                         <td><span class="mkv-badge mkv-badge-purple"><?php echo intval($c->points); ?> <?php echo esc_html(mkv__('pts')); ?></span></td>
                         <td><strong style="color:var(--mkv-primary);"><?php echo number_format($c->total_spent, 0, ',', '.'); ?> ₫</strong></td>
                         <td>
-                            <a href="?page=mkv-customers&action=edit&id=<?php echo $c->id; ?>" class="mkv-btn mkv-btn-sm mkv-btn-secondary">
+                            <a href="?page=mkv-customers&action=edit&id=<?php echo intval($c->id); ?>" class="mkv-btn mkv-btn-sm mkv-btn-secondary">
                                 <i class="hgi-stroke hgi-edit-01"></i> <?php echo esc_html(mkv__('Chi tiết')); ?>
                             </a>
                             <a href="<?php echo wp_nonce_url(admin_url('admin-post.php?action=mkv_delete_customer&id=' . $c->id), 'mkv_del_cust_' . $c->id); ?>"
@@ -178,7 +179,7 @@
             <div class="mkv-card-body">
                 <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                     <input type="hidden" name="action" value="mkv_save_customer">
-                    <input type="hidden" name="customer_id" value="<?php echo $customer_id; ?>">
+                    <input type="hidden" name="customer_id" value="<?php echo intval($customer_id); ?>">
                     <?php wp_nonce_field('mkv_save_customer_nonce', '_wpnonce'); ?>
 
                     <div style="display:flex; flex-direction:column; gap:16px;">
@@ -270,11 +271,11 @@
                                 }
                             ?>
                             <tr>
-                                <td><strong><a href="?page=mkv-orders&id=<?php echo $ord->id; ?>"><?php echo esc_html($ord->order_code); ?></a></strong></td>
+                                <td><strong><a href="?page=mkv-orders&id=<?php echo intval($ord->id); ?>"><?php echo esc_html($ord->order_code); ?></a></strong></td>
                                 <td><?php echo esc_html(date('d/m/Y H:i', strtotime($ord->created_at))); ?></td>
                                 <td><span class="mkv-badge mkv-badge-blue"><?php echo esc_html($channel_names[$ord->sales_channel ?? 'pos'] ?? mkv__('Tại quầy')); ?></span></td>
                                 <td style="text-align:center;"><?php echo intval($ord->item_count); ?></td>
-                                <td><span class="mkv-badge <?php echo $st[1]; ?>"><?php echo $st[0]; ?></span></td>
+                                <td><span class="mkv-badge <?php echo esc_attr($st[1]); ?>"><?php echo esc_html($st[0]); ?></span></td>
                                 <td>
                                     <?php if ($payment_due > 0 && $ord->status !== 'cancelled'): ?>
                                         <span class="mkv-badge <?php echo $is_cod_pending ? 'mkv-badge-purple' : 'mkv-badge-red'; ?>"><?php echo esc_html($is_cod_pending ? mkv__('COD') : mkv__('Còn nợ')); ?></span>

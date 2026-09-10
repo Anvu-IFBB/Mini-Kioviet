@@ -44,7 +44,7 @@ class MKV_Customers
         $paged       = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
         $limit       = 15;
         $offset      = ($paged - 1) * $limit;
-        $total_items = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$table_customers} {$where}");
+        $total_items = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}mkv_customers {$where}");
         $total_pages = (int) ceil($total_items / $limit);
 
         // Sorting
@@ -55,7 +55,8 @@ class MKV_Customers
 
         $customers = array();
         if ($action === 'list') {
-            $customers = $wpdb->get_results("SELECT * FROM {$table_customers} {$where} ORDER BY {$orderby} {$order_raw} LIMIT {$limit} OFFSET {$offset}");
+            $sql = "SELECT * FROM {$wpdb->prefix}mkv_customers {$where} ORDER BY {$orderby} {$order_raw} LIMIT %d OFFSET %d";
+            $customers = $wpdb->get_results($wpdb->prepare($sql, $limit, $offset));
         }
 
         $customer     = null;

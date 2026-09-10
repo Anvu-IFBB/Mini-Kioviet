@@ -3,32 +3,29 @@ $statuses = MKV_Orders::STATUSES;
 ?>
 <?php require_once MKV_DIR . 'includes/views/header-kiotviet.php'; ?>
 
-    <div class="mkv-page-header" style="margin-bottom: 24px;">
-        <h1 class="mkv-page-title" style="display:flex; align-items:center; gap:16px;">
-            <a href="javascript:history.back()" class="mkv-orders-back-btn">
-                <i class="hgi-stroke hgi-arrow-left-01"></i> <?php echo esc_html(mkv__('Trở về')); ?>
-            </a>
-            <span><i class="hgi-stroke hgi-invoice-01"></i> <?php echo esc_html(mkv__('Danh Sách Đơn Hàng')); ?></span>
+    <div class="mkv-page-header">
+        <h1 class="mkv-page-title">
+            <i class="hgi-stroke hgi-invoice-01"></i> <?php echo esc_html(mkv__('Danh Sách Đơn Hàng')); ?>
         </h1>
         <div class="mkv-page-actions">
-            <a href="?page=mkv-pos" class="mkv-orders-create-btn"><i class="hgi-stroke hgi-add-square"></i> <?php echo esc_html(mkv__('Tạo đơn mới')); ?></a>
+            <a href="?page=mkv-pos" class="mkv-btn mkv-btn-primary"><i class="hgi-stroke hgi-add-square"></i> <?php echo esc_html(mkv__('Tạo đơn mới')); ?></a>
         </div>
     </div>
 
     <?php if (isset($_GET['created'])): ?>
-        <div class="notice notice-success is-dismissible"><p><?php echo esc_html(mkv__('Đơn hàng mới đã được tạo thành công!')); ?></p></div>
+        <div class="mkv-alert mkv-alert-success"><i class="hgi-stroke hgi-checkmark-circle-02"></i> <?php echo esc_html(mkv__('Đơn hàng mới đã được tạo thành công!')); ?></div>
     <?php endif; ?>
     <?php if (isset($_GET['status_updated'])): ?>
-        <div class="notice notice-success is-dismissible"><p><?php echo esc_html(mkv__('Đã cập nhật trạng thái đơn hàng!')); ?></p></div>
+        <div class="mkv-alert mkv-alert-success"><i class="hgi-stroke hgi-checkmark-circle-02"></i> <?php echo esc_html(mkv__('Đã cập nhật trạng thái đơn hàng!')); ?></div>
     <?php endif; ?>
     <?php if (isset($_GET['cancelled'])): ?>
-        <div class="notice notice-warning is-dismissible"><p><?php echo esc_html(mkv__('Đã hủy đơn hàng và hoàn trả tồn kho.')); ?></p></div>
+        <div class="mkv-alert mkv-alert-warning"><i class="hgi-stroke hgi-alert-02"></i> <?php echo esc_html(mkv__('Đã hủy đơn hàng và hoàn trả tồn kho.')); ?></div>
     <?php endif; ?>
     <?php if (isset($_GET['returned'])): ?>
-        <div class="notice notice-success is-dismissible"><p><?php echo esc_html(mkv__('Trả hàng thành công! Đã hoàn tồn kho và tạo Phiếu Chi hoàn tiền trong Sổ quỹ.')); ?></p></div>
+        <div class="mkv-alert mkv-alert-success"><i class="hgi-stroke hgi-checkmark-circle-02"></i> <?php echo esc_html(mkv__('Trả hàng thành công! Đã hoàn tồn kho và tạo Phiếu Chi hoàn tiền trong Sổ quỹ.')); ?></div>
     <?php endif; ?>
     <?php if (isset($_GET['payment_collected'])): ?>
-        <div class="notice notice-success is-dismissible"><p><?php echo esc_html(mkv__('Đã ghi nhận khoản thu và cập nhật trạng thái thanh toán.')); ?></p></div>
+        <div class="mkv-alert mkv-alert-success"><i class="hgi-stroke hgi-checkmark-circle-02"></i> <?php echo esc_html(mkv__('Đã ghi nhận khoản thu và cập nhật trạng thái thanh toán.')); ?></div>
     <?php endif; ?>
 
     <!-- Status filter tabs -->
@@ -40,12 +37,13 @@ $statuses = MKV_Orders::STATUSES;
         </a>
         <?php endforeach; ?>
     </div>
-    <div class="mkv-filter-bar" style="margin-bottom:18px; padding:10px 16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-        <div style="display:flex; align-items:center; gap:10px;">
-            <label for="mkv-order-channel" style="font-size:13px; font-weight:600; color:var(--mkv-text-muted); display:flex; align-items:center; gap:6px;">
+    <!-- Filter bar: channel selector + counter -->
+    <div class="mkv-filter-bar">
+        <div style="display:flex; align-items:center; gap:10px; flex:1;">
+            <label for="mkv-order-channel" class="mkv-label" style="margin:0; white-space:nowrap; display:flex; align-items:center; gap:6px;">
                 <i class="hgi-stroke hgi-filter-horizontal"></i> <?php echo esc_html(mkv__('Kênh bán:')); ?>
             </label>
-            <select id="mkv-order-channel" class="mkv-select" style="min-width:180px; height:36px; font-size:13px;" onchange="this.value ? (window.location.href='<?php echo esc_js(admin_url('admin.php?page=mkv-orders')); ?>&channel='+encodeURIComponent(this.value)) : (window.location.href='<?php echo esc_js(admin_url('admin.php?page=mkv-orders')); ?>');">
+            <select id="mkv-order-channel" class="mkv-select" style="min-width:180px;" onchange="this.value ? (window.location.href='<?php echo esc_js(admin_url('admin.php?page=mkv-orders')); ?>&channel='+encodeURIComponent(this.value)) : (window.location.href='<?php echo esc_js(admin_url('admin.php?page=mkv-orders')); ?>');">
                 <option value=""><?php echo esc_html(mkv__('Tất cả kênh')); ?></option>
                 <option value="pos" <?php selected($channel_filter, 'pos'); ?>><?php echo esc_html(mkv__('Tại quầy')); ?></option>
                 <option value="online" <?php selected($channel_filter, 'online'); ?>><?php echo esc_html(mkv__('Online')); ?></option>
@@ -53,8 +51,8 @@ $statuses = MKV_Orders::STATUSES;
                 <option value="marketplace" <?php selected($channel_filter, 'marketplace'); ?>><?php echo esc_html(mkv__('Sàn thương mại điện tử')); ?></option>
             </select>
         </div>
-        <div style="font-size:13px; color:var(--mkv-text-muted);">
-            <?php echo esc_html(mkv__('Tổng số:')); ?> <strong style="color:var(--mkv-text-main);"><?php echo count($orders); ?></strong> <?php echo esc_html(mkv__('đơn hàng')); ?>
+        <div style="font-size:13px; color:var(--mkv-text-muted); white-space:nowrap;">
+            <?php echo esc_html(mkv__('Tổng số:')); ?> <strong style="color:var(--mkv-text-main);"><?php echo isset($total_items) ? number_format($total_items, 0, ',', '.') : count($orders); ?></strong> <?php echo esc_html(mkv__('đơn hàng')); ?>
         </div>
     </div>
 
@@ -151,7 +149,7 @@ $statuses = MKV_Orders::STATUSES;
                     <td style="color:#64748b; font-size:13px;"><?php echo esc_html(date('d/m/Y H:i', strtotime($o->created_at))); ?></td>
                     <td style="text-align:right; padding-right:24px;">
                         <div style="display:flex; gap:8px; align-items:center; justify-content:flex-end; flex-wrap:nowrap;">
-                            <?php if (!in_array($o->status, array('completed','cancelled')) && isset($s['next']) && $s['next']): ?>
+                            <?php if (!in_array($o->status, array('completed','cancelled','returned')) && isset($s['next']) && $s['next']): ?>
                             <a href="<?php echo wp_nonce_url(admin_url('admin-post.php?action=mkv_update_order_status&id='.$o->id.'&new_status='.$s['next']), 'mkv_status_'.$o->id.'_'.$s['next']); ?>"
                                 class="mkv-action-btn mkv-action-primary">
                                 → <?php echo esc_html(mkv__($statuses[$s['next']]['label'])); ?>
@@ -160,16 +158,18 @@ $statuses = MKV_Orders::STATUSES;
                             
                             <?php if (!empty($o->shipping_provider) && get_option('mkv_shipping_enable', 0) == 1): ?>
                                 <?php if (empty($o->tracking_code)): ?>
+                                    <?php if (!in_array($o->status, array('completed','cancelled','returned','draft'))): ?>
                                     <a href="<?php echo wp_nonce_url(admin_url('admin-post.php?action=mkv_push_shipping&id='.$o->id), 'mkv_shipping_'.$o->id); ?>"
                                         class="mkv-action-btn mkv-action-info">
                                         <i class="hgi-stroke hgi-truck-delivery"></i> <?php echo esc_html(mkv__('Tạo vận đơn')); ?>
                                     </a>
+                                    <?php endif; ?>
                                 <?php else: ?>
                                     <span class="mkv-badge mkv-badge-purple" style="font-size:11px; height:28px; display:inline-flex; align-items:center; gap:4px;"><i class="hgi-stroke hgi-truck-delivery"></i> <?php echo esc_html($o->tracking_code); ?></span>
                                 <?php endif; ?>
                             <?php endif; ?>
                             
-                            <?php if (!in_array($o->status, array('completed','cancelled'))): ?>
+                            <?php if (!in_array($o->status, array('completed','cancelled','returned'))): ?>
                             <a href="<?php echo wp_nonce_url(admin_url('admin-post.php?action=mkv_cancel_order&id='.$o->id), 'mkv_cancel_'.$o->id); ?>"
                                 class="mkv-action-btn mkv-action-danger"
                                 onclick="return confirm('<?php echo esc_js(mkv__('Hủy đơn hàng này? Tồn kho sẽ được hoàn trả.')); ?>');">
@@ -185,7 +185,7 @@ $statuses = MKV_Orders::STATUSES;
                             </a>
                             <?php endif; ?>
 
-                            <?php if ($payment_due > 0 && $o->status !== 'cancelled'): ?>
+                            <?php if ($payment_due > 0 && !in_array($o->status, array('cancelled','returned'))): ?>
                             <button type="button" 
                                 class="mkv-action-btn mkv-action-success"
                                 onclick='mkvOpenCollectModal(<?php echo htmlspecialchars(json_encode(array(
@@ -209,15 +209,35 @@ $statuses = MKV_Orders::STATUSES;
         </table>
     </div>
 
+    <?php if (isset($total_pages) && $total_pages > 1): ?>
+    <div class="mkv-pagination">
+        <?php
+        $base_url = admin_url('admin.php?page=mkv-orders');
+        if ($status_filter) $base_url .= '&status=' . urlencode($status_filter);
+        if ($channel_filter) $base_url .= '&channel=' . urlencode($channel_filter);
+
+        echo paginate_links(array(
+            'base'      => add_query_arg('paged', '%#%', $base_url),
+            'format'    => '',
+            'prev_text' => '<i class="hgi-stroke hgi-arrow-left-01" aria-hidden="true"></i><span class="screen-reader-text">' . esc_html(mkv__('Trang trước')) . '</span>',
+            'next_text' => '<i class="hgi-stroke hgi-arrow-right-01" aria-hidden="true"></i><span class="screen-reader-text">' . esc_html(mkv__('Trang sau')) . '</span>',
+            'total'     => $total_pages,
+            'current'   => $paged,
+            'type'      => 'plain',
+        ));
+        ?>
+    </div>
+    <?php endif; ?>
+
     <!-- Modal Thu Tiền / Đối Soát COD Chuyên Nghiệp -->
-    <div class="mkv-modal-overlay" id="mkv-collect-debt-modal" style="display:none;">
+    <div class="mkv-modal-overlay" id="mkv-collect-debt-modal" role="dialog" aria-modal="true" aria-labelledby="mkv-collect-debt-modal-title" style="display:none;">
         <div class="mkv-modal" style="width:460px;">
             <div class="mkv-modal-header">
-                <h3 class="mkv-modal-title">
+                <h3 class="mkv-modal-title" id="mkv-collect-debt-modal-title">
                     <i class="hgi-stroke hgi-money-receive-square" id="mkv-cdm-icon" style="color:var(--mkv-green);"></i>
                     <span id="mkv-cdm-title"><?php echo esc_html(mkv__('Thu Tiền Khách Nợ')); ?></span>
                 </h3>
-                <button type="button" class="mkv-modal-close" onclick="mkvCloseCollectModal()">&times;</button>
+                <button type="button" class="mkv-modal-close" aria-label="<?php echo esc_attr(mkv__('Đóng')); ?>" onclick="mkvCloseCollectModal()">&times;</button>
             </div>
             <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" id="mkv-collect-debt-form">
                 <input type="hidden" name="action" value="mkv_collect_order_debt">

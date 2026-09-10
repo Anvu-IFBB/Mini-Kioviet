@@ -10,6 +10,18 @@ class MKV_Employees
         add_action('admin_post_mkv_add_employee', array($this, 'handle_add_employee'));
         add_action('admin_post_mkv_edit_employee', array($this, 'handle_edit_employee'));
         add_action('admin_post_mkv_delete_employee', array($this, 'handle_delete_employee'));
+        add_filter('wp_authenticate_user', array($this, 'check_employee_active_status'), 10, 2);
+    }
+
+    public function check_employee_active_status($user, $password)
+    {
+        if ($user instanceof WP_User) {
+            $status = get_user_meta($user->ID, 'mkv_employee_status', true);
+            if ($status === 'inactive') {
+                return new WP_Error('mkv_account_disabled', 'Tài khoản nhân viên này đã bị khóa hoặc đã nghỉ việc.');
+            }
+        }
+        return $user;
     }
 
     public function add_admin_menu()
@@ -24,7 +36,15 @@ class MKV_Employees
         check_admin_referer('mkv_checkin_action');
 
         global $wpdb;
-        $user_id = get_current_user_id();
+        $current_user_id = get_current_user_id();
+        $target_user_id = intval($_POST['target_user_id'] ?? $current_user_id);
+
+        // Điểm danh hộ bắt buộc phải có quyền quản trị/quản lý nhân viên
+        if ($target_user_id !== $current_user_id && !current_user_can('mkv_manage_employees')) {
+            wp_die('Không có quyền điểm danh cho nhân viên khác.');
+        }
+
+        $user_id = $target_user_id;
         $action_type = sanitize_text_field($_POST['check_action'] ?? '');
         $today = current_time('Y-m-d');
         $now = current_time('mysql');
@@ -53,7 +73,12 @@ class MKV_Employees
             }
         }
 
-        wp_redirect(admin_url('admin.php?page=mkv-employees&tab=timesheets&message=success'));
+        $redirect_tab = sanitize_text_field($_POST['redirect_tab'] ?? 'list');
+        if (!in_array($redirect_tab, array('list', 'timesheets'), true)) {
+            $redirect_tab = 'list';
+        }
+
+        wp_redirect(admin_url('admin.php?page=mkv-employees&tab=' . $redirect_tab . '&message=success'));
         exit;
     }
 
@@ -88,6 +113,11 @@ class MKV_Employees
         if (is_wp_error($user_id)) {
             wp_redirect(admin_url('admin.php?page=mkv-employees&error=failed'));
             exit;
+        }
+
+        update_user_meta($user_id, 'mkv_employee_status', 'active');
+        if (class_exists('MKV_Audit_Logger')) {
+            MKV_Audit_Logger::log('EMPLOYEE', 'CREATE_EMPLOYEE', 'user', $user_id, "Tạo nhân viên mới: {$username} (Quyền: {$role})");
         }
 
         wp_redirect(admin_url('admin.php?page=mkv-employees&message=created'));
@@ -142,6 +172,20 @@ class MKV_Employees
             exit;
         }
 
+        // Cập nhật trạng thái công tác (Đang làm việc / Đã nghỉ việc)
+        $emp_status = sanitize_text_field($_POST['employee_status'] ?? 'active');
+        if (!in_array($emp_status, array('active', 'inactive'), true)) {
+            $emp_status = 'active';
+        }
+        // Không cho phép tự khóa tài khoản của chính mình
+        if ($user_id === get_current_user_id()) {
+            $emp_status = 'active';
+        }
+        update_user_meta($user_id, 'mkv_employee_status', $emp_status);
+        if (class_exists('MKV_Audit_Logger')) {
+            MKV_Audit_Logger::log('EMPLOYEE', 'UPDATE_EMPLOYEE', 'user', $user_id, "Cập nhật nhân viên: {$current_user_info->user_login} (Quyền: {$role}, Trạng thái: {$emp_status})");
+        }
+
         wp_redirect(admin_url('admin.php?page=mkv-employees&message=updated'));
         exit;
     }
@@ -171,6 +215,9 @@ class MKV_Employees
         $reassign_id = get_current_user_id();
         
         if (wp_delete_user($user_id, $reassign_id)) {
+            if (class_exists('MKV_Audit_Logger')) {
+                MKV_Audit_Logger::log('EMPLOYEE', 'DELETE_EMPLOYEE', 'user', $user_id, "Xóa tài khoản nhân viên ID {$user_id}");
+            }
             wp_redirect(admin_url('admin.php?page=mkv-employees&message=deleted'));
             exit;
         }
@@ -206,13 +253,44 @@ class MKV_Employees
             ));
         }
 
-        // Trạng thái chấm công hôm nay của user hiện tại
+        // Trạng thái chấm công hôm nay của TẤT CẢ nhân viên
         $current_user_id = get_current_user_id();
         $today = current_time('Y-m-d');
-        $my_today_record = $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM {$wpdb->prefix}mkv_timesheets WHERE user_id = %d AND work_date = %s",
-            $current_user_id, $today
+
+        $today_records_raw = $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM {$wpdb->prefix}mkv_timesheets WHERE work_date = %s",
+            $today
         ));
+        $today_attendance = array();
+        if (!empty($today_records_raw)) {
+            foreach ($today_records_raw as $rec) {
+                $today_attendance[$rec->user_id] = $rec;
+            }
+        }
+        $my_today_record = $today_attendance[$current_user_id] ?? null;
+
+        // Thống kê nhanh chỉ số trạng thái nhân sự hôm nay
+        $total_staff          = count($users);
+        $count_working        = 0;
+        $count_not_checked_in = 0;
+        $count_completed      = 0;
+        $count_inactive       = 0;
+
+        foreach ($users as $u) {
+            $st = get_user_meta($u->ID, 'mkv_employee_status', true) ?: 'active';
+            if ($st === 'inactive') {
+                $count_inactive++;
+                continue;
+            }
+            $rec = $today_attendance[$u->ID] ?? null;
+            if ($rec && $rec->check_in_time && !$rec->check_out_time) {
+                $count_working++;
+            } elseif ($rec && $rec->check_in_time && $rec->check_out_time) {
+                $count_completed++;
+            } else {
+                $count_not_checked_in++;
+            }
+        }
 
         require_once MKV_DIR . 'includes/views/view-employees.php';
     }

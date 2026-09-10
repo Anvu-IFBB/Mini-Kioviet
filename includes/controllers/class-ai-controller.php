@@ -415,11 +415,11 @@ class MKV_AI_Controller
         $order_inserted = $wpdb->insert($table_orders, array(
             'order_code' => $order_code,
             'customer_id' => $customer_id ? $customer_id : null,
-            'status' => 'pending',
+            'status' => 'draft',
             'subtotal' => $subtotal,
             'total_amount' => $subtotal,
             'created_by' => get_current_user_id(),
-            'note' => 'Tạo bởi Trợ lý AI',
+            'note' => 'Tạo bởi Trợ lý AI (Đơn nháp)',
             'created_at' => current_time('mysql')
         ));
         if ($order_inserted === false) {
@@ -575,8 +575,7 @@ class MKV_AI_Controller
 
     private function execute_get_order_summary_stats($args) {
         global $wpdb;
-        $table_orders = $wpdb->prefix . 'mkv_orders';
-        $stats = $wpdb->get_results("SELECT status, COUNT(id) as count FROM $table_orders GROUP BY status");
+        $stats = $wpdb->get_results("SELECT status, COUNT(id) as count FROM {$wpdb->prefix}mkv_orders GROUP BY status");
         
         $pending = 0;
         $completed = 0;

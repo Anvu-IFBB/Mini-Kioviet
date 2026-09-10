@@ -9,7 +9,7 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
     </h1>
     <div class="mkv-page-actions">
         <?php if ($current_tab === 'suppliers'): ?>
-            <button class="mkv-btn mkv-btn-primary" onclick="document.getElementById('mkv-modal-sup').style.display='flex'">
+            <button type="button" class="mkv-btn mkv-btn-primary" onclick="document.getElementById('mkv-modal-sup').style.display='flex'">
                 <i class="hgi-stroke hgi-user-add-02"></i> <?php echo esc_html(mkv__('Thêm Nhà cung cấp')); ?>
             </button>
         <?php else: ?>
@@ -80,7 +80,7 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
                 ?>
                     <tr>
                         <td>
-                            <a href="javascript:void(0)" class="mkv-po-code-btn" onclick="mkvOpenPoDetail(<?php echo (int)$p->id; ?>)" style="color:var(--mkv-primary); font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:5px;" title="<?php echo esc_attr(mkv__('Bấm để xem chi tiết phiếu nhập')); ?>">
+                            <button type="button" class="mkv-po-code-btn" onclick="mkvOpenPoDetail(<?php echo (int)$p->id; ?>)" style="color:var(--mkv-primary); font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:5px;" title="<?php echo esc_attr(mkv__('Bấm để xem chi tiết phiếu nhập')); ?>">
                                 <i class="hgi-stroke hgi-invoice-03" style="font-size:15px;"></i> <?php echo esc_html($p->code); ?>
                             </a>
                         </td>
@@ -132,17 +132,34 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
     </table>
 </div>
 
+<?php if (isset($total_pages) && $total_pages > 1): ?>
+<div class="mkv-pagination">
+    <?php
+    $base_url = admin_url('admin.php?page=mkv-purchases&tab=list');
+    echo paginate_links(array(
+        'base'      => add_query_arg('paged', '%#%', $base_url),
+        'format'    => '',
+        'prev_text' => '<i class="hgi-stroke hgi-arrow-left-01" aria-hidden="true"></i><span class="screen-reader-text">' . esc_html(mkv__('Trang trước')) . '</span>',
+        'next_text' => '<i class="hgi-stroke hgi-arrow-right-01" aria-hidden="true"></i><span class="screen-reader-text">' . esc_html(mkv__('Trang sau')) . '</span>',
+        'total'     => $total_pages,
+        'current'   => $paged,
+        'type'      => 'plain',
+    ));
+    ?>
+</div>
+<?php endif; ?>
+
 <!-- Modal Chi Tiết Phiếu Nhập Hàng -->
-<div class="mkv-modal-overlay" id="mkv-modal-po-detail" style="display:none;">
+<div class="mkv-modal-overlay" id="mkv-modal-po-detail" role="dialog" aria-modal="true" aria-labelledby="mkv-modal-po-detail-title" style="display:none;">
     <div class="mkv-modal mkv-modal-xl" style="width:900px; max-width:96%; border-radius:14px; overflow:hidden;">
         <div class="mkv-modal-header" style="background:#f8fafc; border-bottom:1px solid #e2e8f0; padding:16px 22px;">
-            <h3 class="mkv-modal-title" style="font-size:16px; font-weight:700; color:var(--mkv-text-main); display:flex; align-items:center; gap:8px;">
+            <h3 class="mkv-modal-title" id="mkv-modal-po-detail-title" style="font-size:16px; font-weight:700; color:var(--mkv-text-main); display:flex; align-items:center; gap:8px;">
                 <i class="hgi-stroke hgi-invoice-03" style="color:var(--mkv-primary); font-size:20px;"></i>
                 <span><?php echo esc_html(mkv__('Chi Tiết Phiếu Nhập Hàng')); ?></span>
                 <span id="modal-po-code" style="font-family:monospace; font-size:14px; background:#eff6ff; color:var(--mkv-primary); padding:2px 8px; border-radius:6px; font-weight:700; border:1px solid #bfdbfe;"></span>
                 <span id="modal-po-badge"></span>
             </h3>
-            <button type="button" class="mkv-modal-close" onclick="mkvClosePoDetail()">&times;</button>
+            <button type="button" class="mkv-modal-close" aria-label="<?php echo esc_attr(mkv__('Đóng')); ?>" onclick="mkvClosePoDetail()">&times;</button>
         </div>
         
         <div class="mkv-modal-body" style="padding:22px; max-height:calc(85vh - 130px); overflow-y:auto;">
@@ -320,11 +337,11 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
 </div>
 
 <!-- Modal thêm NCC -->
-<div class="mkv-modal-overlay" id="mkv-modal-sup" style="display:none;">
+<div class="mkv-modal-overlay" id="mkv-modal-sup" role="dialog" aria-modal="true" aria-labelledby="mkv-modal-sup-title" style="display:none;">
     <div class="mkv-modal">
         <div class="mkv-modal-header">
-            <h3 class="mkv-modal-title"><i class="hgi-stroke hgi-user-add-02" style="color:var(--mkv-primary);"></i> <?php echo esc_html(mkv__('Thêm Nhà cung cấp')); ?></h3>
-            <button class="mkv-modal-close" onclick="document.getElementById('mkv-modal-sup').style.display='none'">&times;</button>
+            <h3 class="mkv-modal-title" id="mkv-modal-sup-title"><i class="hgi-stroke hgi-user-add-02" style="color:var(--mkv-primary);"></i> <?php echo esc_html(mkv__('Thêm Nhà cung cấp')); ?></h3>
+            <button type="button" class="mkv-modal-close" aria-label="<?php echo esc_attr(mkv__('Đóng')); ?>" onclick="document.getElementById('mkv-modal-sup').style.display='none'">&times;</button>
         </div>
         <form action="<?php echo admin_url('admin-post.php'); ?>" method="POST">
             <div class="mkv-modal-body">

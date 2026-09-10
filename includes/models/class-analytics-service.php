@@ -65,9 +65,14 @@ class MKV_Analytics_Service
 
         $total_products      = (int) wp_count_posts('mkv_product')->publish;
         $total_customers     = (int) $wpdb->get_var("SELECT COUNT(id) FROM {$wpdb->prefix}mkv_customers");
-        $total_revenue       = (float) $wpdb->get_var("SELECT SUM(GREATEST(0, total_amount - shipping_fee)) FROM {$wpdb->prefix}mkv_orders WHERE status IN ('paid', 'completed')");
-        $total_returns_rev   = (float) $wpdb->get_var("SELECT SUM(GREATEST(0, total_amount - shipping_fee)) FROM {$wpdb->prefix}mkv_orders WHERE status = 'returned'");
-        $net_total_revenue   = max(0.0, $total_revenue - $total_returns_rev);
+        $all_time_rev = $wpdb->get_row("SELECT 
+            SUM(CASE WHEN status IN ('paid', 'completed') THEN GREATEST(0, total_amount - shipping_fee) ELSE 0 END) as total_revenue,
+            SUM(CASE WHEN status = 'returned' THEN GREATEST(0, total_amount - shipping_fee) ELSE 0 END) as total_returns_rev
+        FROM {$wpdb->prefix}mkv_orders
+        WHERE status IN ('paid', 'completed', 'returned')");
+        $total_revenue     = (float) ($all_time_rev->total_revenue ?? 0);
+        $total_returns_rev = (float) ($all_time_rev->total_returns_rev ?? 0);
+        $net_total_revenue = max(0.0, $total_revenue - $total_returns_rev);
         $total_cash_balance  = (float) $wpdb->get_var("SELECT SUM(CASE WHEN type='thu' THEN amount ELSE -amount END) FROM {$wpdb->prefix}mkv_cashbook");
         $total_customer_debt = (float) $wpdb->get_var("SELECT SUM(total_debt) FROM {$wpdb->prefix}mkv_customers WHERE total_debt > 0");
 
@@ -101,7 +106,9 @@ class MKV_Analytics_Service
 
     private static function get_period_dates($period)
     {
-        $now = current_time('timestamp');
+        // P4-005: Use time() — current_time('timestamp') was deprecated in WP 5.3
+        $now = time();
+
 
         if ($period === 'yesterday') {
             $start_date = gmdate('Y-m-d 00:00:00', strtotime('-1 day', $now));
@@ -240,76 +247,116 @@ class MKV_Analytics_Service
         $chart_labels = array();
         $chart_data   = array();
         $now = current_time('timestamp');
-        
+
+        $base_sql = "SELECT DATE(created_at) as bucket_date, SUM(GREATEST(0, total_amount - shipping_fee)) as rev
+            FROM {$wpdb->prefix}mkv_orders
+            WHERE status IN ('paid', 'completed')";
+        $hourly_sql = "SELECT HOUR(created_at) as bucket_hour, SUM(GREATEST(0, total_amount - shipping_fee)) as rev
+            FROM {$wpdb->prefix}mkv_orders
+            WHERE status IN ('paid', 'completed')";
+
         if ($period === 'yesterday') {
             $yest = gmdate('Y-m-d', strtotime('-1 day', $now));
+            $rows = $wpdb->get_results($wpdb->prepare(
+                $hourly_sql . " AND DATE(created_at) = %s GROUP BY HOUR(created_at)",
+                $yest
+            ), ARRAY_A);
+
+            $by_hour = array();
+            foreach ($rows as $row) {
+                $by_hour[(int) $row['bucket_hour']] = (float) $row['rev'];
+            }
+
             for ($i = 0; $i <= 23; $i++) {
                 $hour = str_pad($i, 2, '0', STR_PAD_LEFT);
                 $chart_labels[] = $hour . ':00';
-                $rev = $wpdb->get_var($wpdb->prepare(
-                    "SELECT SUM(GREATEST(0, total_amount - shipping_fee)) FROM {$wpdb->prefix}mkv_orders WHERE DATE(created_at) = %s AND HOUR(created_at) = %d AND status IN ('paid', 'completed')",
-                    $yest, $i
-                ));
-                $chart_data[] = $rev ? (float) $rev : 0;
+                $chart_data[] = isset($by_hour[$i]) ? $by_hour[$i] : 0.0;
             }
         } elseif ($period === '7days' || $period === '30days') {
             $num_days = ($period === '7days') ? 7 : 30;
+            $rows = $wpdb->get_results($wpdb->prepare(
+                $base_sql . " AND created_at >= %s AND created_at <= %s GROUP BY DATE(created_at)",
+                $start_date,
+                $end_date
+            ), ARRAY_A);
+            $by_day = array();
+            foreach ($rows as $row) {
+                $by_day[$row['bucket_date']] = (float) $row['rev'];
+            }
+
             for ($i = $num_days - 1; $i >= 0; $i--) {
-                $d = date('Y-m-d', strtotime("-{$i} days", $now));
-                $chart_labels[] = date('d/m', strtotime($d));
-                $rev = $wpdb->get_var($wpdb->prepare(
-                    "SELECT SUM(GREATEST(0, total_amount - shipping_fee)) FROM {$wpdb->prefix}mkv_orders WHERE DATE(created_at) = %s AND status IN ('paid', 'completed')",
-                    $d
-                ));
-                $chart_data[] = $rev ? (float) $rev : 0;
+                $d = gmdate('Y-m-d', strtotime("-{$i} days", $now));
+                $chart_labels[] = gmdate('d/m', strtotime($d));
+                $chart_data[] = isset($by_day[$d]) ? $by_day[$d] : 0.0;
             }
         } elseif ($period === 'week') {
             $days = array(mkv__('Thứ 2'), mkv__('Thứ 3'), mkv__('Thứ 4'), mkv__('Thứ 5'), mkv__('Thứ 6'), mkv__('Thứ 7'), mkv__('CN'));
-            $week_start = date('Y-m-d', strtotime('monday this week', $now));
+            $rows = $wpdb->get_results($wpdb->prepare(
+                $base_sql . " AND created_at >= %s AND created_at <= %s GROUP BY DATE(created_at)",
+                $start_date,
+                $end_date
+            ), ARRAY_A);
+            $by_day = array();
+            foreach ($rows as $row) {
+                $by_day[$row['bucket_date']] = (float) $row['rev'];
+            }
+            $week_start = gmdate('Y-m-d', strtotime('monday this week', $now));
             for ($i = 0; $i < 7; $i++) {
                 $chart_labels[] = $days[$i];
-                $date = date('Y-m-d', strtotime($week_start . " +{$i} days"));
-                $rev = $wpdb->get_var($wpdb->prepare(
-                    "SELECT SUM(GREATEST(0, total_amount - shipping_fee)) FROM {$wpdb->prefix}mkv_orders WHERE DATE(created_at) = %s AND status IN ('paid', 'completed')",
-                    $date
-                ));
-                $chart_data[] = $rev ? (float) $rev : 0;
+                $date = gmdate('Y-m-d', strtotime($week_start . " +{$i} days"));
+                $chart_data[] = isset($by_day[$date]) ? $by_day[$date] : 0.0;
             }
         } elseif ($period === 'month') {
-            $days_in_month = date('t', $now);
-            $month = date('Y-m', $now);
-            for ($i = 1; $i <= $days_in_month; $i++) {
+            $rows = $wpdb->get_results($wpdb->prepare(
+                $base_sql . " AND created_at >= %s AND created_at <= %s GROUP BY DATE(created_at)",
+                $start_date,
+                $end_date
+            ), ARRAY_A);
+            $by_day = array();
+            foreach ($rows as $row) {
+                $by_day[$row['bucket_date']] = (float) $row['rev'];
+            }
+            $day_count = (int) gmdate('t', $now);
+            $month = gmdate('Y-m', $now);
+            for ($i = 1; $i <= $day_count; $i++) {
                 $chart_labels[] = str_pad($i, 2, '0', STR_PAD_LEFT);
                 $date = $month . '-' . str_pad($i, 2, '0', STR_PAD_LEFT);
-                $rev = $wpdb->get_var($wpdb->prepare(
-                    "SELECT SUM(GREATEST(0, total_amount - shipping_fee)) FROM {$wpdb->prefix}mkv_orders WHERE DATE(created_at) = %s AND status IN ('paid', 'completed')",
-                    $date
-                ));
-                $chart_data[] = $rev ? (float) $rev : 0;
+                $chart_data[] = isset($by_day[$date]) ? $by_day[$date] : 0.0;
             }
         } elseif ($period === 'last_month') {
             $last_month_ts = strtotime('first day of -1 month', $now);
-            $days_in_month = date('t', $last_month_ts);
-            $month = date('Y-m', $last_month_ts);
-            for ($i = 1; $i <= $days_in_month; $i++) {
+            $rows = $wpdb->get_results($wpdb->prepare(
+                $base_sql . " AND created_at >= %s AND created_at <= %s GROUP BY DATE(created_at)",
+                $start_date,
+                $end_date
+            ), ARRAY_A);
+            $by_day = array();
+            foreach ($rows as $row) {
+                $by_day[$row['bucket_date']] = (float) $row['rev'];
+            }
+            $day_count = (int) gmdate('t', $last_month_ts);
+            $month = gmdate('Y-m', $last_month_ts);
+            for ($i = 1; $i <= $day_count; $i++) {
                 $chart_labels[] = str_pad($i, 2, '0', STR_PAD_LEFT);
                 $date = $month . '-' . str_pad($i, 2, '0', STR_PAD_LEFT);
-                $rev = $wpdb->get_var($wpdb->prepare(
-                    "SELECT SUM(GREATEST(0, total_amount - shipping_fee)) FROM {$wpdb->prefix}mkv_orders WHERE DATE(created_at) = %s AND status IN ('paid', 'completed')",
-                    $date
-                ));
-                $chart_data[] = $rev ? (float) $rev : 0;
+                $chart_data[] = isset($by_day[$date]) ? $by_day[$date] : 0.0;
             }
         } elseif ($period === 'year') {
-            $year = date('Y', $now);
+            $rows = $wpdb->get_results($wpdb->prepare(
+                $base_sql . " AND created_at >= %s AND created_at <= %s GROUP BY YEAR(created_at), MONTH(created_at)",
+                $start_date,
+                $end_date
+            ), ARRAY_A);
+            $by_month = array();
+            foreach ($rows as $row) {
+                $month_key = gmdate('Y-m', strtotime($row['bucket_date']));
+                $by_month[$month_key] = (float) $row['rev'];
+            }
+            $year = gmdate('Y', $now);
             for ($i = 1; $i <= 12; $i++) {
                 $chart_labels[] = mkv__('Th') . $i;
-                $month = str_pad($i, 2, '0', STR_PAD_LEFT);
-                $rev = $wpdb->get_var($wpdb->prepare(
-                    "SELECT SUM(GREATEST(0, total_amount - shipping_fee)) FROM {$wpdb->prefix}mkv_orders WHERE YEAR(created_at) = %s AND MONTH(created_at) = %s AND status IN ('paid', 'completed')",
-                    $year, $month
-                ));
-                $chart_data[] = $rev ? (float) $rev : 0;
+                $month = $year . '-' . str_pad($i, 2, '0', STR_PAD_LEFT);
+                $chart_data[] = isset($by_month[$month]) ? $by_month[$month] : 0.0;
             }
         } elseif ($period === 'all') {
             $months_data = $wpdb->get_results(
@@ -323,24 +370,29 @@ class MKV_Analytics_Service
             if ($months_data) {
                 foreach ($months_data as $row) {
                     $chart_labels[] = $row->label;
-                    $chart_data[] = (float)$row->rev;
+                    $chart_data[] = (float) $row->rev;
                 }
             } else {
                 $chart_labels = array(date('m/Y', $now));
                 $chart_data = array(0);
             }
         } else {
-            $today = date('Y-m-d', $now);
+            $today = gmdate('Y-m-d', $now);
+            $rows = $wpdb->get_results($wpdb->prepare(
+                $hourly_sql . " AND DATE(created_at) = %s GROUP BY HOUR(created_at)",
+                $today
+            ), ARRAY_A);
+            $by_hour = array();
+            foreach ($rows as $row) {
+                $by_hour[(int) $row['bucket_hour']] = (float) $row['rev'];
+            }
             for ($i = 0; $i <= 23; $i++) {
                 $hour = str_pad($i, 2, '0', STR_PAD_LEFT);
                 $chart_labels[] = $hour . ':00';
-                $rev = $wpdb->get_var($wpdb->prepare(
-                    "SELECT SUM(GREATEST(0, total_amount - shipping_fee)) FROM {$wpdb->prefix}mkv_orders WHERE DATE(created_at) = %s AND HOUR(created_at) = %d AND status IN ('paid', 'completed')",
-                    $today, $i
-                ));
-                $chart_data[] = $rev ? (float) $rev : 0;
+                $chart_data[] = isset($by_hour[$i]) ? $by_hour[$i] : 0.0;
             }
         }
+
         return array('labels' => $chart_labels, 'data' => $chart_data);
     }
 
@@ -381,10 +433,10 @@ class MKV_Analytics_Service
     {
         global $wpdb;
         $activities = $wpdb->get_results($wpdb->prepare(
-            "SELECT o.order_code, o.total_amount, o.status, o.created_at as time, c.name as customer_name
+            "SELECT o.order_code, o.total_amount, o.status, COALESCE(o.updated_at, o.created_at) as time, c.name as customer_name
              FROM {$wpdb->prefix}mkv_orders o
              LEFT JOIN {$wpdb->prefix}mkv_customers c ON o.customer_id = c.id
-             ORDER BY o.created_at DESC
+             ORDER BY COALESCE(o.updated_at, o.created_at) DESC
              LIMIT %d", $limit
         ));
         if (!empty($activities)) {

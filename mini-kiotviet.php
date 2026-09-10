@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Mini KiotViet Dashboard
  * Description: Xây dựng giao diện Dashboard quản lý bán hàng kiểu KiotViet trên WordPress.
- * Version: 3.0
+ * Version: 3.3.0
  * Author: An Vũ
  * Text Domain: mini-kiotviet
  */
@@ -11,7 +11,7 @@ if (!defined('ABSPATH')) exit;
 
 define('MKV_DIR', plugin_dir_path(__FILE__));
 define('MKV_URL', plugin_dir_url(__FILE__));
-define('MKV_VERSION', '3.0');
+define('MKV_VERSION', '3.3.0');
 
 // Enqueue assets
 add_action('admin_enqueue_scripts', function () {
@@ -52,12 +52,17 @@ add_action('admin_enqueue_scripts', function () {
     // AI Assistant
     wp_enqueue_script('marked', 'https://cdn.jsdelivr.net/npm/marked/marked.min.js', array(), '4.3.0', true);
     wp_enqueue_script('dompurify', 'https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js', array(), '3.2.6', true);
-    wp_enqueue_script('mkv-admin-ai-assistant', MKV_URL . 'assets/js/admin-ai-assistant.js', array('jquery', 'dompurify'), $js_ai_assistant_ver, true);
+    wp_enqueue_script('mkv-admin-ai-assistant', MKV_URL . 'assets/js/admin-ai-assistant.js', array('jquery'), $js_ai_assistant_ver, true);
     wp_localize_script('mkv-admin-ai-assistant', 'mkv_ai_data', array(
         'ajax_url' => admin_url('admin-ajax.php'),
         'nonce'    => wp_create_nonce('mkv_ai_chat_nonce'),
     ));
     
+    wp_localize_script('mkv-admin-global', 'mkv_global_vars', array(
+        'ajax_url' => admin_url('admin-ajax.php'),
+        'nonce'    => wp_create_nonce('mkv_global_nonce'),
+    ));
+
     wp_localize_script('mkv-admin-global', 'mkv_i18n', array(
         'compared_to_yesterday' => mkv__('So với hôm qua'),
         'same_as_yesterday'     => mkv__('Bằng hôm qua'),
@@ -74,11 +79,23 @@ add_action('admin_enqueue_scripts', function () {
         'guest_customer'        => mkv__('Khách lẻ'),
         'product_unit'          => mkv__('sản phẩm'),
         'activity_template'     => mkv__('vừa mua đơn hàng <strong>{order_code}</strong> với giá trị <strong style="color:var(--mkv-primary);">{amount}</strong>'),
+        'error'                 => mkv__('Lỗi'),
     ));
 }); 
 
-// Render AI Assistant Drawer at root body level on all admin pages
+// Render Support Center Modal & AI Assistant Drawer at root body level on all admin pages
 add_action('admin_footer', function () {
+    ?>
+    <script>
+    window.mkv_ai_data = window.mkv_ai_data || {
+        ajax_url: '<?php echo esc_js(admin_url('admin-ajax.php')); ?>',
+        nonce: '<?php echo esc_js(wp_create_nonce('mkv_ai_chat_nonce')); ?>'
+    };
+    </script>
+    <?php
+    if (file_exists(MKV_DIR . 'includes/views/view-support-modal.php')) {
+        require_once MKV_DIR . 'includes/views/view-support-modal.php';
+    }
     if (file_exists(MKV_DIR . 'includes/views/view-ai-drawer.php')) {
         require_once MKV_DIR . 'includes/views/view-ai-drawer.php';
     }
@@ -104,6 +121,7 @@ add_filter('admin_body_class', function ($classes) {
 // Includes
 require_once MKV_DIR . 'includes/mkv-i18n.php';
 require_once MKV_DIR . 'includes/models/class-db-schema.php';
+require_once MKV_DIR . 'includes/models/class-audit-logger.php';
 require_once MKV_DIR . 'includes/models/class-analytics-service.php';
 require_once MKV_DIR . 'includes/models/class-shipping-service.php';
 require_once MKV_DIR . 'includes/models/class-ai-service.php';
@@ -153,6 +171,13 @@ register_activation_hook(__FILE__, function ()
     delete_option('mkv_db_version');
 });
 
+// Plugin deactivation
+register_deactivation_hook(__FILE__, function ()
+{
+    wp_clear_scheduled_hook('mkv_daily_stock_scan');
+    wp_clear_scheduled_hook('mkv_daily_audit_cleanup');
+});
+
 
 
 function mkv_register_roles_and_caps()
@@ -161,7 +186,8 @@ function mkv_register_roles_and_caps()
         'mkv_manage_dashboard', 'mkv_manage_products', 'mkv_manage_inventory',
         'mkv_manage_customers', 'mkv_manage_orders', 'mkv_manage_reports',
         'mkv_manage_settings', 'mkv_manage_notifications', 'mkv_view_cost_price',
-        'mkv_manage_cashbook', 'mkv_manage_employees', 'mkv_manage_purchases'
+        'mkv_manage_cashbook', 'mkv_manage_employees', 'mkv_manage_purchases',
+        'mkv_view_audit_logs'
     );
 
     // Admin — toàn quyền (luôn đồng bộ)
@@ -170,26 +196,25 @@ function mkv_register_roles_and_caps()
         foreach ($all_caps as $cap) $admin->add_cap($cap);
     }
 
-    // --- Manager: toàn quyền trừ Settings ---
-    $manager_caps = array_diff($all_caps, array('mkv_manage_settings'));
+    // --- Manager: toàn quyền trừ Settings & Audit Logs ---
+    $manager_caps = array_diff($all_caps, array('mkv_manage_settings', 'mkv_view_audit_logs'));
     $manager_perms = array('read' => true);
     foreach ($manager_caps as $c) $manager_perms[$c] = true;
     // Xóa và tạo lại để đảm bảo caps luôn đúng
     remove_role('mkv_manager');
     add_role('mkv_manager', 'Cửa hàng trưởng', $manager_perms);
 
-    // --- Sales: POS + Khách hàng + Đơn hàng ---
+    // --- Sales: POS + Khách hàng + Đơn hàng + Thông báo ---
     remove_role('mkv_sales');
     add_role('mkv_sales', 'Nhân viên Sales', array(
         'read'                     => true,
         'mkv_manage_dashboard'     => true,
         'mkv_manage_customers'     => true,
         'mkv_manage_orders'        => true,
-        'mkv_manage_cashbook'      => true,
         'mkv_manage_notifications' => true,
     ));
 
-    // --- Warehouse: Kho + Sản phẩm ---
+    // --- Warehouse: Kho + Sản phẩm + Nhập hàng + Giá vốn ---
     remove_role('mkv_warehouse');
     add_role('mkv_warehouse', 'Thủ kho', array(
         'read'                     => true,
@@ -202,6 +227,14 @@ function mkv_register_roles_and_caps()
     ));
 }
 
+// Tự động đồng bộ cấu hình phân quyền người dùng khi khởi động
+add_action('admin_init', function() {
+    if (get_option('mkv_roles_version') !== '2.2') {
+        mkv_register_roles_and_caps();
+        update_option('mkv_roles_version', '2.2');
+    }
+});
+
 // Luôn cấp toàn quyền MKV cho Administrator mà không lo lỗi phân quyền
 add_filter('user_has_cap', function($allcaps, $caps, $args, $user) {
     if (!empty($allcaps['administrator']) || !empty($allcaps['manage_options'])) {
@@ -209,7 +242,8 @@ add_filter('user_has_cap', function($allcaps, $caps, $args, $user) {
             'mkv_manage_dashboard', 'mkv_manage_products', 'mkv_manage_inventory',
             'mkv_manage_customers', 'mkv_manage_orders', 'mkv_manage_reports',
             'mkv_manage_settings', 'mkv_manage_notifications', 'mkv_view_cost_price',
-            'mkv_manage_cashbook', 'mkv_manage_employees', 'mkv_manage_purchases'
+            'mkv_manage_cashbook', 'mkv_manage_employees', 'mkv_manage_purchases',
+            'mkv_view_audit_logs' // P4-002: match full capability set defined in mkv_register_roles_and_caps
         );
         foreach ($mkv_caps as $c) {
             $allcaps[$c] = true;
@@ -237,10 +271,20 @@ add_action('admin_head', function() {
 function mkv_register_cron()
 {
     if (!wp_next_scheduled('mkv_daily_stock_scan')) {
-        // 08:00 giờ server mỗi ngày
-        wp_schedule_event(strtotime('08:00:00'), 'daily', 'mkv_daily_stock_scan');
+        // P4-006: Use time() + offset to guarantee a future timestamp; 'daily' recurrence handles subsequent runs
+        wp_schedule_event(time() + MINUTE_IN_SECONDS, 'daily', 'mkv_daily_stock_scan');
     }
     add_action('mkv_daily_stock_scan', 'mkv_cron_stock_scan');
+
+    // Phase 3H: Scheduled Audit Log retention cleanup (daily)
+    if (!wp_next_scheduled('mkv_daily_audit_cleanup')) {
+        wp_schedule_event(time() + MINUTE_IN_SECONDS, 'daily', 'mkv_daily_audit_cleanup');
+    }
+    add_action('mkv_daily_audit_cleanup', function() {
+        if (class_exists('MKV_Audit_Logger')) {
+            MKV_Audit_Logger::purge_expired_logs();
+        }
+    });
 }
 
 function mkv_cron_stock_scan()
@@ -273,18 +317,25 @@ function mkv_cron_stock_scan()
     wp_mail($email, $subject, $body);
 
     // Ghi vào bảng notifications
+    $today_start = current_time('Y-m-d 00:00:00');
+    $today_end   = current_time('Y-m-d 23:59:59');
+    $existing_titles = $wpdb->get_col($wpdb->prepare(
+        "SELECT title FROM {$wpdb->prefix}mkv_notifications WHERE created_at BETWEEN %s AND %s AND type = 'warning'",
+        $today_start,
+        $today_end
+    ));
+    $existing_titles_map = array_flip($existing_titles ?: array());
+
     foreach ($low as $item) {
-        $exists = $wpdb->get_var($wpdb->prepare(
-            "SELECT id FROM {$wpdb->prefix}mkv_notifications WHERE title = %s AND DATE(created_at) = CURDATE()",
-            'Sắp hết hàng: ' . $item->post_title
-        ));
-        if (!$exists) {
+        $notif_title = 'Sắp hết hàng: ' . $item->post_title;
+        if (!isset($existing_titles_map[$notif_title])) {
             $wpdb->insert("{$wpdb->prefix}mkv_notifications", array(
                 'type'    => 'warning',
-                'title'   => 'Sắp hết hàng: ' . $item->post_title,
+                'title'   => $notif_title,
                 'message' => "Tồn kho hiện tại: {$item->total_stock}. Vui lòng nhập thêm hàng.",
                 'is_read' => 0,
             ));
+            $existing_titles_map[$notif_title] = true;
         }
     }
 }
@@ -324,7 +375,6 @@ add_action('admin_menu', function () {
         'mkv-employees' => 110,
         'mkv-notifications' => 120,
         'mkv-settings' => 130,
-        'mkv-ai-logs' => 140,
     );
 
     usort($submenu['mini-kiotviet'], function ($left, $right) use ($menu_order) {
@@ -334,14 +384,7 @@ add_action('admin_menu', function () {
     });
 }, 9999);
 
-// Redirect Dashboard mặc định -> MKV Dashboard
-add_action('admin_init', function () {
-    global $pagenow;
-    if ($pagenow === 'index.php' && !isset($_GET['page']) && current_user_can('mkv_manage_dashboard')) {
-        wp_redirect(admin_url('admin.php?page=mini-kiotviet'));
-        exit;
-    }
-});
+// Logic điều hướng sau đăng nhập được xử lý tối ưu theo vai trò tại MKV_Dashboard::redirect_to_custom_dashboard()
 
 // REST API: kiểm tra tồn kho realtime (cho POS)
 add_action('rest_api_init', function () {
@@ -368,10 +411,12 @@ add_action('rest_api_init', function () {
         'methods'             => 'GET',
         'callback'            => function () {
             global $wpdb;
-            $today  = current_time('Y-m-d');
+            $today_start = current_time('Y-m-d 00:00:00');
+            $today_end   = current_time('Y-m-d 23:59:59');
             $orders = (int) $wpdb->get_var($wpdb->prepare(
-                "SELECT COUNT(*) FROM {$wpdb->prefix}mkv_orders WHERE DATE(created_at) = %s",
-                $today
+                "SELECT COUNT(*) FROM {$wpdb->prefix}mkv_orders WHERE created_at >= %s AND created_at <= %s",
+                $today_start,
+                $today_end
             ));
             $alerts = (int) $wpdb->get_var(
                 "SELECT COUNT(*) FROM {$wpdb->prefix}mkv_notifications WHERE is_read = 0"
@@ -402,3 +447,19 @@ add_action('http_api_curl', function ($handle) {
         curl_setopt($handle, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
     }
 });
+
+/**
+ * Sanitize CSV cell against CSV/Formula injection (Spreadsheet Formula Injection)
+ */
+if (!function_exists('mkv_sanitize_csv_cell')) {
+    function mkv_sanitize_csv_cell($value) {
+        if (is_string($value) && strlen($value) > 0) {
+            $first_char = $value[0];
+            if (in_array($first_char, array('=', '+', '-', '@', "\t", "\r"), true)) {
+                return "'" . $value;
+            }
+        }
+        return $value;
+    }
+}
+

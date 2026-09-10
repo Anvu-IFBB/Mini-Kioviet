@@ -3,7 +3,7 @@ if (!defined('ABSPATH')) exit;
 
 class MKV_DB_Schema
 {
-    const DB_VERSION = '3.0.0';
+    const DB_VERSION = '3.3.0';
 
     public static function init()
     {
@@ -119,11 +119,14 @@ class MKV_DB_Schema
             shipping_phone varchar(50)    DEFAULT NULL,
             created_by     bigint(20),
             created_at     datetime       DEFAULT CURRENT_TIMESTAMP,
+            updated_at     datetime       DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY  (id),
             UNIQUE KEY order_code (order_code),
             KEY status     (status),
             KEY payment_status (payment_status),
             KEY created_at (created_at),
+            KEY updated_at (updated_at),
+            KEY idx_status_created (status, created_at),
             KEY customer_id (customer_id),
             KEY tracking_code (tracking_code),
             KEY sales_channel (sales_channel),
@@ -131,6 +134,12 @@ class MKV_DB_Schema
             KEY cod_settled_at (cod_settled_at)
         ) $charset;";
         dbDelta($sql);
+
+        // Migration: Add updated_at if not exists
+        $row = $wpdb->get_row("SELECT * FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = '{$wpdb->prefix}mkv_orders' AND column_name = 'updated_at'");
+        if (!$row) {
+            $wpdb->query("ALTER TABLE {$wpdb->prefix}mkv_orders ADD COLUMN updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, ADD INDEX updated_at (updated_at)");
+        }
 
         // Migration 1: Reclassify COD orders - if COD is pending or COD amount > 0, debt_amount & customer_debt_amount must be 0
         $wpdb->query(
@@ -221,7 +230,8 @@ class MKV_DB_Schema
             created_at   datetime      DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
             KEY type (type),
-            KEY created_at (created_at)
+            KEY created_at (created_at),
+            KEY idx_type_created (type, created_at)
         ) $charset;";
         dbDelta($sql);
 
@@ -324,7 +334,9 @@ class MKV_DB_Schema
             sys_qty       int(11)       NOT NULL,
             actual_qty    int(11)       NOT NULL,
             diff_qty      int(11)       NOT NULL,
-            PRIMARY KEY (id)
+            PRIMARY KEY (id),
+            KEY idx_stocktake_id (stocktake_id),
+            KEY idx_product_id (product_id)
         ) $charset;";
         dbDelta($sql);
 
@@ -353,7 +365,9 @@ class MKV_DB_Schema
             qty           int(11)       NOT NULL,
             price         decimal(15,2) NOT NULL,
             subtotal      decimal(15,2) NOT NULL,
-            PRIMARY KEY (id)
+            PRIMARY KEY (id),
+            KEY idx_return_id (return_id),
+            KEY idx_product_id (product_id)
         ) $charset;";
         dbDelta($sql);
 
@@ -362,7 +376,7 @@ class MKV_DB_Schema
             id             bigint(20)   NOT NULL AUTO_INCREMENT,
             user_id        bigint(20)   NOT NULL,
             interaction_id varchar(100) DEFAULT '',
-            message_type   varchar(20)  DEFAULT 'user', -- 'user', 'ai', 'function'
+            message_type   varchar(20)  DEFAULT 'user',
             message        text,
             created_at     datetime     DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
@@ -370,5 +384,85 @@ class MKV_DB_Schema
             KEY created_at (created_at)
         ) $charset;";
         dbDelta($sql);
+
+        // ===== 18. Nhật ký kiểm toán bảo mật (Phase 3G) =====
+        $sql = "CREATE TABLE {$wpdb->prefix}mkv_audit_logs (
+            id          bigint(20)   NOT NULL AUTO_INCREMENT,
+            user_id     bigint(20)   DEFAULT 0,
+            event_type  varchar(50)  NOT NULL,
+            action      varchar(50)  NOT NULL,
+            object_type varchar(50)  DEFAULT '',
+            object_id   varchar(100) DEFAULT '',
+            description text,
+            ip_address  varchar(100) DEFAULT '',
+            user_agent  text,
+            created_at  datetime     DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY created_at (created_at),
+            KEY user_id (user_id),
+            KEY event_type (event_type),
+            KEY action (action),
+            KEY idx_event_created (event_type, created_at),
+            KEY idx_action_created (action, created_at)
+        ) $charset;";
+        dbDelta($sql);
+
+        // Phase 3A: Idempotent Migration for Performance Indexes
+        self::migrate_indexes();
+    }
+
+    /**
+     * Add index to table if it does not already exist.
+     * Safe, non-destructive, and idempotent.
+     *
+     * @param string $table Full table name (with prefix)
+     * @param string $index_name Name of the index
+     * @param string $columns Column list, e.g. '`status`, `created_at`'
+     * @return bool True if added, false if already existed or failed
+     */
+    public static function add_index_if_not_exists($table, $index_name, $columns)
+    {
+        global $wpdb;
+        $exists = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(1) FROM information_schema.statistics 
+             WHERE table_schema = DATABASE() 
+               AND table_name = %s 
+               AND index_name = %s",
+            $table,
+            $index_name
+        ));
+
+        if (!$exists) {
+            $result = $wpdb->query("ALTER TABLE `{$table}` ADD INDEX `{$index_name}` ({$columns})");
+            return ($result !== false);
+        }
+        return false;
+    }
+
+    /**
+     * Migrate Phase 3A approved performance indexes.
+     */
+    public static function migrate_indexes()
+    {
+        global $wpdb;
+
+        // 1. wp_mkv_stocktake_items
+        self::add_index_if_not_exists("{$wpdb->prefix}mkv_stocktake_items", 'idx_stocktake_id', '`stocktake_id`');
+        self::add_index_if_not_exists("{$wpdb->prefix}mkv_stocktake_items", 'idx_product_id', '`product_id`');
+
+        // 2. wp_mkv_return_items
+        self::add_index_if_not_exists("{$wpdb->prefix}mkv_return_items", 'idx_return_id', '`return_id`');
+        self::add_index_if_not_exists("{$wpdb->prefix}mkv_return_items", 'idx_product_id', '`product_id`');
+
+        // 3. wp_mkv_orders
+        self::add_index_if_not_exists("{$wpdb->prefix}mkv_orders", 'idx_status_created', '`status`, `created_at`');
+
+        // 4. wp_mkv_cashbook
+        self::add_index_if_not_exists("{$wpdb->prefix}mkv_cashbook", 'idx_type_created', '`type`, `created_at`');
+
+        // 5. wp_mkv_audit_logs (Phase 3H composite indexes for high performance querying)
+        self::add_index_if_not_exists("{$wpdb->prefix}mkv_audit_logs", 'idx_event_created', '`event_type`, `created_at`');
+        self::add_index_if_not_exists("{$wpdb->prefix}mkv_audit_logs", 'idx_action_created', '`action`, `created_at`');
     }
 }
+

@@ -4,33 +4,105 @@
 
 @layer base {
   :root {
-    --mkv-bg: #f2f3f5;
-    --mkv-surface: #ffffff;
-    --mkv-text-main: #1e293b;
-    --mkv-text-muted: #64748b;
-    --mkv-border: #e2e8f0;
-    --mkv-border-light: #f8fafc;
-    --mkv-green: #10b981;
+    /* UI-01 canonical semantic tokens. Keep legacy aliases below for compatibility. */
+    --mkv-color-background: #f4f6f8;
+    --mkv-color-surface: #ffffff;
+    --mkv-color-surface-muted: #f8fafc;
+    --mkv-color-border: #e2e8f0;
+    --mkv-color-text-primary: #0f172a;
+    --mkv-color-text-secondary: #334155;
+    --mkv-color-text-muted: #64748b;
+    --mkv-color-text-disabled: #94a3b8;
+    --mkv-color-primary: #0060df;
+    --mkv-color-primary-hover: #004ecc;
+    --mkv-color-primary-subtle: #eff6ff;
+    --mkv-color-success: #10b981;
+    --mkv-color-warning: #f59e0b;
+    --mkv-color-danger: #ef4444;
+    --mkv-color-info: #2563eb;
+
+    --mkv-font-body: 14px;
+    --mkv-font-small: 12px;
+    --mkv-font-label: 13px;
+    --mkv-font-section-title: 16px;
+    --mkv-font-page-title: 20px;
+    --mkv-font-metric: 28px;
+
+    --mkv-space-1: 4px;
+    --mkv-space-2: 8px;
+    --mkv-space-3: 12px;
+    --mkv-space-4: 16px;
+    --mkv-space-5: 20px;
+    --mkv-space-6: 24px;
+    --mkv-space-8: 32px;
+
+    --mkv-radius-small: 6px;
+    --mkv-radius-default: 8px;
+    --mkv-radius-large: 12px;
+    --mkv-shadow-none: none;
+    --mkv-shadow-subtle: 0 1px 3px rgba(0, 41, 87, .05), 0 1px 2px rgba(0, 41, 87, .03);
+    --mkv-shadow-elevated: 0 4px 12px rgba(0, 41, 87, .06);
+    --mkv-focus-ring: 0 0 0 3px rgba(0, 96, 223, .22);
+    --mkv-transition-fast: 160ms cubic-bezier(.4, 0, .2, 1);
+
+    /* Legacy aliases: existing .mkv-* components continue to resolve. */
+    --mkv-bg: var(--mkv-color-background);
+    --mkv-surface: var(--mkv-color-surface);
+    --mkv-text-main: var(--mkv-color-text-primary);
+    --mkv-text-muted: var(--mkv-color-text-muted);
+    --mkv-border: var(--mkv-color-border);
+    --mkv-border-light: var(--mkv-color-surface-muted);
+    --mkv-green: var(--mkv-color-success);
+    --mkv-primary: var(--mkv-color-primary);
+    --mkv-primary-dark: var(--mkv-color-primary-hover);
+    --mkv-primary-light: var(--mkv-color-primary-subtle);
   }
 
-  .dark {
-    --mkv-bg: #0f172a;
-    --mkv-surface: #1e293b;
-    --mkv-text-main: #f8fafc;
-    --mkv-text-muted: #94a3b8;
-    --mkv-border: #334155;
-    --mkv-border-light: #1e293b;
+  .dark,
+  html.dark,
+  body.dark {
+    --mkv-color-background: #0b0f19;
+    --mkv-color-surface: #1e293b;
+    --mkv-color-surface-muted: #243247;
+    --mkv-color-border: #334155;
+    --mkv-color-text-primary: #f1f5f9;
+    --mkv-color-text-secondary: #cbd5e1;
+    --mkv-color-text-muted: #94a3b8;
+    --mkv-color-text-disabled: #64748b;
+    --mkv-color-primary-subtle: #1e3a8a;
+    --mkv-shadow-subtle: 0 1px 2px rgba(0, 0, 0, .4);
+    --mkv-shadow-elevated: 0 2px 8px rgba(0, 0, 0, .5);
+    --mkv-focus-ring: 0 0 0 3px rgba(56, 189, 248, .3);
   }
   
   body.mkv-admin-page {
     @apply text-mkv-text-main font-sans bg-mkv-bg m-0 p-0 overflow-x-hidden;
+    font-size: var(--mkv-font-body);
+    line-height: 1.5;
+  }
+
+  :where(button, a, input, select, textarea):focus-visible {
+    outline: 2px solid var(--mkv-color-primary);
+    outline-offset: 2px;
+    box-shadow: var(--mkv-focus-ring);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      scroll-behavior: auto !important;
+      transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+    }
   }
 }
 
 @layer components {
   /* You can gradually migrate components to Tailwind here */
   .mkv-card {
-    @apply bg-[var(--mkv-surface)] text-[var(--mkv-text-main)] border border-[var(--mkv-border-light)] shadow-sm rounded-lg overflow-hidden transition-shadow duration-200 mb-5;
+    @apply bg-[var(--mkv-surface)] text-[var(--mkv-text-main)] border border-[var(--mkv-border)] shadow-sm rounded-lg overflow-hidden transition-shadow duration-200 mb-5;
   }
   .mkv-card:hover {
     @apply shadow-md;
@@ -39,6 +111,7 @@
   /* Buttons */
   .mkv-btn {
     @apply inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-[13px] font-medium cursor-pointer transition-all border border-transparent whitespace-nowrap outline-none shadow-sm;
+    min-height: 36px;
   }
   .mkv-btn:active {
     @apply transform translate-y-px shadow-none;
@@ -62,7 +135,7 @@
     @apply bg-[var(--mkv-green)] text-white hover:opacity-90;
   }
   .mkv-btn-secondary {
-    @apply bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300 shadow-sm;
+    @apply bg-[var(--mkv-surface)] text-[var(--mkv-color-text-secondary)] border-[var(--mkv-border)] hover:bg-[var(--mkv-color-surface-muted)] hover:border-slate-300 shadow-sm;
   }
   .mkv-btn-outline {
     @apply bg-transparent text-[var(--mkv-primary)] border border-[var(--mkv-primary)] hover:bg-[var(--mkv-primary)] hover:text-white;
@@ -73,7 +146,7 @@
   
   /* Modern Input fields */
   .mkv-input {
-    @apply w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-sm shadow-sm placeholder-slate-400
+    @apply w-full px-3 py-2 bg-[var(--mkv-surface)] text-[var(--mkv-color-text-primary)] border border-slate-300 rounded-md text-sm shadow-sm placeholder-slate-400
     focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-shadow duration-200;
   }
 }

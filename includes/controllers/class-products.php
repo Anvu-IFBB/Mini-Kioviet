@@ -130,19 +130,56 @@ class MKV_Products
                         });
                     });
 
-                    // Tích hợp ô Tìm kiếm trực tiếp vào thanh công cụ .tablenav.top
-                    function mkvUnifyToolbar() {
+                    // 1. Tổ chức hàng Sub-bar: Trạng thái (Pills) bên trái, Ô Tìm kiếm bên phải trên CÙNG MỘT DÒNG
+                    function mkvAlignSubBar() {
+                        const $sub = $('.subsubsub');
                         const $search = $('#posts-filter .search-box, .wrap > .search-box');
-                        const $toolbar = $('#posts-filter .tablenav.top');
-                        if ($search.length && $toolbar.length && !$toolbar.find('.search-box').length) {
-                            $toolbar.prepend($search);
-                            $('#post-search-input').attr('placeholder', 'Tìm tên sản phẩm, mã SKU...');
+                        if ($sub.length && $search.length && !$('.mkv-product-subbar').length) {
+                            const $subbar = $('<div class="mkv-product-subbar"></div>');
+                            $sub.before($subbar);
+                            $subbar.append($sub).append($search);
+                            $('#post-search-input').attr('placeholder', 'Tìm tên sản phẩm, mã SKU, barcode...');
                             $('#search-submit').val('Tìm kiếm');
                         }
                     }
-                    mkvUnifyToolbar();
-                    setTimeout(mkvUnifyToolbar, 50);
-                    setTimeout(mkvUnifyToolbar, 300);
+                    mkvAlignSubBar();
+                    setTimeout(mkvAlignSubBar, 50);
+                    setTimeout(mkvAlignSubBar, 200);
+
+                    // 2. Tổ chức thanh công cụ .tablenav.top cân đối hai bên:
+                    // Trái: Thao tác hàng loạt + Bộ lọc danh mục / ngày + Nút Lọc
+                    // Phải: Nút Xuất CSV + Nhập CSV + Hiển thị số lượng mục
+                    function mkvStructureToolbar() {
+                        const $toolbar = $('#posts-filter .tablenav.top');
+                        if (!$toolbar.length || $toolbar.find('.mkv-toolbar-left').length) return;
+
+                        const $left = $('<div class="mkv-toolbar-left"></div>');
+                        const $right = $('<div class="mkv-toolbar-right"></div>');
+
+                        const $bulkactions = $toolbar.find('.bulkactions');
+                        const $actions = $toolbar.find('.actions:not(.bulkactions)');
+                        const $pages = $toolbar.find('.tablenav-pages');
+                        const $csvBtns = $toolbar.find('.mkv-btn-csv, button[name="mkv_export_csv"], button[onclick*="mkv_import_file"]');
+
+                        if ($bulkactions.length) {
+                            $left.append($bulkactions);
+                            $left.append('<span class="mkv-toolbar-divider"></span>');
+                        }
+                        if ($actions.length) {
+                            $left.append($actions);
+                        }
+                        if ($csvBtns.length) {
+                            $right.append($csvBtns);
+                        }
+                        if ($pages.length) {
+                            $right.append($pages);
+                        }
+
+                        $toolbar.empty().append($left).append($right);
+                    }
+                    mkvStructureToolbar();
+                    setTimeout(mkvStructureToolbar, 60);
+                    setTimeout(mkvStructureToolbar, 250);
 
                     // Defeat WP's sticky column headers and toolbar jumping completely
                     function mkvDefeatSticky() {
@@ -166,7 +203,7 @@ class MKV_Products
                     setTimeout(mkvDefeatSticky, 1200);
                     $(window).on('scroll.mkv_fix resize.mkv_fix', mkvDefeatSticky);
 
-                    <?php if (mkv_get_lang() === 'vi'): ?>
+                    <?php if (mkv_get_current_lang() === 'vi'): ?>
                     // Việt hóa các nút và select mặc định của WP
                     $('#post-query-submit').val('Lọc');
                     $('#doaction, #doaction2').val('Áp dụng');
@@ -289,7 +326,83 @@ class MKV_Products
             });
         }
 
-        if (!in_array($hook, array('post.php', 'post-new.php'))) return;
+        if (in_array($hook, array('post.php', 'post-new.php')) && isset($GLOBALS['typenow']) && $GLOBALS['typenow'] === 'mkv_product') {
+            add_action('admin_footer', function() {
+                $is_edit = (isset($GLOBALS['pagenow']) && $GLOBALS['pagenow'] === 'post.php');
+                ?>
+                <script>
+                jQuery(document).ready(function($){
+                    // 0. Căn chỉnh thứ tự 2 cột chuẩn Workstation: Đưa #mkv_product_details vào giữa #titlediv và #postdivrich
+                    function mkvNormalizeColumns() {
+                        const $details = $('#mkv_product_details');
+                        const $title = $('#titlediv');
+                        const $rich = $('#postdivrich');
+                        if ($details.length && $title.length && !$title.next().is('#mkv_product_details')) {
+                            $title.after($details);
+                        }
+                        if ($details.length && $rich.length && !$details.next().is('#postdivrich')) {
+                            $details.after($rich);
+                        }
+                        $('#postbox-container-2').hide();
+                    }
+                    mkvNormalizeColumns();
+                    setTimeout(mkvNormalizeColumns, 30);
+                    setTimeout(mkvNormalizeColumns, 150);
+                    setTimeout(mkvNormalizeColumns, 500);
+
+                    // 1. Icon & Tiêu đề chuẩn SaaS cho các Card (Bọc trong .mkv-postbox-title chống lệch)
+                    const $submitH2 = $('#submitdiv .postbox-header h2');
+                    if ($submitH2.length && !$submitH2.find('.mkv-postbox-title').length) {
+                        $submitH2.html('<span class="mkv-postbox-title"><i class="hgi-stroke hgi-sent" style="font-size:16px; color:var(--mkv-primary);"></i> <?php echo esc_js(mkv__('Trạng thái & Xuất bản')); ?></span>');
+                    }
+
+                    const $catH2 = $('#mkv_product_catdiv .postbox-header h2');
+                    if ($catH2.length && !$catH2.find('.mkv-postbox-title').length) {
+                        $catH2.html('<span class="mkv-postbox-title"><i class="hgi-stroke hgi-folder-02" style="font-size:16px; color:var(--mkv-primary);"></i> <?php echo esc_js(mkv__('Danh mục sản phẩm')); ?></span>');
+                    }
+
+                    const $imgH2 = $('#postimagediv .postbox-header h2');
+                    if ($imgH2.length && !$imgH2.find('.mkv-postbox-title').length) {
+                        $imgH2.html('<span class="mkv-postbox-title"><i class="hgi-stroke hgi-image-02" style="font-size:16px; color:var(--mkv-primary);"></i> <?php echo esc_js(mkv__('Ảnh đại diện sản phẩm')); ?></span>');
+                    }
+
+                    const $detailsH2 = $('#mkv_product_details .postbox-header h2');
+                    if ($detailsH2.length && !$detailsH2.find('.mkv-postbox-title').length) {
+                        $detailsH2.html('<span class="mkv-postbox-title"><i class="hgi-stroke hgi-package" style="font-size:16px; color:var(--mkv-primary);"></i> <?php echo esc_js(mkv__('Thông tin hàng hóa & Thiết lập giá')); ?></span>');
+                    }
+
+                    // 2. Tinh chỉnh nút Xuất bản và Lưu nháp
+                    <?php if ($is_edit): ?>
+                    $('#publish').val('<?php echo esc_js(mkv__('Cập nhật sản phẩm')); ?>');
+                    <?php else: ?>
+                    $('#publish').val('<?php echo esc_js(mkv__('Lưu & Xuất bản')); ?>');
+                    <?php endif; ?>
+                    $('#save-post').val('<?php echo esc_js(mkv__('Lưu nháp')); ?>');
+
+                    // 3. Việt hóa & Gắn Badge cho các dòng Trạng thái xuất bản
+                    <?php if (mkv_get_current_lang() === 'vi'): ?>
+                    $('.misc-pub-section a.edit-post-status, .misc-pub-section a.edit-visibility, .misc-pub-section a.edit-timestamp').text('Chỉnh sửa');
+                    $('#delete-action a.submitdelete').text('Chuyển vào thùng rác');
+                    $('#post-status-display').each(function() {
+                        let txt = $(this).text().trim();
+                        if (txt === 'Privately Published') $(this).text('Riêng tư');
+                        else if (txt === 'Published') $(this).text('Đã xuất bản');
+                        else if (txt === 'Draft') $(this).text('Bản nháp');
+                        else if (txt === 'Pending Review') $(this).text('Chờ duyệt');
+                    });
+                    $('#post-visibility-display').each(function() {
+                        let txt = $(this).text().trim();
+                        if (txt === 'Public') $(this).text('Công khai');
+                        else if (txt === 'Password protected') $(this).text('Bảo vệ bằng mật khẩu');
+                        else if (txt === 'Private') $(this).text('Riêng tư');
+                    });
+                    <?php endif; ?>
+                });
+                </script>
+                <?php
+            });
+            return;
+        }
     }
 
     /**
@@ -322,17 +435,39 @@ class MKV_Products
         $mkv_cpt_standalone_mode = true;
         require MKV_DIR . 'includes/views/header-kiotviet.php';
 
-        // Back button on edit/new product pages
+        // Top action bar on edit/new product pages
         if (in_array($pagenow, array('post.php', 'post-new.php')) && $is_mkv_cpt) {
-            echo '<div class="mkv-cpt-back-bar" style="padding: 16px 20px 0 20px;">
-                    <a href="' . esc_url(admin_url('edit.php?post_type=mkv_product')) . '" class="mkv-cpt-back-btn">
-                        <i class="hgi-stroke hgi-arrow-left-01"></i> ' . esc_html(mkv__('Quay lại danh sách sản phẩm')) . '
-                    </a>
+            $is_edit = ($pagenow === 'post.php');
+            global $post;
+            $post_title = ($is_edit && !empty($post->post_title)) ? $post->post_title : '';
+            $page_heading = $is_edit ? mkv__('Chỉnh sửa sản phẩm') : mkv__('Thêm sản phẩm mới');
+            $post_status = ($is_edit && isset($post->post_status)) ? $post->post_status : 'draft';
+            $is_draft = in_array($post_status, array('draft', 'auto-draft', 'pending'));
+
+            echo '<div class="mkv-cpt-back-bar">
+                    <div class="mkv-cpt-bar-left">
+                        <a href="' . esc_url(admin_url('edit.php?post_type=mkv_product')) . '" class="mkv-cpt-back-btn" title="' . esc_attr(mkv__('Quay lại danh sách sản phẩm')) . '">
+                            <i class="hgi-stroke hgi-arrow-left-01"></i> ' . esc_html(mkv__('Quay lại')) . '
+                        </a>
+                        <span class="mkv-cpt-divider"></span>
+                        <div class="mkv-cpt-title-group">
+                            <h1 class="mkv-cpt-page-title">' . esc_html($page_heading) . '</h1>
+                            ' . (!empty($post_title) ? '<span class="mkv-cpt-product-name" title="' . esc_attr($post_title) . '">(' . esc_html(wp_trim_words($post_title, 6, '...')) . ')</span>' : '') . '
+                            ' . ($is_edit ? '<span class="mkv-cpt-status-badge ' . ($is_draft ? 'badge-draft' : 'badge-publish') . '">' . esc_html($is_draft ? mkv__('Bản nháp') : mkv__('Đang bán')) . '</span>' : '') . '
+                        </div>
+                    </div>
+                    <div class="mkv-cpt-bar-right">
+                        ' . ($is_draft ? '<button type="button" class="mkv-btn mkv-btn-secondary mkv-btn-save-draft" onclick="var s = document.getElementById(\'save-post\'); if(s) { s.click(); } else { var p = document.getElementById(\'publish\'); if(p) p.click(); }"><i class="hgi-stroke hgi-floppy-disk"></i> ' . esc_html(mkv__('Lưu nháp')) . '</button>' : '') . '
+                        ' . ($is_edit ? '<a href="' . esc_url(admin_url('post-new.php?post_type=mkv_product')) . '" class="mkv-btn mkv-btn-secondary" style="height:38px; display:inline-flex; align-items:center; gap:6px; font-weight:600;"><i class="hgi-stroke hgi-add-square"></i> ' . esc_html(mkv__('Thêm mới')) . '</a>' : '') . '
+                        <button type="button" class="mkv-btn mkv-btn-primary" onclick="var p = document.getElementById(\'publish\'); if(p) p.click();" style="height:38px; padding:0 22px; display:inline-flex; align-items:center; gap:6px; font-weight:700; box-shadow:0 2px 6px rgba(0,114,188,0.25);">
+                            <i class="hgi-stroke hgi-tick-02"></i> ' . esc_html($is_edit ? mkv__('Cập nhật sản phẩm') : mkv__('Lưu sản phẩm')) . '
+                        </button>
+                    </div>
                   </div>';
         }
         // Back button on taxonomy edit page
         if ($is_mkv_tax && ($pagenow === 'term.php' || ($pagenow === 'edit-tags.php' && isset($_GET['action']) && $_GET['action'] === 'edit'))) {
-            echo '<div class="mkv-cpt-back-bar" style="padding: 16px 20px 0 20px;">
+            echo '<div class="mkv-cpt-back-bar" style="padding: 14px 24px;">
                     <a href="' . esc_url(admin_url('admin.php?page=mkv-categories')) . '" class="mkv-cpt-back-btn">
                         <i class="hgi-stroke hgi-arrow-left-01"></i> ' . esc_html(mkv__('Quay lại danh mục')) . '
                     </a>
@@ -378,6 +513,7 @@ class MKV_Products
 
         $sku       = get_post_meta($post->ID, '_mkv_sku', true);
         $barcode   = get_post_meta($post->ID, '_mkv_barcode', true);
+        $unit      = get_post_meta($post->ID, '_mkv_unit', true) ?: 'Cái';
         $price_in  = get_post_meta($post->ID, '_mkv_price_in', true);
         $price_out = get_post_meta($post->ID, '_mkv_price_out', true);
         $stock     = get_post_meta($post->ID, '_mkv_stock', true);
@@ -395,7 +531,15 @@ class MKV_Products
 
         $sku       = sanitize_text_field($_POST['mkv_sku'] ?? '');
         $barcode   = sanitize_text_field($_POST['mkv_barcode'] ?? '');
-        $price_in  = floatval($_POST['mkv_price_in'] ?? 0);
+        $unit      = sanitize_text_field($_POST['mkv_unit'] ?? 'Cái');
+
+        $can_cost  = current_user_can('mkv_view_cost_price') || current_user_can('mkv_edit_cost_price');
+        if ($can_cost && isset($_POST['mkv_price_in'])) {
+            $price_in = floatval($_POST['mkv_price_in']);
+        } else {
+            $price_in = floatval(get_post_meta($post_id, '_mkv_price_in', true));
+        }
+
         $price_out = floatval($_POST['mkv_price_out'] ?? 0);
         $stock     = intval($_POST['mkv_stock'] ?? 0);
         $min_stock = intval($_POST['mkv_min_stock'] ?? get_option('mkv_min_stock_threshold', 5));
@@ -405,11 +549,11 @@ class MKV_Products
             set_transient('mkv_product_error_' . $post_id, 'Tên sản phẩm là bắt buộc.', 45);
             return;
         }
-        if ($price_in < 0 || $price_out <= 0) {
+        if ($price_out <= 0 || ($can_cost && $price_in < 0)) {
             set_transient('mkv_product_error_' . $post_id, 'Giá bán phải lớn hơn 0 và giá nhập không được âm.', 45);
             return;
         }
-        if (current_user_can('mkv_view_cost_price') && $price_out < $price_in) {
+        if ($can_cost && $price_out < $price_in) {
             set_transient('mkv_product_error_' . $post_id, 'Giá bán không được nhỏ hơn giá nhập.', 45);
             return;
         }
@@ -448,7 +592,10 @@ class MKV_Products
 
         if ($sku_valid) update_post_meta($post_id, '_mkv_sku', $sku);
         if ($barcode_valid) update_post_meta($post_id, '_mkv_barcode', $barcode);
-        update_post_meta($post_id, '_mkv_price_in',  $price_in);
+        update_post_meta($post_id, '_mkv_unit',      $unit ?: 'Cái');
+        if ($can_cost && isset($_POST['mkv_price_in'])) {
+            update_post_meta($post_id, '_mkv_price_in',  $price_in);
+        }
         update_post_meta($post_id, '_mkv_price_out', $price_out);
         update_post_meta($post_id, '_mkv_min_stock', $min_stock);
 
@@ -597,10 +744,16 @@ class MKV_Products
         }
         
         // Export button
-        echo '<button type="submit" name="mkv_export_csv" value="1" class="button button-secondary" style="margin-left:8px; display:inline-flex; align-items:center; gap:6px;"><i class="hgi-stroke hgi-download-02" style="font-size:15px;"></i> ' . esc_html(mkv__('Xuất CSV')) . '</button>';
+        $export_nonce = wp_create_nonce('mkv_export_products_action');
+        $export_url = add_query_arg(array(
+            'post_type'      => 'mkv_product',
+            'mkv_export_csv' => '1',
+            '_wpnonce'       => $export_nonce
+        ), admin_url('edit.php'));
+        echo '<a href="' . esc_url($export_url) . '" class="button button-secondary mkv-btn-csv" style="display:inline-flex; align-items:center; gap:6px;"><i class="hgi-stroke hgi-download-02" style="font-size:15px;"></i> ' . esc_html(mkv__('Xuất CSV')) . '</a>';
         
         // Import button and hidden form
-        echo '<button type="button" class="button button-secondary" style="margin-left:8px; display:inline-flex; align-items:center; gap:6px;" onclick="document.getElementById(\'mkv_import_file\').click();"><i class="hgi-stroke hgi-upload-02" style="font-size:15px;"></i> ' . esc_html(mkv__('Nhập CSV')) . '</button>';
+        echo '<button type="button" class="button button-secondary mkv-btn-csv" style="display:inline-flex; align-items:center; gap:6px;" onclick="document.getElementById(\'mkv_import_file\').click();"><i class="hgi-stroke hgi-upload-02" style="font-size:15px;"></i> ' . esc_html(mkv__('Nhập CSV')) . '</button>';
         
         // Add JS and Hidden Form to body via footer
         add_action('admin_footer', function() {
@@ -632,7 +785,10 @@ class MKV_Products
     public function export_csv_action()
     {
         if (!isset($_GET['mkv_export_csv']) || !isset($_GET['post_type']) || $_GET['post_type'] !== 'mkv_product') return;
-        if (!current_user_can('mkv_manage_products')) return;
+        check_admin_referer('mkv_export_products_action');
+        if (!current_user_can('mkv_manage_products')) {
+            wp_die(mkv__('Bạn không có quyền quản lý sản phẩm.'));
+        }
 
         $can_cost = current_user_can('mkv_view_cost_price');
         header('Content-Type: text/csv; charset=utf-8');
@@ -656,7 +812,7 @@ class MKV_Products
                 get_post_meta($p->ID, '_mkv_min_stock', true),
             );
             if ($can_cost) array_splice($row, 4, 0, array(get_post_meta($p->ID, '_mkv_price_in', true)));
-            fputcsv($out, $row);
+            fputcsv($out, array_map('mkv_sanitize_csv_cell', $row));
         }
         fclose($out);
         exit;
@@ -674,6 +830,29 @@ class MKV_Products
             wp_die('Không thể tải lên file CSV.');
         }
 
+        $filename = $_FILES['mkv_import_csv']['name'] ?? '';
+        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        if ($ext !== 'csv') {
+            if (class_exists('MKV_Audit_Logger')) {
+                MKV_Audit_Logger::log('CSV', 'CSV_REJECTED', 'product_csv', sanitize_file_name($filename), 'INVALID_EXTENSION');
+            }
+            wp_die('Chỉ chấp nhận tệp định dạng .csv.');
+        }
+
+        // Validate MIME type
+        $allowed_mimes = array('text/csv', 'text/plain', 'application/csv', 'text/comma-separated-values', 'application/excel', 'application/vnd.ms-excel', 'application/vnd.msexcel', 'text/anytext');
+        $finfo = function_exists('finfo_open') ? finfo_open(FILEINFO_MIME_TYPE) : false;
+        $mime = $finfo ? finfo_file($finfo, $_FILES['mkv_import_csv']['tmp_name']) : '';
+        if ($finfo) {
+            finfo_close($finfo);
+        }
+        if ($mime && !in_array($mime, $allowed_mimes, true)) {
+            if (class_exists('MKV_Audit_Logger')) {
+                MKV_Audit_Logger::log('CSV', 'CSV_REJECTED', 'product_csv', sanitize_file_name($filename), 'INVALID_MIME');
+            }
+            wp_die('Loại tệp không hợp lệ. Vui lòng tải lên tệp CSV chuẩn.');
+        }
+
         $file = $_FILES['mkv_import_csv']['tmp_name'];
         if (!$file) return;
 
@@ -687,6 +866,8 @@ class MKV_Products
         $headers[0] = preg_replace('/^\xEF\xBB\xBF/', '', $headers[0]);
         $headers = array_map('trim', $headers);
 
+        $can_edit_cost = current_user_can('mkv_edit_cost_price');
+        $cost_blocked_logged = false;
         $imported = 0;
         while (($row = fgetcsv($handle)) !== false) {
             if (count($row) < count($headers)) continue;
@@ -694,7 +875,16 @@ class MKV_Products
             $title = sanitize_text_field($data['Tên sản phẩm'] ?? $data['Tên'] ?? '');
             $sku = sanitize_text_field($data['SKU'] ?? '');
             $barcode = sanitize_text_field($data['Barcode'] ?? '');
-            $price_in = max(0, floatval($data['Giá nhập'] ?? 0));
+            $raw_cost = isset($data['Giá nhập']) ? floatval($data['Giá nhập']) : 0;
+            if (!$can_edit_cost && $raw_cost > 0) {
+                if (!$cost_blocked_logged && class_exists('MKV_Audit_Logger')) {
+                    MKV_Audit_Logger::log('CSV', 'CSV_REJECTED', 'product_csv', sanitize_file_name($filename), 'UNAUTHORIZED_COST_PRICE_IMPORT');
+                    $cost_blocked_logged = true;
+                }
+                $price_in = 0;
+            } else {
+                $price_in = max(0, $raw_cost);
+            }
             $price_out = max(0, floatval($data['Giá bán'] ?? 0));
             $stock = max(0, intval($data['Tồn kho'] ?? 0));
             if (empty($title)) continue;

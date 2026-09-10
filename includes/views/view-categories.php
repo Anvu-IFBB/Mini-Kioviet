@@ -173,7 +173,7 @@ $categories = get_terms(array(
             </span>
         </div>
 
-        <div class="mkv-table-wrap" style="border:none; box-shadow:none; border-radius:0; margin-bottom:0; max-height:calc(100vh - 280px);">
+        <div class="mkv-table-wrap" style="border:none; box-shadow:none; border-radius:0; margin-bottom:0;">
             <table class="mkv-table" style="margin:0; min-width:580px;">
             <thead>
                 <tr>
@@ -202,11 +202,11 @@ $categories = get_terms(array(
                                 $is_current = ($editing_id > 0 && $editing_id == $cat->term_id);
                                 $row_style = $is_current ? 'background:rgba(0,82,204,0.06);' : '';
                                 ?>
-                                <tr style="<?php echo $row_style; ?>">
+                                <tr style="<?php echo esc_attr($row_style); ?>">
                                     <td>
                                         <span style="display:inline-flex; align-items:center; gap:6px;">
                                             <?php if ($level > 0): ?>
-                                                <span style="color:#94a3b8; font-weight:400;"><?php echo $prefix; ?></span>
+                                                <span style="color:#94a3b8; font-weight:400;"><?php echo esc_html($prefix); ?></span>
                                             <?php endif; ?>
                                             <i class="hgi-stroke <?php echo $level > 0 ? 'hgi-folder-02' : 'hgi-folder-01'; ?>" style="color:var(--mkv-primary); font-size:15px;"></i>
                                             <strong style="color:var(--mkv-text-main); font-size:13.5px;">
@@ -235,16 +235,17 @@ $categories = get_terms(array(
                                             <a href="<?php echo admin_url('admin.php?page=mkv-categories&edit=' . $cat->term_id); ?>"
                                                class="mkv-btn mkv-btn-icon"
                                                style="<?php echo $is_current ? 'background:var(--mkv-primary); color:#fff;' : ''; ?>"
-                                               title="Sửa danh mục này">
+                                               title="Sửa danh mục này"
+                                               aria-label="Sửa danh mục này">
                                                 <i class="hgi-stroke hgi-edit-02"></i>
                                             </a>
-                                            <form method="post" action="<?php echo admin_url('admin-post.php'); ?>"
-                                                  onsubmit="return confirm('Bạn có chắc chắn muốn xóa danh mục \'<?php echo esc_js($cat->name); ?>\'? Các sản phẩm thuộc danh mục này sẽ không bị xóa.');"
-                                                  style="margin:0; display:inline;">
+                                             <form method="post" action="<?php echo admin_url('admin-post.php'); ?>"
+                                                   onsubmit="return confirm('<?php echo esc_js(sprintf(mkv__('Bạn có chắc chắn muốn xóa danh mục \'%s\'? Các sản phẩm thuộc danh mục này sẽ không bị xóa.'), $cat->name)); ?>');"
+                                                   style="margin:0; display:inline;">
                                                 <input type="hidden" name="action" value="mkv_delete_category">
                                                 <input type="hidden" name="cat_id" value="<?php echo esc_attr($cat->term_id); ?>">
                                                 <?php wp_nonce_field('mkv_delete_category_nonce'); ?>
-                                                <button type="submit" class="mkv-btn mkv-btn-icon" style="color:var(--mkv-red);" title="Xóa danh mục">
+                                                <button type="submit" class="mkv-btn mkv-btn-icon" style="color:var(--mkv-red);" title="Xóa danh mục" aria-label="Xóa danh mục">
                                                     <i class="hgi-stroke hgi-delete-02"></i>
                                                 </button>
                                             </form>

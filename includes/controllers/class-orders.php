@@ -23,6 +23,7 @@ class MKV_Orders
         add_action('admin_post_mkv_return_order',         array($this, 'handle_return_order'));
         add_action('admin_post_mkv_collect_order_debt',   array($this, 'handle_collect_order_debt'));
         add_action('admin_post_mkv_push_shipping',        array($this, 'handle_push_shipping'));
+        add_action('admin_post_mkv_update_tracking_code', array($this, 'handle_update_tracking_code'));
         add_action('admin_enqueue_scripts',               array($this, 'enqueue_assets'));
     }
 
@@ -38,8 +39,9 @@ class MKV_Orders
     public function enqueue_assets($hook)
     {
         if ($hook === 'mini-kiotviet_page_mkv-pos') {
-            wp_enqueue_style('mkv-pos-css', MKV_URL . 'assets/css/admin-pos.css', array(), MKV_VERSION);
-            wp_enqueue_script('mkv-pos-js', MKV_URL . 'assets/js/admin-pos.js', array('jquery'), time(), true);
+            // P4-007: Use filemtime() for proper browser cache invalidation instead of time() which disables caching
+            $pos_js_ver = file_exists(MKV_DIR . 'assets/js/admin-pos.js') ? filemtime(MKV_DIR . 'assets/js/admin-pos.js') : MKV_VERSION;
+            wp_enqueue_script('mkv-pos-js', MKV_URL . 'assets/js/admin-pos.js', array('jquery'), $pos_js_ver, true);
         }
     }
 
@@ -56,7 +58,8 @@ class MKV_Orders
     {
         global $wpdb;
         $customers = $wpdb->get_results("SELECT id, name, phone, address, points FROM {$wpdb->prefix}mkv_customers ORDER BY name ASC");
-        $products  = get_posts(array('post_type' => 'mkv_product', 'numberposts' => -1, 'post_status' => 'publish'));
+        // P4-003: Safety cap of 2000 products to prevent memory exhaustion on large catalogs
+        $products  = get_posts(array('post_type' => 'mkv_product', 'numberposts' => 2000, 'post_status' => 'publish'));
         $locations = $wpdb->get_results("SELECT * FROM {$wpdb->prefix}mkv_locations WHERE status='active' ORDER BY id ASC");
         require_once MKV_DIR . 'includes/views/view-pos.php';
     }
@@ -64,6 +67,12 @@ class MKV_Orders
     public function render_orders_list()
     {
         global $wpdb;
+
+        $order_id = isset($_GET['id']) ? (int) $_GET['id'] : (isset($_GET['order_id']) ? (int) $_GET['order_id'] : 0);
+        if ($order_id > 0) {
+            $this->render_order_detail($order_id);
+            return;
+        }
 
         $status_filter = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
         $channel_filter = sanitize_key($_GET['channel'] ?? '');
@@ -82,14 +91,86 @@ class MKV_Orders
         $where = $where_parts ? 'WHERE ' . implode(' AND ', $where_parts) : '';
         if ($where_values) $where = $wpdb->prepare($where, $where_values);
 
+        $per_page = 20;
+        $paged = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
+        $offset = ($paged - 1) * $per_page;
+
+        $total_items = (int) $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->prefix}mkv_orders o $where");
+        $total_pages = ceil($total_items / $per_page);
+
         $orders = $wpdb->get_results(
             "SELECT o.*, c.name as customer_name
              FROM {$wpdb->prefix}mkv_orders o
              LEFT JOIN {$wpdb->prefix}mkv_customers c ON o.customer_id = c.id
              $where
-             ORDER BY o.id DESC LIMIT 100"
+             ORDER BY o.id DESC LIMIT $per_page OFFSET $offset"
         );
         require_once MKV_DIR . 'includes/views/view-orders.php';
+    }
+
+    /**
+     * Render Single Order Detail View (KiotViet Pro UI/UX)
+     */
+    public function render_order_detail($order_id)
+    {
+        global $wpdb;
+
+        $order = $wpdb->get_row($wpdb->prepare(
+            "SELECT o.*, 
+                    c.name as customer_name, c.phone as customer_phone, c.address as customer_full_address, c.points as customer_points, c.total_debt as customer_total_debt, c.total_spent as customer_total_spent,
+                    u.display_name as cashier_name,
+                    l.name as warehouse_name
+             FROM {$wpdb->prefix}mkv_orders o
+             LEFT JOIN {$wpdb->prefix}mkv_customers c ON o.customer_id = c.id
+             LEFT JOIN {$wpdb->users} u ON o.created_by = u.ID
+             LEFT JOIN {$wpdb->prefix}mkv_locations l ON o.warehouse_id = l.id
+             WHERE o.id = %d",
+            $order_id
+        ));
+
+        if (!$order) {
+            echo '<div class="notice notice-error"><p>' . esc_html(mkv__('Không tìm thấy đơn hàng yêu cầu.')) . '</p></div>';
+            // P4-004: Reduced fallback limit to 20 (consistent with main list pagination)
+            $orders = $wpdb->get_results(
+                "SELECT o.*, c.name as customer_name
+                 FROM {$wpdb->prefix}mkv_orders o
+                 LEFT JOIN {$wpdb->prefix}mkv_customers c ON o.customer_id = c.id
+                 ORDER BY o.id DESC LIMIT 20"
+            );
+            require_once MKV_DIR . 'includes/views/view-orders.php';
+            return;
+        }
+
+        // Fetch Order Items
+        $items = $wpdb->get_results($wpdb->prepare(
+            "SELECT oi.*, p.post_title as product_name
+             FROM {$wpdb->prefix}mkv_order_items oi
+             LEFT JOIN {$wpdb->posts} p ON oi.product_id = p.ID
+             WHERE oi.order_id = %d
+             ORDER BY oi.id ASC",
+            $order_id
+        ));
+
+        foreach ($items as &$it) {
+            $it->sku = get_post_meta($it->product_id, '_mkv_sku', true) ?: ('SP' . str_pad($it->product_id, 4, '0', STR_PAD_LEFT));
+            $it->barcode = get_post_meta($it->product_id, '_mkv_barcode', true) ?: '';
+            $it->unit = get_post_meta($it->product_id, '_mkv_unit', true) ?: 'Cái';
+            $thumb = get_the_post_thumbnail_url($it->product_id, 'thumbnail');
+            $it->thumb = $thumb ?: '';
+        }
+        unset($it);
+
+        // Fetch Cashbook Transactions related to this order
+        $cashbook_logs = $wpdb->get_results($wpdb->prepare(
+            "SELECT cb.*, u.display_name as staff_name
+             FROM {$wpdb->prefix}mkv_cashbook cb
+             LEFT JOIN {$wpdb->users} u ON cb.created_by = u.ID
+             WHERE cb.reference_id = %d
+             ORDER BY cb.id ASC",
+            $order_id
+        ));
+
+        require_once MKV_DIR . 'includes/views/view-order-detail.php';
     }
 
     public function handle_create_order()
@@ -128,7 +209,12 @@ class MKV_Orders
         $note           = sanitize_textarea_field($_POST['order_note'] ?? '');
         $points_used    = intval($_POST['points_used'] ?? 0);
         $allow_negative = (int) get_option('mkv_allow_negative_stock', 0);
-        $order_code     = 'DH' . date('ymdHis') . rand(10, 99);
+        $client_order_code = sanitize_text_field($_POST['order_code'] ?? '');
+        if (!empty($client_order_code) && preg_match('/^[A-Za-z0-9_-]{6,50}$/', $client_order_code)) {
+            $order_code = $client_order_code;
+        } else {
+            $order_code = 'DH' . date('ymdHis') . rand(10, 99);
+        }
         $is_draft       = isset($_POST['is_draft']) && $_POST['is_draft'] == '1';
         $sales_channel  = sanitize_text_field($_POST['sales_channel'] ?? 'pos');
         $allowed_channels = array('pos', 'online', 'social', 'marketplace');
@@ -262,10 +348,22 @@ class MKV_Orders
                     }
                 }
                 
-                $this->deduct_stock($pid, $location_id, $qty, $order_code);
+                $this->deduct_stock($pid, $location_id, $qty, $order_code, (bool)$allow_negative);
             }
         }
         
+        // Xử lý phí giao hàng trước khi tính tổng tiền và chiết khấu điểm
+        $shipping_fee = 0;
+        $shipping_provider = null;
+        $customer_address = null;
+        $shipping_phone = null;
+        if ($shipping_requested || !empty($_POST['customer_address']) || (isset($_POST['shipping_fee']) && $_POST['shipping_fee'] > 0)) {
+            $shipping_fee = max(0, round((float) ($_POST['shipping_fee'] ?? 0)));
+            $shipping_provider = sanitize_text_field($_POST['shipping_provider'] ?? get_option('mkv_shipping_provider', 'ghtk'));
+            $customer_address = $shipping_address_input;
+            $shipping_phone = $shipping_phone_input;
+        }
+
         $vat_included = (int) get_option('mkv_vat_included', 0);
         if ($vat_included) {
             $tax_amount = round($vat_rate > 0 ? ($subtotal - ($subtotal / (1 + $vat_rate))) : 0);
@@ -281,7 +379,7 @@ class MKV_Orders
         if ($point_value <= 0) $point_value = 1;
         
         if ($points_used > 0 && $customer_id > 0) {
-            $customer = $wpdb->get_row($wpdb->prepare("SELECT points FROM {$wpdb->prefix}mkv_customers WHERE id=%d", $customer_id));
+            $customer = $wpdb->get_row($wpdb->prepare("SELECT points FROM {$wpdb->prefix}mkv_customers WHERE id=%d FOR UPDATE", $customer_id));
             if ($customer && $customer->points >= $points_used) {
                 // Giới hạn điểm dùng không vượt quá tổng tiền
                 $max_points_needed = ceil($total_amount / $point_value);
@@ -290,25 +388,13 @@ class MKV_Orders
                 $points_discount = $points_used * $point_value;
                 if (!$is_draft) {
                     $wpdb->query($wpdb->prepare(
-                        "UPDATE {$wpdb->prefix}mkv_customers SET points = points - %d WHERE id=%d",
-                        $points_used, $customer_id
+                        "UPDATE {$wpdb->prefix}mkv_customers SET points = GREATEST(0, points - %d) WHERE id=%d AND points >= %d",
+                        $points_used, $customer_id, $points_used
                     ));
                 }
             } else {
                 $points_used = 0;
             }
-        }
-
-        // Xử lý phí giao hàng
-        $shipping_fee = 0;
-        $shipping_provider = null;
-        $customer_address = null;
-        $shipping_phone = null;
-        if ($shipping_requested || !empty($_POST['customer_address']) || (isset($_POST['shipping_fee']) && $_POST['shipping_fee'] > 0)) {
-            $shipping_fee = max(0, round((float) ($_POST['shipping_fee'] ?? 0)));
-            $shipping_provider = sanitize_text_field($_POST['shipping_provider'] ?? get_option('mkv_shipping_provider', 'ghtk'));
-            $customer_address = $shipping_address_input;
-            $shipping_phone = $shipping_phone_input;
         }
 
         // Tính lại tổng tiền sau khi trừ giảm giá và cộng phí ship
@@ -425,7 +511,7 @@ class MKV_Orders
         }
     }
 
-    private function deduct_stock(int $product_id, int $location_id, int $qty, string $order_code)
+    private function deduct_stock(int $product_id, int $location_id, int $qty, string $order_code, bool $allow_negative = false)
     {
         global $wpdb;
         
@@ -435,11 +521,21 @@ class MKV_Orders
             $product_id, $location_id
         ));
         
-        // 2. Trừ kho nguyên tử (Atomic Update) để tránh Race Condition
-        $wpdb->query($wpdb->prepare(
-            "UPDATE {$wpdb->prefix}mkv_inventory_stock SET stock = stock - %d WHERE product_id = %d AND location_id = %d",
-            $qty, $product_id, $location_id
-        ));
+        // 2. Trừ kho nguyên tử (Atomic Update có điều kiện nếu không cho phép âm)
+        if ($allow_negative) {
+            $wpdb->query($wpdb->prepare(
+                "UPDATE {$wpdb->prefix}mkv_inventory_stock SET stock = stock - %d WHERE product_id = %d AND location_id = %d",
+                $qty, $product_id, $location_id
+            ));
+        } else {
+            $update_res = $wpdb->query($wpdb->prepare(
+                "UPDATE {$wpdb->prefix}mkv_inventory_stock SET stock = stock - %d WHERE product_id = %d AND location_id = %d AND stock >= %d",
+                $qty, $product_id, $location_id, $qty
+            ));
+            if ($update_res === false || $update_res === 0) {
+                throw new Exception('Sản phẩm "' . get_the_title($product_id) . '" không đủ tồn kho để xuất bán.');
+            }
+        }
 
         // Đồng bộ meta
         $total = (int) $wpdb->get_var($wpdb->prepare("SELECT SUM(stock) FROM {$wpdb->prefix}mkv_inventory_stock WHERE product_id=%d FOR UPDATE", $product_id));
@@ -486,109 +582,128 @@ class MKV_Orders
         if (!isset(self::STATUSES[$new_status])) wp_die('Trạng thái không hợp lệ.');
 
         global $wpdb;
-        $order = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}mkv_orders WHERE id=%d", $order_id));
-        if (!$order) wp_die('Đơn hàng không tồn tại.');
+        $wpdb->query('START TRANSACTION');
+        try {
+            $order = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}mkv_orders WHERE id=%d FOR UPDATE", $order_id));
+            if (!$order) {
+                $wpdb->query('ROLLBACK');
+                wp_die('Đơn hàng không tồn tại.');
+            }
 
-        $is_previously_paid = in_array($order->payment_status ?? '', array('paid', 'cod_settled'), true);
-        $is_now_paid        = in_array($new_status, array('paid', 'shipping', 'completed'));
+            if ($order->status === $new_status) {
+                $wpdb->query('COMMIT');
+                wp_redirect(admin_url('admin.php?page=mkv-orders&status_updated=1'));
+                exit;
+            }
 
-        if ($is_previously_paid && !$is_now_paid) {
-            wp_die('Lỗi logic: Không được phép chuyển ngược trạng thái từ Đã thanh toán về chưa thanh toán. Vui lòng sử dụng chức năng Trả Hàng hoặc Hủy Đơn.');
-        }
-        if ($order->status !== 'draft' && $new_status === 'draft') {
-            wp_die('Lỗi logic: Không thể chuyển trạng thái về Nháp.');
-        }
+            if (in_array($order->status, array('cancelled', 'returned'), true)) {
+                $wpdb->query('ROLLBACK');
+                wp_die('Đơn hàng đã ở trạng thái kết thúc (Đã hủy hoặc Đã trả hàng), không thể cập nhật.');
+            }
 
-        // Nếu chuyển từ draft sang trạng thái khác -> trừ kho & trừ điểm
-        if ($order->status === 'draft' && $new_status !== 'draft' && $new_status !== 'cancelled') {
-            $allow_negative = (int) get_option('mkv_allow_negative_stock', 0);
-            $items = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}mkv_order_items WHERE order_id=%d", $order_id));
-            
-            $wpdb->query('START TRANSACTION');
-            
-            // Check tồn kho trước
-            if (!$allow_negative) {
-                foreach ($items as $item) {
-                    $stock_row = $wpdb->get_row($wpdb->prepare(
-                        "SELECT SUM(stock) as s FROM {$wpdb->prefix}mkv_inventory_stock WHERE product_id=%d AND location_id=%d FOR UPDATE",
-                        $item->product_id, $order->warehouse_id
-                    ));
-                    $avail = ($stock_row && $stock_row->s !== null) ? (int)$stock_row->s : 0;
-                    if ($avail < $item->qty) {
-                        $wpdb->query('ROLLBACK');
-                        wp_die('Sản phẩm "' . get_the_title($item->product_id) . '" không đủ tồn kho (còn ' . $avail . ', cần ' . $item->qty . '). Không thể duyệt đơn.');
+            $is_previously_paid = in_array($order->payment_status ?? '', array('paid', 'cod_settled'), true);
+            $is_now_paid        = in_array($new_status, array('paid', 'shipping', 'completed'));
+
+            if ($is_previously_paid && !$is_now_paid) {
+                $wpdb->query('ROLLBACK');
+                wp_die('Lỗi logic: Không được phép chuyển ngược trạng thái từ Đã thanh toán về chưa thanh toán. Vui lòng sử dụng chức năng Trả Hàng hoặc Hủy Đơn.');
+            }
+            if ($order->status !== 'draft' && $new_status === 'draft') {
+                $wpdb->query('ROLLBACK');
+                wp_die('Lỗi logic: Không thể chuyển trạng thái về Nháp.');
+            }
+
+            // Nếu chuyển từ draft sang trạng thái khác -> trừ kho & trừ điểm
+            if ($order->status === 'draft' && $new_status !== 'draft' && $new_status !== 'cancelled') {
+                $allow_negative = (int) get_option('mkv_allow_negative_stock', 0);
+                $items = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}mkv_order_items WHERE order_id=%d", $order_id));
+                
+                // Check tồn kho trước
+                if (!$allow_negative) {
+                    foreach ($items as $item) {
+                        $stock_row = $wpdb->get_row($wpdb->prepare(
+                            "SELECT SUM(stock) as s FROM {$wpdb->prefix}mkv_inventory_stock WHERE product_id=%d AND location_id=%d FOR UPDATE",
+                            $item->product_id, $order->warehouse_id
+                        ));
+                        $avail = ($stock_row && $stock_row->s !== null) ? (int)$stock_row->s : 0;
+                        if ($avail < $item->qty) {
+                            throw new Exception('Sản phẩm "' . get_the_title($item->product_id) . '" không đủ tồn kho (còn ' . $avail . ', cần ' . $item->qty . '). Không thể duyệt đơn.');
+                        }
                     }
                 }
-            }
-            
-            foreach ($items as $item) {
-                $this->deduct_stock($item->product_id, $order->warehouse_id, $item->qty, $order->order_code);
-            }
-            
-            // Trừ điểm đã dùng
-            if ($order->customer_id > 0 && $order->points_used > 0) {
-                $wpdb->query($wpdb->prepare(
-                    "UPDATE {$wpdb->prefix}mkv_customers SET points = points - %d WHERE id=%d",
-                    $order->points_used, $order->customer_id
-                ));
-            }
-            
-            $wpdb->query('COMMIT');
-        }
-
-        $fulfillment_status = 'pending';
-        if ($new_status === 'shipping') $fulfillment_status = 'in_transit';
-        if ($new_status === 'completed') $fulfillment_status = 'delivered';
-        if ($new_status === 'cancelled') $fulfillment_status = 'cancelled';
-
-        $wpdb->update("{$wpdb->prefix}mkv_orders", array(
-            'status' => $new_status,
-            'fulfillment_status' => $fulfillment_status,
-        ), array('id' => $order_id));
-
-        // Tích điểm và cập nhật Sổ quỹ nếu đơn hàng chuyển sang nhóm đã thanh toán
-        if ($is_now_paid && !$is_previously_paid && ($order->payment_status ?? '') !== 'cod_pending') {
-            $customer_debt_to_clear = (float) ($order->customer_debt_amount ?? $order->debt_amount);
-            $amount_to_collect = max(0.0, (float) $order->total_amount - (float) $order->paid_amount);
-            
-            // Sổ quỹ (chỉ thu số tiền còn thiếu, không thu lại phần đã thanh toán trước đó)
-            if ($amount_to_collect > 0) {
-                $wpdb->insert("{$wpdb->prefix}mkv_cashbook", array(
-                    'type'         => 'thu',
-                    'method'       => $order->payment_method ?: 'cash',
-                    'amount'       => $amount_to_collect,
-                    'reference_id' => $order_id,
-                    'note'         => 'Thu tiền bán hàng (Đơn ' . $order->order_code . ')',
-                    'created_by'   => get_current_user_id(),
-                    'created_at'   => current_time('mysql')
-                ));
+                
+                foreach ($items as $item) {
+                    $this->deduct_stock($item->product_id, $order->warehouse_id, $item->qty, $order->order_code, (bool)$allow_negative);
+                }
+                
+                // Trừ điểm đã dùng
+                if ($order->customer_id > 0 && $order->points_used > 0) {
+                    $wpdb->query($wpdb->prepare(
+                        "UPDATE {$wpdb->prefix}mkv_customers SET points = points - %d WHERE id=%d",
+                        $order->points_used, $order->customer_id
+                    ));
+                }
             }
 
-            // Cập nhật paid_amount trong order thành total_amount
+            $fulfillment_status = 'pending';
+            if ($new_status === 'shipping') $fulfillment_status = 'in_transit';
+            if ($new_status === 'completed') $fulfillment_status = 'delivered';
+            if ($new_status === 'cancelled') $fulfillment_status = 'cancelled';
+
             $wpdb->update("{$wpdb->prefix}mkv_orders", array(
-                'paid_amount' => $order->total_amount,
-                'debt_amount' => 0,
-                'customer_debt_amount' => 0,
-                'payment_status' => 'paid',
+                'status' => $new_status,
+                'fulfillment_status' => $fulfillment_status,
             ), array('id' => $order_id));
 
-            if ($order->customer_id && $customer_debt_to_clear > 0) {
-                $wpdb->query($wpdb->prepare(
-                    "UPDATE {$wpdb->prefix}mkv_customers SET total_debt = GREATEST(0, total_debt - %f) WHERE id=%d",
-                    $customer_debt_to_clear,
-                    $order->customer_id
-                ));
+            // Tích điểm và cập nhật Sổ quỹ nếu đơn hàng chuyển sang nhóm đã thanh toán
+            if ($is_now_paid && !$is_previously_paid && ($order->payment_status ?? '') !== 'cod_pending') {
+                $customer_debt_to_clear = (float) ($order->customer_debt_amount ?? $order->debt_amount);
+                $amount_to_collect = max(0.0, (float) $order->total_amount - (float) $order->paid_amount);
+                
+                // Sổ quỹ (chỉ thu số tiền còn thiếu, không thu lại phần đã thanh toán trước đó)
+                if ($amount_to_collect > 0) {
+                    $wpdb->insert("{$wpdb->prefix}mkv_cashbook", array(
+                        'type'         => 'thu',
+                        'method'       => $order->payment_method ?: 'cash',
+                        'amount'       => $amount_to_collect,
+                        'reference_id' => $order_id,
+                        'note'         => 'Thu tiền bán hàng (Đơn ' . $order->order_code . ')',
+                        'created_by'   => get_current_user_id(),
+                        'created_at'   => current_time('mysql')
+                    ));
+                }
+
+                // Cập nhật paid_amount trong order thành total_amount
+                $wpdb->update("{$wpdb->prefix}mkv_orders", array(
+                    'paid_amount' => $order->total_amount,
+                    'debt_amount' => 0,
+                    'customer_debt_amount' => 0,
+                    'payment_status' => 'paid',
+                ), array('id' => $order_id));
+
+                if ($order->customer_id && $customer_debt_to_clear > 0) {
+                    $wpdb->query($wpdb->prepare(
+                        "UPDATE {$wpdb->prefix}mkv_customers SET total_debt = GREATEST(0, total_debt - %f) WHERE id=%d",
+                        $customer_debt_to_clear,
+                        $order->customer_id
+                    ));
+                }
+
+                if ($order->customer_id) {
+                    $rate   = max(1, (int) get_option('mkv_points_rate', 100));
+                    $points = (int) floor($order->total_amount / $rate);
+                    
+                    $wpdb->query($wpdb->prepare(
+                        "UPDATE {$wpdb->prefix}mkv_customers SET points=points+%d, total_spent=total_spent+%f WHERE id=%d",
+                        $points, $order->total_amount, $order->customer_id
+                    ));
+                }
             }
 
-            if ($order->customer_id) {
-                $rate   = max(1, (int) get_option('mkv_points_rate', 100));
-                $points = (int) floor($order->total_amount / $rate);
-                
-                $wpdb->query($wpdb->prepare(
-                    "UPDATE {$wpdb->prefix}mkv_customers SET points=points+%d, total_spent=total_spent+%f WHERE id=%d",
-                    $points, $order->total_amount, $order->customer_id
-                ));
-            }
+            $wpdb->query('COMMIT');
+        } catch (Exception $e) {
+            $wpdb->query('ROLLBACK');
+            wp_die('Lỗi cập nhật trạng thái đơn: ' . $e->getMessage());
         }
 
         wp_redirect(admin_url('admin.php?page=mkv-orders&status_updated=1'));
@@ -618,12 +733,16 @@ class MKV_Orders
     {
         if (is_int($raw)) return (float) $raw;
         if (is_float($raw)) return $raw;
+        if (!is_scalar($raw)) return 0.0;
 
-        $str = trim((string) $raw);
-        if ($str === '') return 0.0;
+        $raw_str = trim((string) $raw);
+        if ($raw_str === '') return 0.0;
+
+        $is_negative = (strpos($raw_str, '-') === 0);
+        $sign = $is_negative ? -1.0 : 1.0;
 
         // Remove currency symbols and non-essential whitespace e.g. "500.000 đ" -> "500.000"
-        $str = preg_replace('/[^\d.,]/u', '', $str);
+        $str = preg_replace('/[^\d.,]/u', '', $raw_str);
         if ($str === '') return 0.0;
 
         // Both dots and commas present e.g. 1.250.000,50 (VN) or 1,250,000.50 (US)
@@ -638,12 +757,12 @@ class MKV_Orders
                 // US: 1,250,000.50
                 $str = str_replace(',', '', $str);
             }
-            return (float) $str;
+            return $sign * (float) $str;
         }
 
         // Multiple dots e.g. "16.514.227" -> all thousand separators
         if (substr_count($str, '.') > 1) {
-            return (float) str_replace('.', '', $str);
+            return $sign * (float) str_replace('.', '', $str);
         }
 
         // Single dot e.g. "272.727" vs "272727.27"
@@ -651,22 +770,22 @@ class MKV_Orders
             $parts = explode('.', $str);
             // If exactly 3 digits after the dot (e.g. 272.727, 500.000, 10.000) -> thousand separator in VND!
             if (strlen($parts[1]) === 3) {
-                return (float) ($parts[0] . $parts[1]);
+                return $sign * (float) ($parts[0] . $parts[1]);
             }
             // Standard float e.g. 272727.27
-            return (float) $str;
+            return $sign * (float) $str;
         }
 
         // Commas without dots
         if (strpos($str, ',') !== false) {
             $parts = explode(',', $str);
             if (count($parts) > 2 || strlen($parts[1]) === 3) {
-                return (float) implode('', $parts);
+                return $sign * (float) implode('', $parts);
             }
-            return (float) ($parts[0] . '.' . $parts[1]);
+            return $sign * (float) ($parts[0] . '.' . $parts[1]);
         }
 
-        return (float) preg_replace('/\D/', '', $str);
+        return $sign * (float) preg_replace('/\D/', '', $str);
     }
 
     public function handle_collect_order_debt()
@@ -789,87 +908,117 @@ class MKV_Orders
     public static function process_cancel_order($order_id, $user_id = 0)
     {
         global $wpdb;
-        $order = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}mkv_orders WHERE id=%d", $order_id));
-        if (!$order || in_array($order->status, array('cancelled', 'returned'), true)) {
-            return new WP_Error('invalid_order', 'Đơn hàng không hợp lệ.');
-        }
+        $wpdb->query('START TRANSACTION');
+        try {
+            $order = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}mkv_orders WHERE id=%d FOR UPDATE", $order_id));
+            if (!$order || in_array($order->status, array('cancelled', 'returned'), true)) {
+                $wpdb->query('ROLLBACK');
+                return new WP_Error('invalid_order', 'Đơn hàng không hợp lệ hoặc đã bị hủy/trả trước đó.');
+            }
 
-        $is_paid_shipping = in_array($order->status, array('paid', 'shipping', 'completed'));
+            $is_paid_shipping = in_array($order->status, array('paid', 'shipping', 'completed'), true);
 
-        // 1. Hoàn trả tiền vào sổ quỹ (chỉ khi đã thanh toán)
-        if ($is_paid_shipping && $order->paid_amount > 0) {
-            $wpdb->insert("{$wpdb->prefix}mkv_cashbook", array(
-                'type'         => 'chi',
-                'method'       => $order->payment_method,
-                'amount'       => $order->paid_amount,
-                'reference_id' => $order_id,
-                'customer_id'  => $order->customer_id ?: null,
-                'note'         => 'Hoàn tiền - Hủy đơn ' . $order->order_code,
-                'created_by'   => $user_id
+            // 1. Hoàn trả tiền vào sổ quỹ (chỉ khi đã thanh toán)
+            if ($is_paid_shipping && $order->paid_amount > 0) {
+                $cb_res = $wpdb->insert("{$wpdb->prefix}mkv_cashbook", array(
+                    'type'         => 'chi',
+                    'method'       => $order->payment_method ?: 'cash',
+                    'amount'       => $order->paid_amount,
+                    'reference_id' => $order_id,
+                    'customer_id'  => $order->customer_id ?: null,
+                    'note'         => 'Hoàn tiền - Hủy đơn ' . $order->order_code,
+                    'created_by'   => $user_id,
+                    'created_at'   => current_time('mysql')
+                ));
+                if ($cb_res === false) {
+                    if (!empty($wpdb->last_error)) {
+                        error_log('[Mini-KiotViet] Cancel order cashbook error: ' . $wpdb->last_error);
+                    }
+                    throw new Exception('Lỗi tạo phiếu chi hoàn tiền trong sổ quỹ.');
+                }
+            }
+
+            // 2. Hoàn trả / trừ điểm khách hàng
+            if ($order->customer_id > 0) {
+                $used_points   = $order->status !== 'draft' ? (int) $order->points_used : 0;
+                $earned_points = 0;
+                $total_spent   = 0;
+                $debt_amount   = (float) ($order->customer_debt_amount ?? $order->debt_amount ?? 0);
+                
+                // Chỉ thu hồi điểm tích lũy và total_spent nếu đơn này ĐÃ cộng
+                if ($is_paid_shipping) {
+                    $rate = max(1, (int) get_option('mkv_points_rate', 100));
+                    $earned_points = (int) floor($order->total_amount / $rate);
+                    $total_spent = $order->total_amount;
+                }
+                
+                $points_diff = (int) ($used_points - $earned_points); // Khôi phục điểm đã dùng, trừ điểm đã kiếm
+                
+                if ($points_diff !== 0 || $total_spent > 0 || $debt_amount > 0) {
+                    $cust_res = $wpdb->query($wpdb->prepare(
+                        "UPDATE {$wpdb->prefix}mkv_customers SET points = points + %d, total_spent = GREATEST(0, total_spent - %f), total_debt = GREATEST(0, total_debt - %f) WHERE id = %d",
+                        $points_diff, $total_spent, $debt_amount, $order->customer_id
+                    ));
+                    if ($cust_res === false) {
+                        if (!empty($wpdb->last_error)) {
+                            error_log('[Mini-KiotViet] Cancel order customer error: ' . $wpdb->last_error);
+                        }
+                        throw new Exception('Lỗi cập nhật điểm và công nợ khách hàng.');
+                    }
+                }
+            }
+
+            // 3. Hoàn trả tồn kho (chỉ áp dụng cho các đơn KHÁC draft vì draft chưa từng trừ kho)
+            if ($order->status !== 'draft') {
+                $items = $wpdb->get_results($wpdb->prepare(
+                    "SELECT * FROM {$wpdb->prefix}mkv_order_items WHERE order_id=%d", $order_id
+                ));
+                foreach ($items as $item) {
+                    $wpdb->query($wpdb->prepare(
+                        "INSERT IGNORE INTO {$wpdb->prefix}mkv_inventory_stock (product_id, location_id, stock) VALUES (%d, %d, 0)",
+                        $item->product_id, $order->warehouse_id
+                    ));
+                    $stock_res = $wpdb->query($wpdb->prepare(
+                        "UPDATE {$wpdb->prefix}mkv_inventory_stock SET stock = stock + %d WHERE product_id = %d AND location_id = %d",
+                        $item->qty, $item->product_id, $order->warehouse_id
+                    ));
+                    if ($stock_res === false) {
+                        throw new Exception('Lỗi khôi phục tồn kho sản phẩm ID ' . $item->product_id);
+                    }
+                    $total = (int) $wpdb->get_var($wpdb->prepare("SELECT SUM(stock) FROM {$wpdb->prefix}mkv_inventory_stock WHERE product_id=%d", $item->product_id));
+                    update_post_meta($item->product_id, '_mkv_stock', $total);
+
+                    $wpdb->insert("{$wpdb->prefix}mkv_inventory_logs", array(
+                        'product_id'  => $item->product_id,
+                        'location_id' => $order->warehouse_id,
+                        'type'        => 'in',
+                        'qty'         => $item->qty,
+                        'note'        => 'Hoàn kho - Hủy đơn ' . $order->order_code,
+                        'created_by'  => $user_id,
+                        'created_at'  => current_time('mysql'),
+                    ));
+                }
+            }
+
+            $order_res = $wpdb->query($wpdb->prepare(
+                "UPDATE {$wpdb->prefix}mkv_orders 
+                 SET status = 'cancelled', fulfillment_status = 'cancelled', debt_amount = 0, customer_debt_amount = 0 
+                 WHERE id = %d AND status NOT IN ('cancelled', 'returned')",
+                $order_id
             ));
-        }
-
-        // 2. Hoàn trả / trừ điểm khách hàng
-        if ($order->customer_id > 0) {
-            $used_points   = $order->status !== 'draft' ? (int) $order->points_used : 0;
-            $earned_points = 0;
-            $total_spent   = 0;
-            $debt_amount   = (float) ($order->customer_debt_amount ?? $order->debt_amount ?? 0);
-            
-            // Chỉ thu hồi điểm tích lũy và total_spent nếu đơn này ĐÃ cộng
-            if ($is_paid_shipping) {
-                $rate = max(1, (int) get_option('mkv_points_rate', 100));
-                $earned_points = (int) floor($order->total_amount / $rate);
-                $total_spent = $order->total_amount;
+            if ($order_res === false || $order_res === 0) {
+                if (!empty($wpdb->last_error)) {
+                    error_log('[Mini-KiotViet] Cancel order status error: ' . $wpdb->last_error);
+                }
+                throw new Exception('Lỗi cập nhật trạng thái đơn hàng (đơn có thể đã bị thay đổi đồng thời).');
             }
-            
-            $points_diff = (int) ($used_points - $earned_points); // Khôi phục điểm đã dùng, trừ điểm đã kiếm
-            
-            if ($points_diff !== 0 || $total_spent > 0 || $debt_amount > 0) {
-                $wpdb->query($wpdb->prepare(
-                    "UPDATE {$wpdb->prefix}mkv_customers SET points = points + %d, total_spent = GREATEST(0, total_spent - %f), total_debt = GREATEST(0, total_debt - %f) WHERE id = %d",
-                    $points_diff, $total_spent, $debt_amount, $order->customer_id
-                ));
-            }
+
+            $wpdb->query('COMMIT');
+            return true;
+        } catch (Exception $e) {
+            $wpdb->query('ROLLBACK');
+            return new WP_Error('cancel_order_failed', $e->getMessage());
         }
-
-        // 3. Hoàn trả tồn kho (áp dụng cho tất cả các đơn KHÁC draft)
-        // Vì pending cũng đã trừ kho lúc tạo rồi.
-        if ($order->status !== 'draft') {
-            $items = $wpdb->get_results($wpdb->prepare(
-                "SELECT * FROM {$wpdb->prefix}mkv_order_items WHERE order_id=%d", $order_id
-            ));
-            foreach ($items as $item) {
-                $wpdb->query($wpdb->prepare(
-                    "INSERT IGNORE INTO {$wpdb->prefix}mkv_inventory_stock (product_id, location_id, stock) VALUES (%d, %d, 0)",
-                    $item->product_id, $order->warehouse_id
-                ));
-                $wpdb->query($wpdb->prepare(
-                    "UPDATE {$wpdb->prefix}mkv_inventory_stock SET stock = stock + %d WHERE product_id = %d AND location_id = %d",
-                    $item->qty, $item->product_id, $order->warehouse_id
-                ));
-                $total = (int) $wpdb->get_var($wpdb->prepare("SELECT SUM(stock) FROM {$wpdb->prefix}mkv_inventory_stock WHERE product_id=%d", $item->product_id));
-                update_post_meta($item->product_id, '_mkv_stock', $total);
-
-                $wpdb->insert("{$wpdb->prefix}mkv_inventory_logs", array(
-                    'product_id'  => $item->product_id,
-                    'location_id' => $order->warehouse_id,
-                    'type'        => 'in',
-                    'qty'         => $item->qty,
-                    'note'        => 'Hoàn kho - Hủy đơn ' . $order->order_code,
-                    'created_by'  => $user_id,
-                    'created_at'  => current_time('mysql'),
-                ));
-            }
-        }
-
-        $wpdb->update("{$wpdb->prefix}mkv_orders", array(
-            'status'               => 'cancelled',
-            'fulfillment_status'   => 'cancelled',
-            'debt_amount'          => 0,
-            'customer_debt_amount' => 0,
-        ), array('id' => $order_id));
-        return true;
     }
 
     public function handle_return_order()
@@ -890,95 +1039,149 @@ class MKV_Orders
     public static function process_return_order($order_id, $user_id = 0)
     {
         global $wpdb;
-        $order = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}mkv_orders WHERE id=%d", $order_id));
-        if (!$order || !in_array($order->status, array('paid', 'completed', 'shipping'))) {
-            return new WP_Error('invalid_order', 'Không thể trả hàng cho đơn này.');
-        }
+        $wpdb->query('START TRANSACTION');
+        try {
+            $order = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$wpdb->prefix}mkv_orders WHERE id=%d FOR UPDATE", $order_id));
+            if (!$order || !in_array($order->status, array('paid', 'completed', 'shipping'), true)) {
+                $wpdb->query('ROLLBACK');
+                return new WP_Error('invalid_order', 'Không thể trả hàng cho đơn này.');
+            }
 
-        // Tạo phiếu trả hàng
-        $return_code = 'TH' . date('ymdHis');
-        $wpdb->insert("{$wpdb->prefix}mkv_returns", array(
-            'return_code'  => $return_code,
-            'order_id'     => $order_id,
-            'customer_id'  => $order->customer_id,
-            'location_id'  => $order->warehouse_id,
-            'total_refund' => $order->total_amount,
-            'created_by'   => $user_id
-        ));
-        $return_id = $wpdb->insert_id;
-
-        // Xử lý từng sản phẩm trong đơn (Hoàn kho toàn bộ)
-        $items = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}mkv_order_items WHERE order_id=%d", $order_id));
-        foreach ($items as $item) {
-            $wpdb->insert("{$wpdb->prefix}mkv_return_items", array(
-                'return_id'  => $return_id,
-                'product_id' => $item->product_id,
-                'qty'        => $item->qty,
-                'price'      => $item->price,
-                'subtotal'   => $item->subtotal
+            $existing_return = $wpdb->get_var($wpdb->prepare(
+                "SELECT id FROM {$wpdb->prefix}mkv_returns WHERE order_id = %d LIMIT 1",
+                $order_id
             ));
+            if ($existing_return) {
+                $wpdb->query('ROLLBACK');
+                return new WP_Error('already_returned', 'Đơn hàng này đã có phiếu trả hàng.');
+            }
 
-            // Hoàn kho bằng Atomic Update
-            $wpdb->query($wpdb->prepare(
-                "INSERT IGNORE INTO {$wpdb->prefix}mkv_inventory_stock (product_id, location_id, stock) VALUES (%d, %d, 0)",
-                $item->product_id, $order->warehouse_id
+            // Tạo phiếu trả hàng (bổ sung số ngẫu nhiên tránh trùng return_code khi chạy đồng thời cùng giây)
+            $return_code = 'TH' . date('ymdHis') . rand(10, 99);
+            $actual_refund = min((float)$order->total_amount, (float)($order->paid_amount ?? 0));
+            $ret_res = $wpdb->insert("{$wpdb->prefix}mkv_returns", array(
+                'return_code'  => $return_code,
+                'order_id'     => $order_id,
+                'customer_id'  => $order->customer_id,
+                'location_id'  => $order->warehouse_id,
+                'total_refund' => $actual_refund,
+                'created_by'   => $user_id,
+                'created_at'   => current_time('mysql')
             ));
-            $wpdb->query($wpdb->prepare(
-                "UPDATE {$wpdb->prefix}mkv_inventory_stock SET stock = stock + %d WHERE product_id = %d AND location_id = %d",
-                $item->qty, $item->product_id, $order->warehouse_id
-            ));
-            $total = (int) $wpdb->get_var($wpdb->prepare("SELECT SUM(stock) FROM {$wpdb->prefix}mkv_inventory_stock WHERE product_id=%d", $item->product_id));
-            update_post_meta($item->product_id, '_mkv_stock', $total);
+            if ($ret_res === false) {
+                if (!empty($wpdb->last_error)) {
+                    error_log('[Mini-KiotViet] Return order insert error: ' . $wpdb->last_error);
+                }
+                throw new Exception('Không thể tạo phiếu trả hàng.');
+            }
+            $return_id = $wpdb->insert_id;
 
-            // Ghi log tồn kho
-            $wpdb->insert("{$wpdb->prefix}mkv_inventory_logs", array(
-                'product_id'  => $item->product_id,
-                'location_id' => $order->warehouse_id,
-                'type'        => 'in',
-                'qty'         => $item->qty,
-                'note'        => 'Khách trả hàng (Đơn ' . $order->order_code . ')',
-                'created_by'  => $user_id
-            ));
-        }
+            // Xử lý từng sản phẩm trong đơn (Hoàn kho toàn bộ)
+            $items = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->prefix}mkv_order_items WHERE order_id=%d", $order_id));
+            foreach ($items as $item) {
+                $item_res = $wpdb->insert("{$wpdb->prefix}mkv_return_items", array(
+                    'return_id'  => $return_id,
+                    'product_id' => $item->product_id,
+                    'qty'        => $item->qty,
+                    'price'      => $item->price,
+                    'subtotal'   => $item->subtotal
+                ));
+                if ($item_res === false) {
+                    if (!empty($wpdb->last_error)) {
+                        error_log('[Mini-KiotViet] Return order item error: ' . $wpdb->last_error);
+                    }
+                    throw new Exception('Lỗi lưu chi tiết sản phẩm trả hàng.');
+                }
 
-        // Tạo Phiếu Chi trong sổ quỹ để hoàn tiền
-        if (isset($order->paid_amount) && $order->paid_amount > 0) {
-            $wpdb->insert("{$wpdb->prefix}mkv_cashbook", array(
-                'type'         => 'chi',
-                'method'       => $order->payment_method,
-                'amount'       => $order->paid_amount,
-                'reference_id' => $return_id,
-                'customer_id'  => $order->customer_id ?: null,
-                'note'         => 'Hoàn tiền trả hàng cho đơn ' . $order->order_code,
-                'created_by'   => $user_id
-            ));
-        }
-
-        // Hoàn trả / trừ điểm khách hàng
-        if ($order->customer_id > 0) {
-            $rate   = max(1, (int) get_option('mkv_points_rate', 100));
-            $earned_points = (int) floor($order->total_amount / $rate);
-            $used_points   = (int) $order->points_used;
-            $points_diff   = (int) ($used_points - $earned_points); // Khôi phục điểm đã dùng, trừ điểm đã kiếm
-            $debt_amount   = (float) ($order->customer_debt_amount ?? $order->debt_amount ?? 0);
-            
-            if ($points_diff !== 0 || $order->total_amount > 0 || $debt_amount > 0) {
+                // Hoàn kho bằng Atomic Update
                 $wpdb->query($wpdb->prepare(
-                    "UPDATE {$wpdb->prefix}mkv_customers SET points = points + %d, total_spent = GREATEST(0, total_spent - %f), total_debt = GREATEST(0, total_debt - %f) WHERE id = %d",
-                    $points_diff, $order->total_amount, $debt_amount, $order->customer_id
+                    "INSERT IGNORE INTO {$wpdb->prefix}mkv_inventory_stock (product_id, location_id, stock) VALUES (%d, %d, 0)",
+                    $item->product_id, $order->warehouse_id
+                ));
+                $stock_res = $wpdb->query($wpdb->prepare(
+                    "UPDATE {$wpdb->prefix}mkv_inventory_stock SET stock = stock + %d WHERE product_id = %d AND location_id = %d",
+                    $item->qty, $item->product_id, $order->warehouse_id
+                ));
+                if ($stock_res === false) {
+                    throw new Exception('Lỗi khôi phục kho sản phẩm ID ' . $item->product_id);
+                }
+                $total = (int) $wpdb->get_var($wpdb->prepare("SELECT SUM(stock) FROM {$wpdb->prefix}mkv_inventory_stock WHERE product_id=%d", $item->product_id));
+                update_post_meta($item->product_id, '_mkv_stock', $total);
+
+                // Ghi log tồn kho
+                $wpdb->insert("{$wpdb->prefix}mkv_inventory_logs", array(
+                    'product_id'  => $item->product_id,
+                    'location_id' => $order->warehouse_id,
+                    'type'        => 'in',
+                    'qty'         => $item->qty,
+                    'note'        => 'Khách trả hàng (Đơn ' . $order->order_code . ')',
+                    'created_by'  => $user_id,
+                    'created_at'  => current_time('mysql')
                 ));
             }
+
+            // Tạo Phiếu Chi trong sổ quỹ để hoàn tiền (chỉ hoàn số tiền thực tế khách đã trả)
+            if ($actual_refund > 0) {
+                $cb_res = $wpdb->insert("{$wpdb->prefix}mkv_cashbook", array(
+                    'type'         => 'chi',
+                    'method'       => $order->payment_method ?: 'cash',
+                    'amount'       => $actual_refund,
+                    'reference_id' => $return_id,
+                    'customer_id'  => $order->customer_id ?: null,
+                    'note'         => 'Hoàn tiền trả hàng cho đơn ' . $order->order_code,
+                    'created_by'   => $user_id,
+                    'created_at'   => current_time('mysql')
+                ));
+                if ($cb_res === false) {
+                    if (!empty($wpdb->last_error)) {
+                        error_log('[Mini-KiotViet] Return order cashbook error: ' . $wpdb->last_error);
+                    }
+                    throw new Exception('Lỗi tạo phiếu chi hoàn tiền trong sổ quỹ.');
+                }
+            }
+
+            // Hoàn trả / trừ điểm khách hàng
+            if ($order->customer_id > 0) {
+                $rate   = max(1, (int) get_option('mkv_points_rate', 100));
+                $earned_points = (int) floor($order->total_amount / $rate);
+                $used_points   = (int) $order->points_used;
+                $points_diff   = (int) ($used_points - $earned_points); // Khôi phục điểm đã dùng, trừ điểm đã kiếm
+                $debt_amount   = (float) ($order->customer_debt_amount ?? $order->debt_amount ?? 0);
+                
+                if ($points_diff !== 0 || $order->total_amount > 0 || $debt_amount > 0) {
+                    $cust_res = $wpdb->query($wpdb->prepare(
+                        "UPDATE {$wpdb->prefix}mkv_customers SET points = points + %d, total_spent = GREATEST(0, total_spent - %f), total_debt = GREATEST(0, total_debt - %f) WHERE id = %d",
+                        $points_diff, $order->total_amount, $debt_amount, $order->customer_id
+                    ));
+                    if ($cust_res === false) {
+                        if (!empty($wpdb->last_error)) {
+                            error_log('[Mini-KiotViet] Return order customer error: ' . $wpdb->last_error);
+                        }
+                        throw new Exception('Lỗi cập nhật điểm và công nợ khách hàng.');
+                    }
+                }
+            }
+
+            // Cập nhật trạng thái đơn thành Trả Hàng (State guard: chỉ cập nhật nếu trạng thái vẫn thuộc nhóm được phép trả)
+            $ord_res = $wpdb->query($wpdb->prepare(
+                "UPDATE {$wpdb->prefix}mkv_orders 
+                 SET status = 'returned', fulfillment_status = 'returned', debt_amount = 0, customer_debt_amount = 0 
+                 WHERE id = %d AND status IN ('paid', 'completed', 'shipping')",
+                $order_id
+            ));
+            if ($ord_res === false || $ord_res === 0) {
+                if (!empty($wpdb->last_error)) {
+                    error_log('[Mini-KiotViet] Return order status error: ' . $wpdb->last_error);
+                }
+                throw new Exception('Lỗi cập nhật trạng thái đơn hàng (đơn có thể đã bị thay đổi đồng thời).');
+            }
+
+            $wpdb->query('COMMIT');
+            return true;
+        } catch (Exception $e) {
+            $wpdb->query('ROLLBACK');
+            return new WP_Error('return_order_failed', $e->getMessage());
         }
-
-        // Cập nhật trạng thái đơn thành Trả Hàng
-        $wpdb->update("{$wpdb->prefix}mkv_orders", array(
-            'status'               => 'returned',
-            'fulfillment_status'   => 'returned',
-            'debt_amount'          => 0,
-            'customer_debt_amount' => 0,
-        ), array('id' => $order_id));
-
-        return true;
     }
 
     public function handle_push_shipping()
@@ -995,6 +1198,38 @@ class MKV_Orders
         }
 
         wp_redirect(admin_url('admin.php?page=mkv-orders&pushed=1'));
+        exit;
+    }
+    public function handle_update_tracking_code()
+    {
+        $order_id = intval($_POST['order_id'] ?? 0);
+        if (!wp_verify_nonce($_POST['_wpnonce'] ?? '', 'mkv_tracking_' . $order_id) || !current_user_can('mkv_manage_orders')) {
+            wp_die('Không có quyền.');
+        }
+
+        $tracking_code = sanitize_text_field($_POST['tracking_code'] ?? '');
+        if (empty($tracking_code)) {
+            wp_die('Vui lòng nhập mã vận đơn.');
+        }
+
+        global $wpdb;
+        $order = $wpdb->get_row($wpdb->prepare("SELECT status FROM {$wpdb->prefix}mkv_orders WHERE id = %d", $order_id));
+        if (!$order) {
+            wp_die('Đơn hàng không tồn tại.');
+        }
+
+        // P4-008: Use strict comparison (true) consistent with rest of codebase
+        if (in_array($order->status, array('cancelled', 'returned'), true)) {
+            wp_die('Không thể cập nhật mã vận đơn cho đơn hàng đã hủy hoặc hoàn trả.');
+        }
+
+        $wpdb->update("{$wpdb->prefix}mkv_orders", array(
+            'tracking_code'      => $tracking_code,
+            'status'             => 'shipping',
+            'fulfillment_status' => 'in_transit'
+        ), array('id' => $order_id));
+
+        wp_redirect(admin_url('admin.php?page=mkv-orders&action=detail&id=' . $order_id . '&updated=tracking'));
         exit;
     }
 }

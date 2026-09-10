@@ -40,6 +40,18 @@
     align-items: start;
 }
 
+#pos-product-grid {
+    max-height: calc(100vh - 275px) !important;
+    overflow-y: auto;
+}
+
+.mkv-pos-layout > .mkv-card:last-child {
+    max-height: calc(100vh - 215px) !important;
+    position: sticky;
+    top: 10px;
+    overflow-y: auto;
+}
+
 /* POS Quantity Input Spinners removal */
 .pos-qty-input::-webkit-outer-spin-button,
 .pos-qty-input::-webkit-inner-spin-button {
@@ -105,7 +117,7 @@
 }
 
 /* --- Inline CSS moved from view-pos.php --- */
-.mkv-pos-container { padding: 20px; box-sizing: border-box; }
+.mkv-pos-container { padding: 0; box-sizing: border-box; }
 .mkv-pos-header { background: var(--mkv-surface); padding: 16px 24px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
 .mkv-pos-layout .mkv-card { border: none !important; box-shadow: 0 6px 24px rgba(0,0,0,0.04) !important; border-radius: 16px !important; }
 .pos-product-item.out-of-stock { opacity:.5; cursor:not-allowed; filter: grayscale(80%); }
@@ -201,7 +213,7 @@
 @media print {
     body * { visibility: hidden; }
     #mkv-printable-receipt, #mkv-printable-receipt * { visibility: visible; }
-    #mkv-printable-receipt { position: absolute; left: 0; top: 0; width: 100%; border: none; }
+    #mkv-printable-receipt { position: absolute; left: 0; right: 0; top: 0; width: 100%; max-width: 80mm; margin: 0 auto; border: none; }
 }
 
 /* ========== POS DARK MODE SUPPORT ========== */
@@ -267,3 +279,58 @@ html.dark .pos-action-btn-outline:hover:not([disabled]) {
     background: #1e293b !important;
     color: #f1f5f9 !important;
 }
+
+/* ========== POS FULLSCREEN / WORKSTATION MODE ========== */
+body.mkv-pos-fullscreen #wpadminbar,
+body.mkv-pos-fullscreen #adminmenumain,
+body.mkv-pos-fullscreen #adminmenuback,
+body.mkv-pos-fullscreen #adminmenuwrap {
+    display: none !important;
+}
+body.mkv-pos-fullscreen #wpcontent,
+body.mkv-pos-fullscreen #wpbody,
+body.mkv-pos-fullscreen #wpbody-content,
+body.mkv-pos-fullscreen #wpfooter {
+    margin: 0 !important;
+    padding: 0 !important;
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+}
+body.mkv-pos-fullscreen html,
+body.mkv-pos-fullscreen body {
+    padding-top: 0 !important;
+    overflow: hidden !important;
+}
+body.mkv-pos-fullscreen .mkv-app-layout {
+    height: 100vh !important;
+    margin: 0 !important;
+    max-height: 100vh !important;
+}
+body.mkv-pos-fullscreen .mkv-topbar,
+body.mkv-pos-fullscreen .mkv-main-header {
+    display: none !important;
+}
+body.mkv-pos-fullscreen .mkv-page-scroll {
+    padding: 16px 20px !important;
+}
+body.mkv-pos-fullscreen #pos-product-grid {
+    max-height: calc(100vh - 200px) !important;
+}
+body.mkv-pos-fullscreen .mkv-pos-layout > .mkv-card:last-child {
+    max-height: calc(100vh - 140px) !important;
+}
+
+@media (max-width: 1024px) {
+    .mkv-pos-layout {
+        grid-template-columns: 1fr;
+    }
+    .mkv-pos-layout > .mkv-card:last-child {
+        position: static;
+        max-height: none !important;
+    }
+    #pos-product-grid {
+        max-height: 500px !important;
+    }
+}
+
+
