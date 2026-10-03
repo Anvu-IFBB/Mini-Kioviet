@@ -266,6 +266,14 @@
     --mkv-breakpoint-lg:          1024px;
     --mkv-breakpoint-xl:          1280px;
     --mkv-breakpoint-2xl:         1536px;
+
+    /* ----------------------------------------------------------------------
+       14. SAFE AREA INSETS (iOS Safari / Mobile Devices)
+       ---------------------------------------------------------------------- */
+    --mkv-safe-top:               env(safe-area-inset-top, 0px);
+    --mkv-safe-right:             env(safe-area-inset-right, 0px);
+    --mkv-safe-bottom:            env(safe-area-inset-bottom, 0px);
+    --mkv-safe-left:              env(safe-area-inset-left, 0px);
 }
 
 /* ==========================================================================

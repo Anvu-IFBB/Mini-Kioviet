@@ -828,11 +828,19 @@ body.mkv-ai-drawer-open .mkv-ai-fab {
 /* ==========================================================================
    Mobile Responsiveness
    ========================================================================== */
+/* ==========================================================================
+   Mobile Responsiveness
+   ========================================================================== */
 @media screen and (max-width: 768px) {
     .mkv-ai-drawer {
         width: 100% !important;
         max-width: 100vw !important;
         right: -100% !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        padding-top: var(--mkv-safe-top, 0px) !important;
     }
     .mkv-ai-drawer.history-open {
         width: 100% !important;
@@ -850,19 +858,25 @@ body.mkv-ai-drawer-open .mkv-ai-fab {
         max-width: 320px !important;
     }
     .mkv-ai-fab {
-        bottom: 16px !important;
-        right: 16px !important;
-        width: 44px !important;
-        height: 44px !important;
+        bottom: calc(16px + var(--mkv-safe-bottom, 0px)) !important;
+        right: calc(16px + var(--mkv-safe-right, 0px)) !important;
+        width: 48px !important;
+        height: 48px !important;
         padding: 8px !important;
         border-radius: 50% !important;
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35) !important;
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4) !important;
     }
     .mkv-ai-fab-icon {
-        font-size: 20px !important;
+        font-size: 22px !important;
     }
     .mkv-ai-fab-text {
         display: none !important;
+    }
+    .mkv-ai-footer {
+        padding: 10px 14px calc(12px + var(--mkv-safe-bottom, 0px)) 14px !important;
+    }
+    .mkv-ai-input {
+        font-size: 16px !important; /* Prevents iOS Safari auto-zoom */
     }
 }
 

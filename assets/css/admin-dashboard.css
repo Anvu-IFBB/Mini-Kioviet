@@ -88,12 +88,53 @@
     .mkv-dashboard-layout { flex-direction: column; }
     .mkv-dashboard-sidebar { width: 100%; }
 }
-@media screen and (max-width: 600px) {
-    .mkv-today-stats-grid { flex-wrap: wrap; }
-    .mkv-dashboard-stat-col {
-        min-width: 50%;
-        border-right: none;
-        border-bottom: 1px solid var(--mkv-border-light);
+@media screen and (max-width: 782px) {
+    .mkv-dashboard-layout {
+        flex-direction: column;
+        gap: 14px;
     }
-    .mkv-dashboard-stat-value { font-size: 22px; }
+    .mkv-dashboard-sidebar {
+        width: 100%;
+    }
+    .mkv-today-stats-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        width: 100%;
+    }
+    .mkv-dashboard-stat-col {
+        min-width: 0 !important;
+        width: 100% !important;
+        padding: 14px 10px !important;
+        border-right: 1px solid var(--mkv-border-light) !important;
+        border-bottom: 1px solid var(--mkv-border-light) !important;
+        box-sizing: border-box !important;
+    }
+    .mkv-dashboard-stat-col:nth-child(2n) {
+        border-right: none !important;
+    }
+    .mkv-dashboard-stat-col:nth-last-child(-n+2) {
+        border-bottom: none !important;
+    }
+    .mkv-dashboard-stat-value {
+        font-size: clamp(16px, 4.5vw, 22px) !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+    .mkv-dashboard-stat-label {
+        font-size: 11.5px !important;
+        margin-bottom: 6px !important;
+    }
+}
+@media screen and (max-width: 480px) {
+    #mkv-dashboard-period {
+        font-size: 16px !important; /* Prevent iOS zoom */
+        width: 100% !important;
+        margin-top: 6px;
+    }
+    .mkv-card-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+    }
 }
