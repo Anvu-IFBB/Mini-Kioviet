@@ -35,6 +35,8 @@ chrome_profile*/
 *.tmp
 *.temp
 update*.md
+PHASE_*.md
+MKV_*.md
 
 # 5. Database Dumps & Local Backups
 *.sql

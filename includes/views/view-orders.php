@@ -64,7 +64,7 @@ $statuses = MKV_Orders::STATUSES;
                     <th style="min-width:180px;"><?php echo esc_html(mkv__('Khách hàng')); ?></th>
                     <th style="width:130px;"><?php echo esc_html(mkv__('Kênh bán')); ?></th>
                     <th style="width:120px;"><?php echo esc_html(mkv__('Trạng thái')); ?></th>
-                    <th style="width:130px;"><?php echo esc_html(mkv__('Tổng tiền')); ?></th>
+                    <th style="width:130px; text-align:right;"><?php echo esc_html(mkv__('Tổng tiền')); ?></th>
                     <th style="width:130px;"><?php echo esc_html(mkv__('Thanh toán')); ?></th>
                     <th style="width:140px;"><?php echo esc_html(mkv__('Ngày tạo')); ?></th>
                     <th style="width:340px; text-align:right; padding-right:24px;"><?php echo esc_html(mkv__('Hành động')); ?></th>
@@ -102,7 +102,7 @@ $statuses = MKV_Orders::STATUSES;
                         <span class="mkv-badge <?php echo esc_attr($channel['class']); ?>"><?php echo esc_html($channel['label']); ?></span>
                     </td>
                     <td><span class="mkv-badge <?php echo $s['badge']; ?>"><?php echo esc_html(mkv__($s['label'])); ?></span></td>
-                    <td>
+                    <td style="text-align:right;">
                         <strong style="color:var(--mkv-text-main); font-size:14px;"><?php echo number_format($o->total_amount, 0, ',', '.'); ?> ₫</strong>
                     </td>
                     <td>

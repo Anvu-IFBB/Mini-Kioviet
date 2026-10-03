@@ -66,8 +66,8 @@
         <table class="mkv-table" style="min-width: 850px;">
             <thead><tr>
                 <th><?php echo esc_html(mkv__('Sản phẩm')); ?></th>
-                <?php foreach ($locations as $loc): ?><th style="width:90px;"><?php echo esc_html($loc->name); ?></th><?php endforeach; ?>
-                <th style="width:90px;"><?php echo esc_html(mkv__('Tổng')); ?></th>
+                <?php foreach ($locations as $loc): ?><th style="width:90px; text-align:right;"><?php echo esc_html($loc->name); ?></th><?php endforeach; ?>
+                <th style="width:90px; text-align:right;"><?php echo esc_html(mkv__('Tổng')); ?></th>
                 <th style="width:350px;"><?php echo esc_html(mkv__('Điều chỉnh nhanh')); ?></th>
             </tr></thead>
             <tbody>
@@ -111,13 +111,13 @@
                         </div>
                     </td>
                     <?php foreach ($locations as $loc): ?>
-                    <td><?php $s = $stocks[$loc->id];
-                        if ($s <= 0) echo '<span class="mkv-badge mkv-badge-red">'.$s.'</span>';
-                        elseif ($s <= $min_stock) echo '<span class="mkv-badge mkv-badge-yellow">'.$s.'</span>';
-                        else echo '<span class="mkv-badge mkv-badge-green">'.$s.'</span>';
+                    <td style="text-align:right;"><?php $s = $stocks[$loc->id];
+                        if ($s <= 0) echo '<span class="mkv-badge mkv-badge-red">'.number_format($s).'</span>';
+                        elseif ($s <= $min_stock) echo '<span class="mkv-badge mkv-badge-yellow">'.number_format($s).'</span>';
+                        else echo '<span class="mkv-badge mkv-badge-green">'.number_format($s).'</span>';
                     ?></td>
                     <?php endforeach; ?>
-                    <td><strong><?php echo $total; ?></strong></td>
+                    <td style="text-align:right;"><strong><?php echo number_format($total); ?></strong></td>
                     <td>
                         <form method="post" action="<?php echo admin_url('admin-post.php'); ?>" style="display:inline-flex; gap:6px; align-items:center; background:var(--mkv-border-light); padding:4px 6px; border-radius:8px; border:1px solid var(--mkv-border);">
                             <input type="hidden" name="action" value="mkv_adjust_stock">

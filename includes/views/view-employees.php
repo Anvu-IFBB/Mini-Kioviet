@@ -186,7 +186,7 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
                                             <input type="hidden" name="target_user_id" value="<?php echo $u->ID; ?>">
                                             <input type="hidden" name="redirect_tab" value="list">
                                             <?php wp_nonce_field('mkv_checkin_action'); ?>
-                                            <button type="submit" class="mkv-btn mkv-btn-sm" style="background:#ecfdf5; color:#047857; border:1px solid #a7f3d0; padding:4px 8px; font-size:12px;" title="<?php echo esc_attr(mkv__('Điểm danh vào ca')); ?>">
+                                            <button type="submit" class="mkv-btn mkv-btn-sm mkv-btn-success" style="padding:4px 8px; font-size:12px;" title="<?php echo esc_attr(mkv__('Điểm danh vào ca')); ?>">
                                                 <i class="hgi-stroke hgi-time-02"></i> <?php echo esc_html(mkv__('Vào ca')); ?>
                                             </button>
                                         </form>
@@ -197,7 +197,7 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
                                             <input type="hidden" name="target_user_id" value="<?php echo $u->ID; ?>">
                                             <input type="hidden" name="redirect_tab" value="list">
                                             <?php wp_nonce_field('mkv_checkin_action'); ?>
-                                            <button type="submit" class="mkv-btn mkv-btn-sm" style="background:#eff6ff; color:#1d4ed8; border:1px solid #bfdbfe; padding:4px 8px; font-size:12px;" title="<?php echo esc_attr(mkv__('Điểm danh tan ca')); ?>">
+                                            <button type="submit" class="mkv-btn mkv-btn-sm mkv-btn-info" style="padding:4px 8px; font-size:12px;" title="<?php echo esc_attr(mkv__('Điểm danh tan ca')); ?>">
                                                 <i class="hgi-stroke hgi-logout-02"></i> <?php echo esc_html(mkv__('Tan ca')); ?>
                                             </button>
                                         </form>
@@ -207,7 +207,7 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
                                 <?php if ($u->ID != get_current_user_id()): ?>
                                 <button type="button" class="mkv-btn mkv-btn-sm mkv-btn-secondary" aria-label="<?php echo esc_attr(mkv__('Sửa nhân viên')); ?>" onclick="editEmployee(<?php echo $u->ID; ?>, '<?php echo esc_js($u->display_name); ?>', '<?php echo esc_js($u->user_email); ?>', '<?php echo isset($u->roles[0]) ? esc_js($u->roles[0]) : ''; ?>', '<?php echo esc_js($emp_status); ?>');">
                                     <i class="hgi-stroke hgi-edit-01"></i> <?php echo esc_html(mkv__('Sửa')); ?>
-                                </a>
+                                </button>
                                 <a href="<?php echo wp_nonce_url(admin_url('admin-post.php?action=mkv_delete_employee&user_id='.$u->ID), 'mkv_delete_employee_action'); ?>" class="mkv-btn mkv-btn-sm mkv-btn-danger" aria-label="<?php echo esc_attr(mkv__('Xóa nhân viên')); ?>" onclick="return confirm('<?php echo esc_js(mkv__('Bạn có chắc muốn xóa nhân viên này? Toàn bộ phiếu thu, hóa đơn của họ sẽ được tự động gán cho bạn.')); ?>');">
                                     <i class="hgi-stroke hgi-delete-02"></i>
                                 </a>

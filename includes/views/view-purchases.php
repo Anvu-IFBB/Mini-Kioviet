@@ -39,7 +39,7 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
 <!-- Tab: Danh sách Phiếu nhập -->
 <?php if ($current_tab === 'list'): ?>
 <div class="mkv-table-wrap">
-    <table class="mkv-table">
+    <table class="mkv-table" style="min-width: 900px;">
         <thead>
             <tr>
                 <th style="width:140px;"><?php echo esc_html(mkv__('Mã phiếu')); ?></th>
@@ -82,7 +82,7 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
                         <td>
                             <button type="button" class="mkv-po-code-btn" onclick="mkvOpenPoDetail(<?php echo (int)$p->id; ?>)" style="color:var(--mkv-primary); font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:5px;" title="<?php echo esc_attr(mkv__('Bấm để xem chi tiết phiếu nhập')); ?>">
                                 <i class="hgi-stroke hgi-invoice-03" style="font-size:15px;"></i> <?php echo esc_html($p->code); ?>
-                            </a>
+                            </button>
                         </td>
                         <td style="color:#64748b; font-size:12.5px;">
                             <?php echo date('d/m/Y H:i', strtotime($p->created_at)); ?>
@@ -216,8 +216,8 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
                         <span id="modal-po-item-count" style="font-size:12px; color:#64748b;"></span>
                     </div>
 
-                    <div style="border:1px solid #e2e8f0; border-radius:8px; overflow:hidden;">
-                        <table class="mkv-table" style="margin:0;">
+                    <div style="border:1px solid #e2e8f0; border-radius:8px; overflow-x:auto; -webkit-overflow-scrolling:touch;">
+                        <table class="mkv-table" style="margin:0; min-width:680px;">
                             <thead>
                                 <tr style="background:#f1f5f9;">
                                     <th style="width:40px; text-align:center;">#</th>
@@ -246,7 +246,7 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
                 </div>
 
                 <!-- Related System Documents (Sổ Quỹ & Thẻ Kho) -->
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px;">
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-top:16px;">
                     <!-- Cashbook payments -->
                     <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px;">
                         <h5 style="margin:0 0 10px; font-size:13px; font-weight:700; color:var(--mkv-text-main); display:flex; align-items:center; gap:6px;">
@@ -271,7 +271,7 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
                 </div>
 
                 <!-- Debt Callout if unpaid -->
-                <div id="modal-po-debt-callout" style="display:none; margin-top:16px; background:#fef2f2; border:1px solid #fecaca; border-radius:10px; padding:12px 16px; align-items:center; justify-content:space-between;">
+                <div id="modal-po-debt-callout" style="display:none; margin-top:16px; background:#fef2f2; border:1px solid #fecaca; border-radius:10px; padding:12px 16px; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
                     <div style="display:flex; align-items:center; gap:8px;">
                         <i class="hgi-stroke hgi-alert-circle" style="color:#ef4444; font-size:20px;"></i>
                         <span style="font-size:13px; color:#991b1b;">

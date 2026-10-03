@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Mini KiotViet - AI Assistant Styles (Glassmorphism)
+   Mini KiotViet - AI Assistant Styles (Modern Business Software)
    ========================================================================== */
 
 .mkv-ai-drawer {
@@ -8,18 +8,17 @@
     right: -850px !important;
     width: 420px !important;
     height: 100vh !important;
-    background: rgba(255, 255, 255, 0.88) !important;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-left: 1px solid rgba(255, 255, 255, 0.4) !important;
-    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.1) !important;
+    background: var(--mkv-surface, #ffffff) !important;
+    border-left: 1px solid var(--mkv-border, #e2e8f0) !important;
+    box-shadow: var(--mkv-shadow-lg) !important;
     z-index: 9999999 !important;
     display: flex !important;
     flex-direction: row !important;
-    transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1), width 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    transition: right 0.25s cubic-bezier(0.16, 1, 0.3, 1), width 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
     font-family: 'Inter', sans-serif !important;
-    pointer-events: auto !important;
+    pointer-events: none !important;
     overflow: hidden !important;
+    visibility: hidden !important;
 }
 
 /* When history panel is open, widen drawer */
@@ -35,20 +34,20 @@
     display: flex;
     flex-direction: column;
     min-width: 0;
-    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* ==========================================================================
-   History Sidebar Panel (Gemini / ChatGPT Style)
+   History Sidebar Panel
    ========================================================================== */
 .mkv-ai-history-panel {
     width: 0;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    background: rgba(248, 250, 252, 0.98);
-    border-right: 1px solid rgba(226, 232, 240, 0.85);
-    transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    background: var(--mkv-color-bg-subtle, #f8fafc);
+    border-right: 1px solid var(--mkv-border, #e2e8f0);
+    transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     flex-shrink: 0;
     position: relative;
 }
@@ -58,11 +57,12 @@
 }
 
 .mkv-ai-history-header {
-    padding: 20px;
+    padding: 14px 18px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: linear-gradient(135deg, rgba(37, 99, 235, 0.95) 0%, rgba(59, 130, 246, 0.85) 100%);
+    background: var(--mkv-surface, #ffffff);
+    border-bottom: 1px solid var(--mkv-border, #e2e8f0);
     flex-shrink: 0;
 }
 
@@ -70,36 +70,36 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    color: white;
-    font-size: 14px;
+    color: var(--mkv-text-main, #0f172a);
+    font-size: 13.5px;
     font-weight: 600;
     white-space: nowrap;
 }
 
 .mkv-ai-history-header-title i {
-    font-size: 18px;
+    font-size: 16px;
+    color: var(--mkv-primary, #0060df);
 }
 
 .mkv-ai-history-close {
-    background: none;
+    background: transparent;
     border: none;
-    color: white;
-    font-size: 18px;
+    color: var(--mkv-text-muted, #64748b);
+    font-size: 16px;
     cursor: pointer;
-    opacity: 0.8;
-    transition: all 0.2s;
+    transition: var(--mkv-transition-colors);
     width: 28px;
     height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
+    border-radius: var(--mkv-radius-sm);
     flex-shrink: 0;
 }
 
 .mkv-ai-history-close:hover {
-    opacity: 1;
-    background: rgba(255, 255, 255, 0.2);
+    color: var(--mkv-text-main);
+    background: var(--mkv-color-surface-muted, #f1f5f9);
 }
 
 .mkv-ai-history-actions {
@@ -112,21 +112,25 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 10px 14px;
-    background: white;
-    border: 1px solid rgba(226, 232, 240, 0.9);
-    border-radius: 12px;
+    padding: 9px 12px;
+    background: var(--mkv-surface, #ffffff);
+    border: 1px solid var(--mkv-border, #e2e8f0);
+    border-radius: var(--mkv-radius-sm);
     font-size: 13px;
     font-weight: 600;
-    color: #1e293b;
+    color: var(--mkv-text-main, #1e293b);
     cursor: pointer;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: var(--mkv-shadow-xs);
+    transition: var(--mkv-transition-colors);
     font-family: inherit;
 }
 
 .mkv-ai-sidebar-new-chat-btn:hover {
-    background: #eff6ff;
+    background: var(--mkv-primary-light, #eff6ff);
+    border-color: var(--mkv-color-primary-border, #bfdbfe);
+    color: var(--mkv-primary, #0060df);
+    box-shadow: var(--mkv-shadow-xs);
+}
     border-color: #bfdbfe;
     color: #2563eb;
     transform: translateY(-1px);
@@ -415,67 +419,75 @@
     right: 0 !important;
     display: flex !important;
     visibility: visible !important;
+    pointer-events: auto !important;
     opacity: 1 !important;
 }
 
 /* Header */
 .mkv-ai-header {
-    padding: 20px;
-    background: linear-gradient(135deg, rgba(37, 99, 235, 0.9) 0%, rgba(59, 130, 246, 0.8) 100%);
-    color: white;
+    padding: 14px 18px;
+    background: var(--mkv-surface, #ffffff);
+    color: var(--mkv-text-main, #0f172a);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.2);
+    border-bottom: 1px solid var(--mkv-border, #e2e8f0);
+    box-shadow: var(--mkv-shadow-xs);
 }
 
 .mkv-ai-header-title {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
 }
 
-.mkv-ai-header-title i {
-    font-size: 24px;
-    background: rgba(255, 255, 255, 0.2);
-    padding: 8px;
-    border-radius: 12px;
+.mkv-ai-header-title .mkv-ai-header-avatar {
+    width: 32px;
+    height: 32px;
+    background: var(--mkv-primary-light, #eff6ff);
+    color: var(--mkv-primary, #0060df);
+    border: 1px solid var(--mkv-color-primary-border, #bfdbfe);
+    border-radius: var(--mkv-radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
 }
 
 .mkv-ai-header h3 {
     margin: 0;
-    font-size: 16px;
+    font-size: 14.5px;
     font-weight: 600;
-    color: white;
+    color: var(--mkv-text-main, #0f172a);
     line-height: 1.2;
 }
 
 .mkv-ai-header p {
-    margin: 4px 0 0;
+    margin: 2px 0 0;
     font-size: 12px;
-    opacity: 0.9;
+    color: var(--mkv-text-muted, #64748b);
+    opacity: 1;
 }
 
 .mkv-ai-close {
-    background: none;
+    background: transparent;
     border: none;
-    color: white;
-    font-size: 20px;
+    color: var(--mkv-text-muted, #64748b);
+    font-size: 16px;
     cursor: pointer;
-    opacity: 0.7;
-    transition: all 0.2s;
-    width: 32px;
-    height: 32px;
+    transition: var(--mkv-transition-colors);
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
+    border-radius: var(--mkv-radius-sm);
 }
 
 .mkv-ai-close:hover {
-    opacity: 1;
-    background: rgba(255, 255, 255, 0.2);
+    color: var(--mkv-text-main);
+    background: var(--mkv-color-surface-muted, #f1f5f9);
 }
 
 /* Chat Body */
@@ -511,50 +523,50 @@
 }
 
 .mkv-ai-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--mkv-radius-sm);
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    font-size: 16px;
+    font-size: 14px;
 }
 
 .mkv-ai-msg.ai .mkv-ai-avatar {
-    background: linear-gradient(135deg, #2563eb, #3b82f6);
+    background: var(--mkv-primary);
     color: white;
-    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+    box-shadow: var(--mkv-shadow-xs);
 }
 
 .mkv-ai-msg.user .mkv-ai-avatar {
-    background: #e5e7eb;
-    color: #4b5563;
+    background: var(--mkv-border);
+    color: var(--mkv-text-muted);
 }
 
 .mkv-ai-content {
-    background: white;
-    padding: 12px 16px;
-    border-radius: 16px;
-    font-size: 14px;
+    background: var(--mkv-surface);
+    padding: 10px 14px;
+    border-radius: var(--mkv-radius-md);
+    font-size: 13.5px;
     line-height: 1.5;
     color: var(--mkv-text-main);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-    border: 1px solid rgba(226, 232, 240, 0.8);
+    box-shadow: var(--mkv-shadow-xs);
+    border: 1px solid var(--mkv-border);
     position: relative;
     word-break: break-word;
 }
 
 .mkv-ai-msg.ai .mkv-ai-content {
-    border-top-left-radius: 4px;
+    border-top-left-radius: 2px;
 }
 
 .mkv-ai-msg.user .mkv-ai-content {
-    background: #2563eb;
+    background: var(--mkv-primary);
     color: white;
-    border: none;
-    border-top-right-radius: 4px;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+    border: 1px solid var(--mkv-color-primary-hover);
+    border-top-right-radius: 2px;
+    box-shadow: var(--mkv-shadow-xs);
 }
 
 .mkv-ai-content p {
@@ -580,36 +592,34 @@
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    border-top: 1px solid rgba(226, 232, 240, 0.5);
+    border-top: 1px solid var(--mkv-border-light);
     padding-top: 12px;
 }
 
 .mkv-ai-chip {
-    background: rgba(255, 255, 255, 0.6);
-    border: 1px solid #cbd5e1;
-    padding: 6px 12px;
-    border-radius: 20px;
+    background: var(--mkv-surface);
+    border: 1px solid var(--mkv-border);
+    padding: 5px 10px;
+    border-radius: var(--mkv-radius-sm);
     font-size: 12px;
-    color: #475569;
+    color: var(--mkv-text-muted);
     cursor: pointer;
-    transition: all 0.2s;
-    backdrop-filter: blur(10px);
+    transition: var(--mkv-transition-colors);
 }
 
 .mkv-ai-chip:hover {
     background: var(--mkv-border-light);
-    border-color: #94a3b8;
-    color: #0f172a;
-    transform: translateY(-1px);
+    border-color: var(--mkv-border-strong);
+    color: var(--mkv-text-main);
 }
 
 /* Input Area */
 .mkv-ai-footer {
-    padding: 16px 20px;
-    background: rgba(255, 255, 255, 0.8);
-    border-top: 1px solid rgba(226, 232, 240, 0.8);
+    padding: 14px 18px;
+    background: var(--mkv-surface);
+    border-top: 1px solid var(--mkv-border);
     display: flex;
-    gap: 12px;
+    gap: 10px;
     align-items: flex-end;
 }
 
@@ -620,22 +630,24 @@
 
 .mkv-ai-input {
     width: 100%;
-    border: 1px solid #cbd5e1;
-    border-radius: 20px;
-    padding: 10px 16px;
-    font-size: 14px;
-    background: rgba(255,255,255,0.9);
+    border: 1px solid var(--mkv-border);
+    border-radius: var(--mkv-radius-sm);
+    padding: 8px 12px;
+    font-size: 13.5px;
+    background: var(--mkv-color-bg-subtle);
+    color: var(--mkv-text-main);
     resize: none;
     outline: none;
-    transition: border-color 0.2s;
+    transition: var(--mkv-transition-colors);
     font-family: inherit;
     box-sizing: border-box;
     max-height: 120px;
 }
 
 .mkv-ai-input:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: var(--mkv-primary);
+    background: var(--mkv-surface);
+    box-shadow: var(--mkv-focus-ring);
 }
 
 .mkv-ai-mic {
@@ -726,7 +738,6 @@
     position: fixed !important;
     inset: 0 !important;
     background: rgba(0,0,0,0.3) !important;
-    backdrop-filter: blur(2px);
     z-index: 9999998 !important;
     display: none;
     opacity: 0;
@@ -761,31 +772,31 @@
    ========================================================================== */
 .mkv-ai-fab {
     appearance: none;
-    border: 0;
+    border: 1px solid var(--mkv-color-primary-hover);
     font: inherit;
     position: fixed;
     bottom: 24px;
     right: 24px;
     display: flex;
     align-items: center;
-    background: linear-gradient(135deg, #2563eb, #3b82f6);
+    background: var(--mkv-primary);
     color: white;
-    padding: 12px;
-    border-radius: 30px;
-    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+    padding: 8px 12px;
+    border-radius: var(--mkv-radius-md);
+    box-shadow: var(--mkv-shadow-md);
     cursor: pointer;
     z-index: 9999990;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: var(--mkv-transition-colors);
     pointer-events: auto;
 }
 
 .mkv-ai-fab:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(37, 99, 235, 0.5);
+    background: var(--mkv-color-primary-hover);
+    box-shadow: var(--mkv-shadow-lg);
 }
 
 .mkv-ai-fab-icon {
-    font-size: 24px;
+    font-size: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -796,9 +807,9 @@
     overflow: hidden;
     white-space: nowrap;
     font-weight: 600;
-    font-size: 14px;
+    font-size: 13px;
     opacity: 0;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
 }
 
 .mkv-ai-fab:hover .mkv-ai-fab-text {
@@ -838,6 +849,21 @@ body.mkv-ai-drawer-open .mkv-ai-fab {
         width: 85% !important;
         max-width: 320px !important;
     }
+    .mkv-ai-fab {
+        bottom: 16px !important;
+        right: 16px !important;
+        width: 44px !important;
+        height: 44px !important;
+        padding: 8px !important;
+        border-radius: 50% !important;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35) !important;
+    }
+    .mkv-ai-fab-icon {
+        font-size: 20px !important;
+    }
+    .mkv-ai-fab-text {
+        display: none !important;
+    }
 }
 
 /* ==========================================================================
@@ -847,59 +873,60 @@ body.mkv-ai-drawer-open .mkv-ai-fab {
     body.admin-color-modern .mkv-ai-drawer, 
     body.admin-color-ocean .mkv-ai-drawer,
     .mkv-ai-dark-mode .mkv-ai-drawer {
-        background: rgba(30, 41, 59, 0.9) !important;
-        border-left: 1px solid rgba(255,255,255,0.1) !important;
+        background: #0f172a !important;
+        border-left: 1px solid #334155 !important;
     }
     
     body.admin-color-modern .mkv-ai-header, 
     body.admin-color-ocean .mkv-ai-header,
     .mkv-ai-dark-mode .mkv-ai-header {
-        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-        border-bottom: 1px solid rgba(255,255,255,0.05);
+        background: #1e293b;
+        border-bottom: 1px solid #334155;
     }
     
     body.admin-color-modern .mkv-ai-content, 
     body.admin-color-ocean .mkv-ai-content,
     .mkv-ai-dark-mode .mkv-ai-content {
-        background: #334155;
+        background: #1e293b;
         color: #f8fafc;
-        border-color: rgba(255,255,255,0.1);
+        border-color: #334155;
     }
     
     body.admin-color-modern .mkv-ai-msg.user .mkv-ai-content, 
     body.admin-color-ocean .mkv-ai-msg.user .mkv-ai-content,
     .mkv-ai-dark-mode .mkv-ai-msg.user .mkv-ai-content {
-        background: #2563eb;
+        background: #0060df;
         color: #ffffff;
+        border-color: #004ecc;
     }
     
     body.admin-color-modern .mkv-ai-footer, 
     body.admin-color-ocean .mkv-ai-footer,
     .mkv-ai-dark-mode .mkv-ai-footer {
-        background: rgba(30, 41, 59, 0.95);
-        border-top: 1px solid rgba(255,255,255,0.1);
+        background: #0f172a;
+        border-top: 1px solid #334155;
     }
     
     body.admin-color-modern .mkv-ai-input, 
     body.admin-color-ocean .mkv-ai-input,
     .mkv-ai-dark-mode .mkv-ai-input {
-        background: rgba(15, 23, 42, 0.8);
-        border-color: rgba(255,255,255,0.1);
+        background: #1e293b;
+        border-color: #334155;
         color: #f8fafc;
     }
     
     body.admin-color-modern .mkv-ai-chip, 
     body.admin-color-ocean .mkv-ai-chip,
     .mkv-ai-dark-mode .mkv-ai-chip {
-        background: rgba(30, 41, 59, 0.6);
-        border-color: rgba(255,255,255,0.2);
+        background: #1e293b;
+        border-color: #334155;
         color: #cbd5e1;
     }
     
     body.admin-color-modern .mkv-ai-chip:hover, 
     body.admin-color-ocean .mkv-ai-chip:hover,
     .mkv-ai-dark-mode .mkv-ai-chip:hover {
-        background: #475569;
+        background: #334155;
         color: #f8fafc;
     }
     
@@ -908,7 +935,7 @@ body.mkv-ai-drawer-open .mkv-ai-fab {
     body.admin-color-ocean .mkv-func-card,
     .mkv-ai-dark-mode .mkv-func-card {
         background: #1e293b;
-        border-color: rgba(255,255,255,0.1);
+        border-color: #334155;
         color: #f8fafc;
     }
     
@@ -929,13 +956,15 @@ body.mkv-ai-drawer-open .mkv-ai-fab {
     body.admin-color-ocean .mkv-ai-history-panel,
     .mkv-ai-dark-mode .mkv-ai-history-panel {
         background: #0f172a;
-        border-right: 1px solid rgba(255,255,255,0.05);
+        border-right: 1px solid #334155;
     }
     
     body.admin-color-modern .mkv-ai-history-header,
     body.admin-color-ocean .mkv-ai-history-header,
     .mkv-ai-dark-mode .mkv-ai-history-header {
-        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        background: #1e293b;
+        border-bottom: 1px solid #334155;
+    }
     }
 
     body.admin-color-modern .mkv-ai-sidebar-new-chat-btn,

@@ -7,8 +7,8 @@
     appearance: none;
     background-color: var(--mkv-surface);
     border: 1px solid var(--mkv-border);
-    border-radius: 20px;
-    padding: 6px 32px 6px 14px;
+    border-radius: var(--mkv-radius-sm, 6px);
+    padding: 6px 32px 6px 12px;
     font-size: 13px;
     font-weight: 500;
     color: var(--mkv-text-muted);
@@ -17,8 +17,8 @@
     background-repeat: no-repeat;
     background-position: right 10px center;
     outline: none;
-    transition: all 0.18s ease;
-    box-shadow: 0 1px 3px rgba(0,0,0,.05);
+    transition: var(--mkv-transition-colors);
+    box-shadow: var(--mkv-shadow-xs);
     font-family: 'Inter', sans-serif;
 }
 #mkv-dashboard-period:hover { border-color: #94a3b8; }

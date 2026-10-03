@@ -67,9 +67,9 @@ $categories = get_terms(array(
     </div>
 <?php endif; ?>
 
-<div class="mkv-two-col-form" style="display:grid; grid-template-columns:360px 1fr; gap:24px; align-items:start;">
+<div class="mkv-two-col-form" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:24px; align-items:start;">
     <!-- Form Card (Thêm / Chỉnh sửa) -->
-    <div class="mkv-card" style="position:sticky; top:140px;">
+    <div class="mkv-card">
         <div class="mkv-card-header" style="display:flex; justify-content:space-between; align-items:center;">
             <h3 class="mkv-card-title">
                 <?php if ($editing_term): ?>
@@ -146,14 +146,14 @@ $categories = get_terms(array(
 
                 <div style="display:flex; gap:10px;">
                     <?php if ($editing_term): ?>
-                        <button type="submit" class="mkv-btn mkv-btn-primary" style="flex:1; justify-content:center; height:38px; border-radius:8px;">
+                        <button type="submit" class="mkv-btn mkv-btn-primary" style="flex:1; justify-content:center; height:38px; border-radius:var(--mkv-radius-sm, 6px);">
                             <i class="hgi-stroke hgi-checkmark-circle-02"></i> <?php echo esc_html(mkv__('Lưu thay đổi')); ?>
                         </button>
-                        <a href="<?php echo admin_url('admin.php?page=mkv-categories'); ?>" class="mkv-btn mkv-btn-secondary" style="justify-content:center; height:38px; border-radius:8px;">
+                        <a href="<?php echo admin_url('admin.php?page=mkv-categories'); ?>" class="mkv-btn mkv-btn-secondary" style="justify-content:center; height:38px; border-radius:var(--mkv-radius-sm, 6px);">
                             <?php echo esc_html(mkv__('Hủy')); ?>
                         </a>
                     <?php else: ?>
-                        <button type="submit" class="mkv-btn mkv-btn-primary" style="width:100%; justify-content:center; height:38px; border-radius:8px;">
+                        <button type="submit" class="mkv-btn mkv-btn-primary" style="width:100%; justify-content:center; height:38px; border-radius:var(--mkv-radius-sm, 6px);">
                             <i class="hgi-stroke hgi-floppy-disk"></i> <?php echo esc_html(mkv__('Thêm danh mục')); ?>
                         </button>
                     <?php endif; ?>

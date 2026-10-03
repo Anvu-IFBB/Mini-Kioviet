@@ -120,7 +120,7 @@ if ($order->status === 'cancelled') {
                     <?php if (empty($order->tracking_code)): ?>
                         <?php if (!in_array($order->status, array('completed','cancelled','returned','draft'))): ?>
                         <a href="<?php echo wp_nonce_url(admin_url('admin-post.php?action=mkv_push_shipping&id='.$order->id), 'mkv_shipping_'.$order->id); ?>"
-                           class="mkv-btn" style="background:#8b5cf6; color:#fff; border:none; height:36px; padding:0 14px; font-weight:600; font-size:12.5px; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 6px rgba(139,92,246,0.25);">
+                           class="mkv-btn mkv-btn-info" style="height:36px; padding:0 14px; font-weight:600; font-size:12.5px; display:inline-flex; align-items:center; gap:6px;">
                             <i class="hgi-stroke hgi-truck-delivery"></i> <?php echo esc_html(mkv__('Tạo vận đơn')); ?>
                         </a>
                         <?php endif; ?>
@@ -137,7 +137,7 @@ if ($order->status === 'cancelled') {
 
                 <!-- Collect Debt / COD Button -->
                 <?php if ($payment_due > 0 && !in_array($order->status, array('cancelled','returned'))): ?>
-                <button type="button" class="mkv-btn" style="background:#10b981; color:#fff; border:none; height:36px; padding:0 16px; font-weight:700; font-size:12.5px; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 6px rgba(16,185,129,0.25);"
+                <button type="button" class="mkv-btn mkv-btn-success" style="height:36px; padding:0 16px; font-weight:700; font-size:12.5px; display:inline-flex; align-items:center; gap:6px;"
                     onclick='mkvOpenCollectModal(<?php echo htmlspecialchars(json_encode(array(
                         "id" => (int) $order->id,
                         "code" => $order->order_code,

@@ -24,15 +24,15 @@
                 <input type="hidden" name="page" value="mkv-customers">
                 <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
                     <input type="search" name="s" value="<?php echo esc_attr($search); ?>"
-                        class="mkv-input" placeholder="<?php echo esc_attr(mkv__('Tìm tên, SĐT hoặc email...')); ?>" style="width:300px;">
+                        class="mkv-input" placeholder="<?php echo esc_attr(mkv__('Tìm tên, SĐT hoặc email...')); ?>" style="min-width:200px; flex:1;">
                     
-                    <select name="orderby" class="mkv-select" style="width:160px;">
+                    <select name="orderby" class="mkv-select" style="min-width:140px;">
                         <option value="id" <?php selected(isset($_GET['orderby']) ? $_GET['orderby'] : '', 'id'); ?>><?php echo esc_html(mkv__('Mới nhất')); ?></option>
                         <option value="total_spent" <?php selected(isset($_GET['orderby']) ? $_GET['orderby'] : '', 'total_spent'); ?>><?php echo esc_html(mkv__('Tổng chi tiêu')); ?></option>
                         <option value="points" <?php selected(isset($_GET['orderby']) ? $_GET['orderby'] : '', 'points'); ?>><?php echo esc_html(mkv__('Điểm tích lũy')); ?></option>
                     </select>
                     
-                    <select name="order" class="mkv-select" style="width:130px;">
+                    <select name="order" class="mkv-select" style="min-width:110px;">
                         <option value="DESC" <?php selected(isset($_GET['order']) ? $_GET['order'] : '', 'DESC'); ?>><?php echo esc_html(mkv__('Giảm dần')); ?></option>
                         <option value="ASC" <?php selected(isset($_GET['order']) ? $_GET['order'] : '', 'ASC'); ?>><?php echo esc_html(mkv__('Tăng dần')); ?></option>
                     </select>
@@ -56,8 +56,8 @@
                     <th><?php echo esc_html(mkv__('Điện thoại')); ?></th>
                     <th><?php echo esc_html(mkv__('Email')); ?></th>
                     <th><?php echo esc_html(mkv__('Địa chỉ')); ?></th>
-                    <th style="width:90px;"><?php echo esc_html(mkv__('Điểm')); ?></th>
-                    <th style="width:140px;"><?php echo esc_html(mkv__('Tổng chi tiêu')); ?></th>
+                    <th style="width:90px; text-align:right;"><?php echo esc_html(mkv__('Điểm')); ?></th>
+                    <th style="width:140px; text-align:right;"><?php echo esc_html(mkv__('Tổng chi tiêu')); ?></th>
                     <th style="width:150px;"><?php echo esc_html(mkv__('Hành động')); ?></th>
                 </tr>
             </thead>
@@ -81,8 +81,8 @@
                         <td><?php echo esc_html($c->phone ?: '—'); ?></td>
                         <td><?php echo esc_html($c->email ?: '—'); ?></td>
                         <td><?php echo esc_html($c->address ?: '—'); ?></td>
-                        <td><span class="mkv-badge mkv-badge-purple"><?php echo intval($c->points); ?> <?php echo esc_html(mkv__('pts')); ?></span></td>
-                        <td><strong style="color:var(--mkv-primary);"><?php echo number_format($c->total_spent, 0, ',', '.'); ?> ₫</strong></td>
+                        <td style="text-align:right;"><span class="mkv-badge mkv-badge-purple"><?php echo intval($c->points); ?> <?php echo esc_html(mkv__('pts')); ?></span></td>
+                        <td style="text-align:right;"><strong style="color:var(--mkv-primary);"><?php echo number_format($c->total_spent, 0, ',', '.'); ?> ₫</strong></td>
                         <td>
                             <a href="?page=mkv-customers&action=edit&id=<?php echo intval($c->id); ?>" class="mkv-btn mkv-btn-sm mkv-btn-secondary">
                                 <i class="hgi-stroke hgi-edit-01"></i> <?php echo esc_html(mkv__('Chi tiết')); ?>

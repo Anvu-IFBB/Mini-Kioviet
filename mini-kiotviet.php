@@ -27,13 +27,15 @@ add_action('admin_enqueue_scripts', function () {
     wp_enqueue_style('google-fonts-inter', 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap', array(), null);
     wp_enqueue_style('hugeicons', 'https://cdn.hugeicons.com/font/hgi-stroke-rounded.css', array(), '1.0');
 
+    $css_tokens_ver = file_exists(MKV_DIR . 'assets/css/design-tokens.css') ? filemtime(MKV_DIR . 'assets/css/design-tokens.css') : MKV_VERSION;
     $css_layout_ver = file_exists(MKV_DIR . 'assets/css/admin-layout.css') ? filemtime(MKV_DIR . 'assets/css/admin-layout.css') : MKV_VERSION;
     $css_dashboard_ver = file_exists(MKV_DIR . 'assets/css/admin-dashboard.css') ? filemtime(MKV_DIR . 'assets/css/admin-dashboard.css') : MKV_VERSION;
     $css_pos_ver = file_exists(MKV_DIR . 'assets/css/admin-pos.css') ? filemtime(MKV_DIR . 'assets/css/admin-pos.css') : MKV_VERSION;
     $css_wp_overrides_ver = file_exists(MKV_DIR . 'assets/css/admin-wp-overrides.css') ? filemtime(MKV_DIR . 'assets/css/admin-wp-overrides.css') : MKV_VERSION;
     $css_ai_assistant_ver = file_exists(MKV_DIR . 'assets/css/admin-ai-assistant.css') ? filemtime(MKV_DIR . 'assets/css/admin-ai-assistant.css') : MKV_VERSION;
 
-    wp_enqueue_style('mkv-tailwind-admin', MKV_URL . 'assets/css/tailwind-admin.css', array(), filemtime(MKV_DIR . 'assets/css/tailwind-admin.css'));
+    wp_enqueue_style('mkv-design-tokens', MKV_URL . 'assets/css/design-tokens.css', array('hugeicons', 'google-fonts-inter'), $css_tokens_ver);
+    wp_enqueue_style('mkv-tailwind-admin', MKV_URL . 'assets/css/tailwind-admin.css', array('mkv-design-tokens'), filemtime(MKV_DIR . 'assets/css/tailwind-admin.css'));
     wp_enqueue_style('mkv-admin-layout', MKV_URL . 'assets/css/admin-layout.css', array('mkv-tailwind-admin'), $css_layout_ver);
     wp_enqueue_style('mkv-admin-dashboard', MKV_URL . 'assets/css/admin-dashboard.css', array('mkv-admin-layout'), $css_dashboard_ver);
     wp_enqueue_style('mkv-admin-pos', MKV_URL . 'assets/css/admin-pos.css', array('mkv-admin-layout'), $css_pos_ver);

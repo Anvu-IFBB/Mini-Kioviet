@@ -1,0 +1,378 @@
+/* ==========================================================================
+   Mini KiotViet (MKV) — Design System Foundation
+   Phase 1: Design Tokens, Color System, Typography, Spacing, Elevation & States
+   Namespace: Strictly --mkv-*
+   ========================================================================== */
+
+:root {
+    /* ----------------------------------------------------------------------
+       1. COLOR SYSTEM — BRAND & PRIMARY
+       ---------------------------------------------------------------------- */
+    --mkv-color-primary:          #0060df;
+    --mkv-color-primary-hover:    #004ecc;
+    --mkv-color-primary-active:   #003eaa;
+    --mkv-color-primary-subtle:   #eff6ff;
+    --mkv-color-primary-border:   #bfdbfe;
+    --mkv-color-primary-contrast: #ffffff;
+
+    /* Legacy Brand Aliases */
+    --mkv-primary:                var(--mkv-color-primary);
+    --mkv-primary-dark:           var(--mkv-color-primary-hover);
+    --mkv-primary-light:          var(--mkv-color-primary-subtle);
+    --mkv-navy:                   #002957;
+    --mkv-blue:                   var(--mkv-color-primary);
+
+    /* ----------------------------------------------------------------------
+       2. COLOR SYSTEM — SEMANTIC STATUSES
+       ---------------------------------------------------------------------- */
+    /* Success: Completed, Paid, In-Stock, Inflow */
+    --mkv-color-success:          #10b981;
+    --mkv-color-success-hover:    #059669;
+    --mkv-color-success-active:   #047857;
+    --mkv-color-success-subtle:   #ecfdf5;
+    --mkv-color-success-border:   #a7f3d0;
+    --mkv-color-success-text:     #065f46;
+    --mkv-green:                  var(--mkv-color-success);
+    --mkv-green-light:            var(--mkv-color-success-subtle);
+
+    /* Warning: Pending, Low Stock, Debt Pending, Notice */
+    --mkv-color-warning:          #f59e0b;
+    --mkv-color-warning-hover:    #d97706;
+    --mkv-color-warning-active:   #b45309;
+    --mkv-color-warning-subtle:   #fffbeb;
+    --mkv-color-warning-border:   #fde68a;
+    --mkv-color-warning-text:     #92400e;
+    --mkv-yellow:                 var(--mkv-color-warning);
+    --mkv-yellow-light:           var(--mkv-color-warning-subtle);
+    --mkv-orange:                 #ea580c;
+
+    /* Danger: Cancelled, Out of Stock, Return, Outflow, Error */
+    --mkv-color-danger:           #ef4444;
+    --mkv-color-danger-hover:     #dc2626;
+    --mkv-color-danger-active:    #b91c1c;
+    --mkv-color-danger-subtle:    #fef2f2;
+    --mkv-color-danger-border:    #fecaca;
+    --mkv-color-danger-text:      #991b1b;
+    --mkv-red:                    var(--mkv-color-danger);
+    --mkv-red-light:              var(--mkv-color-danger-subtle);
+
+    /* Info: Draft, Processing, Category, Logistics */
+    --mkv-color-info:             #0284c7;
+    --mkv-color-info-hover:       #0369a1;
+    --mkv-color-info-active:      #075985;
+    --mkv-color-info-subtle:      #f0f9ff;
+    --mkv-color-info-border:      #bae6fd;
+    --mkv-color-info-text:        #0c4a6e;
+
+    /* Purple Accent */
+    --mkv-color-purple:           #7c3aed;
+    --mkv-color-purple-hover:     #6d28d9;
+    --mkv-color-purple-subtle:    #f5f3ff;
+    --mkv-color-purple-border:    #ddd6fe;
+    --mkv-color-purple-text:      #5b21b6;
+    --mkv-purple:                 var(--mkv-color-purple);
+    --mkv-purple-light:           var(--mkv-color-purple-subtle);
+
+    /* ----------------------------------------------------------------------
+       3. COLOR SYSTEM — SURFACES & BACKGROUNDS (LIGHT MODE)
+       ---------------------------------------------------------------------- */
+    --mkv-color-bg:               #f4f6f8;
+    --mkv-color-bg-subtle:        #f8fafc;
+    --mkv-color-surface:          #ffffff;
+    --mkv-color-surface-subtle:   #f8fafc;
+    --mkv-color-surface-muted:    #f1f5f9;
+    --mkv-color-surface-elevated: #ffffff;
+
+    /* Legacy Surface Aliases */
+    --mkv-bg:                     var(--mkv-color-bg);
+    --mkv-surface:                var(--mkv-color-surface);
+
+    /* ----------------------------------------------------------------------
+       4. COLOR SYSTEM — TYPOGRAPHY & TEXT (LIGHT MODE)
+       ---------------------------------------------------------------------- */
+    --mkv-color-text-primary:     #0f172a;
+    --mkv-color-text-secondary:   #334155;
+    --mkv-color-text-muted:       #64748b;
+    --mkv-color-text-disabled:    #94a3b8;
+    --mkv-color-text-inverse:     #ffffff;
+
+    /* Legacy Text Aliases */
+    --mkv-text-main:              var(--mkv-color-text-primary);
+    --mkv-text-muted:             var(--mkv-color-text-muted);
+
+    /* ----------------------------------------------------------------------
+       5. COLOR SYSTEM — BORDERS (LIGHT MODE)
+       ---------------------------------------------------------------------- */
+    --mkv-color-border:           #e2e8f0;
+    --mkv-color-border-subtle:    #f1f5f9;
+    --mkv-color-border-strong:    #cbd5e1;
+
+    /* Legacy Border Aliases */
+    --mkv-border:                 var(--mkv-color-border);
+    --mkv-border-light:           var(--mkv-color-border-subtle);
+
+    /* ----------------------------------------------------------------------
+       6. FOCUS & INTERACTION TOKENS (LIGHT MODE)
+       ---------------------------------------------------------------------- */
+    --mkv-color-focus-ring:       rgba(0, 96, 223, 0.22);
+    --mkv-focus-ring-offset:      2px;
+    --mkv-focus-ring-width:       3px;
+    --mkv-focus-ring:             0 0 0 var(--mkv-focus-ring-width) var(--mkv-color-focus-ring);
+
+    /* ----------------------------------------------------------------------
+       7. TYPOGRAPHY SYSTEM
+       ---------------------------------------------------------------------- */
+    --mkv-font-family-sans:       'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mkv-font-family-mono:       'JetBrains Mono', 'SF Mono', Consolas, Monaco, 'Courier New', monospace;
+
+    /* Font Sizes (Scale tailored for Retail ERP dense readability) */
+    --mkv-font-size-xs:           11px;
+    --mkv-font-size-sm:           12px;
+    --mkv-font-size-base:         13px;
+    --mkv-font-size-md:           14px;
+    --mkv-font-size-lg:           16px;
+    --mkv-font-size-xl:           18px;
+    --mkv-font-size-2xl:          22px;
+    --mkv-font-size-3xl:          28px;
+
+    /* Legacy Font Aliases */
+    --mkv-font-body:              var(--mkv-font-size-md);
+    --mkv-font-small:             var(--mkv-font-size-sm);
+    --mkv-font-label:             var(--mkv-font-size-base);
+    --mkv-font-section-title:     var(--mkv-font-size-lg);
+    --mkv-font-page-title:        var(--mkv-font-size-2xl);
+    --mkv-font-metric:            var(--mkv-font-size-3xl);
+
+    /* Font Weights */
+    --mkv-font-weight-regular:    400;
+    --mkv-font-weight-medium:     500;
+    --mkv-font-weight-semibold:   600;
+    --mkv-font-weight-bold:       700;
+    --mkv-font-weight-extrabold:  800;
+
+    /* Line Heights */
+    --mkv-line-height-none:       1;
+    --mkv-line-height-tight:      1.25;
+    --mkv-line-height-snug:       1.375;
+    --mkv-line-height-normal:     1.5;
+    --mkv-line-height-relaxed:    1.625;
+
+    /* Letter Spacing */
+    --mkv-letter-spacing-tight:   -0.015em;
+    --mkv-letter-spacing-normal:  0;
+    --mkv-letter-spacing-wide:    0.025em;
+
+    /* Font Features (Tabular figures for financial ERP data tables) */
+    --mkv-font-feature-numeric:   "tnum" 1;
+
+    /* ----------------------------------------------------------------------
+       8. SPACING SYSTEM (4px Scale)
+       ---------------------------------------------------------------------- */
+    --mkv-space-0:                0px;
+    --mkv-space-1:                4px;
+    --mkv-space-1-5:              6px;
+    --mkv-space-2:                8px;
+    --mkv-space-2-5:              10px;
+    --mkv-space-3:                12px;
+    --mkv-space-4:                16px;
+    --mkv-space-5:                20px;
+    --mkv-space-6:                24px;
+    --mkv-space-8:                32px;
+    --mkv-space-10:               40px;
+    --mkv-space-12:               48px;
+
+    /* Component Dimensions */
+    --mkv-control-height-sm:      30px;
+    --mkv-control-height-md:      36px;
+    --mkv-control-height-lg:      42px;
+    --mkv-topbar-height:          52px;
+    --mkv-navbar-height:          44px;
+
+    /* Legacy Dimension Aliases */
+    --mkv-topbar-h:               var(--mkv-topbar-height);
+    --mkv-nav-h:                  var(--mkv-navbar-height);
+
+    /* ----------------------------------------------------------------------
+       9. RADIUS SYSTEM (Restrained & Modern)
+       Main app containers: 8–12px | Cards/panels: 8–10px | Inputs/buttons: 6–8px | Tags: 4–6px
+       ---------------------------------------------------------------------- */
+    --mkv-radius-none:            0px;
+    --mkv-radius-xs:              4px;
+    --mkv-radius-sm:              6px;
+    --mkv-radius-md:              8px;
+    --mkv-radius-lg:              10px;
+    --mkv-radius-xl:              12px;
+    --mkv-radius-full:            9999px;
+
+    /* Legacy Radius Aliases */
+    --mkv-radius-small:           var(--mkv-radius-sm);
+    --mkv-radius-default:         var(--mkv-radius-md);
+    --mkv-radius-large:           var(--mkv-radius-lg);
+    --mkv-radius:                 var(--mkv-radius-md);
+    --mkv-radius-pill:            var(--mkv-radius-full);
+
+    /* ----------------------------------------------------------------------
+       10. SHADOW SYSTEM (Subtle, Clean & Non-AI)
+       ---------------------------------------------------------------------- */
+    --mkv-shadow-none:            none;
+    --mkv-shadow-xs:              0 1px 2px rgba(15, 23, 42, 0.04);
+    --mkv-shadow-sm:              0 1px 3px rgba(0, 41, 87, 0.05), 0 1px 2px rgba(0, 41, 87, 0.03);
+    --mkv-shadow-md:              0 2px 6px rgba(0, 41, 87, 0.05);
+    --mkv-shadow-lg:              0 4px 14px rgba(0, 41, 87, 0.07);
+    --mkv-shadow-xl:              0 10px 20px -3px rgba(0, 41, 87, 0.09);
+
+    /* Legacy Shadow Aliases */
+    --mkv-shadow-subtle:          var(--mkv-shadow-sm);
+    --mkv-shadow-elevated:        var(--mkv-shadow-md);
+    --mkv-shadow:                 var(--mkv-shadow-md);
+
+    /* ----------------------------------------------------------------------
+       11. Z-INDEX LAYERS (Conflict-Free Stacking)
+       ---------------------------------------------------------------------- */
+    --mkv-z-base:                 1;
+    --mkv-z-raised:               10;
+    --mkv-z-sticky:               100;
+    --mkv-z-dropdown:             1000;
+    --mkv-z-topbar:               1010;
+    --mkv-z-overlay:              2000;
+    --mkv-z-drawer:               2100;
+    --mkv-z-modal:                2200;
+    --mkv-z-popover:              2300;
+    --mkv-z-toast:                3000;
+
+    /* ----------------------------------------------------------------------
+       12. MOTION & TRANSITION FOUNDATION
+       ---------------------------------------------------------------------- */
+    --mkv-duration-fast:          150ms;
+    --mkv-duration-normal:        200ms;
+    --mkv-duration-slow:          300ms;
+    --mkv-ease-standard:          cubic-bezier(0.4, 0, 0.2, 1);
+    --mkv-ease-in:                cubic-bezier(0.4, 0, 1, 1);
+    --mkv-ease-out:               cubic-bezier(0, 0, 0.2, 1);
+
+    /* Transition Presets */
+    --mkv-transition:             all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    --mkv-transition-fast:        160ms cubic-bezier(0.4, 0, 0.2, 1);
+    --mkv-transition-colors:      color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+    --mkv-transition-shadow:      box-shadow 0.18s ease;
+    --mkv-transition-transform:   transform 0.18s ease;
+
+    /* ----------------------------------------------------------------------
+       13. BREAKPOINT FOUNDATION (Documentation Tokens)
+       ---------------------------------------------------------------------- */
+    --mkv-breakpoint-xs:          480px;
+    --mkv-breakpoint-sm:          640px;
+    --mkv-breakpoint-md:          768px;
+    --mkv-breakpoint-lg:          1024px;
+    --mkv-breakpoint-xl:          1280px;
+    --mkv-breakpoint-2xl:         1536px;
+}
+
+/* ==========================================================================
+   DARK THEME TOKENS & OVERRIDES
+   Preserves: html.dark, body.dark, .dark
+   ========================================================================== */
+html.dark,
+body.dark,
+.dark {
+    /* Surfaces & Backgrounds */
+    --mkv-color-bg:               #0b0f19;
+    --mkv-color-bg-subtle:        #111827;
+    --mkv-color-surface:          #1e293b;
+    --mkv-color-surface-subtle:   #1a2436;
+    --mkv-color-surface-muted:    #243247;
+    --mkv-color-surface-elevated: #243247;
+
+    /* Typography & Text */
+    --mkv-color-text-primary:     #f1f5f9;
+    --mkv-color-text-secondary:   #cbd5e1;
+    --mkv-color-text-muted:       #94a3b8;
+    --mkv-color-text-disabled:    #64748b;
+    --mkv-color-text-inverse:     #0f172a;
+
+    /* Borders */
+    --mkv-color-border:           #334155;
+    --mkv-color-border-subtle:    #1e293b;
+    --mkv-color-border-strong:    #475569;
+
+    /* Semantic Subtles in Dark */
+    --mkv-color-primary-subtle:   #1e3a8a;
+    --mkv-color-primary-border:   #1d4ed8;
+    --mkv-color-success-subtle:   #064e3b;
+    --mkv-color-success-border:   #047857;
+    --mkv-color-warning-subtle:   #78350f;
+    --mkv-color-warning-border:   #b45309;
+    --mkv-color-danger-subtle:    #7f1d1d;
+    --mkv-color-danger-border:    #b91c1c;
+    --mkv-color-info-subtle:      #0c4a6e;
+    --mkv-color-info-border:      #0369a1;
+    --mkv-color-purple-subtle:    #4c1d95;
+    --mkv-color-purple-border:    #6d28d9;
+
+    /* Shadows in Dark */
+    --mkv-shadow-xs:              0 1px 2px rgba(0, 0, 0, 0.3);
+    --mkv-shadow-sm:              0 1px 2px rgba(0, 0, 0, 0.35);
+    --mkv-shadow-md:              0 2px 6px rgba(0, 0, 0, 0.4);
+    --mkv-shadow-lg:              0 4px 14px rgba(0, 0, 0, 0.5);
+    --mkv-shadow-xl:              0 10px 20px rgba(0, 0, 0, 0.6);
+
+    /* Focus Ring in Dark */
+    --mkv-color-focus-ring:       rgba(56, 189, 248, 0.35);
+
+    /* Force legacy aliases in Dark for complete backward compatibility */
+    --mkv-bg:                     #0b0f19 !important;
+    --mkv-surface:                #1e293b !important;
+    --mkv-text-main:              #f1f5f9 !important;
+    --mkv-text-muted:             #94a3b8 !important;
+    --mkv-border:                 #334155 !important;
+    --mkv-border-light:           #1e293b !important;
+    --mkv-primary-light:          #1e3a8a !important;
+    --mkv-shadow:                 0 2px 8px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* ==========================================================================
+   FOCUS FOUNDATION (Accessible, High Contrast, Non-Destructive)
+   Scoped strictly within MKV containers to prevent leakage to WP Core
+   ========================================================================== */
+:where(.mkv-app-layout, body.mkv-admin-page, body.post-type-mkv_product, body.taxonomy-mkv_product_cat) :where(button, a, input, select, textarea):focus-visible {
+    outline: 2px solid var(--mkv-color-primary) !important;
+    outline-offset: var(--mkv-focus-ring-offset) !important;
+    box-shadow: var(--mkv-focus-ring) !important;
+}
+
+/* ==========================================================================
+   DISABLED & READONLY FOUNDATION
+   ========================================================================== */
+:where(.mkv-app-layout, body.mkv-admin-page, body.post-type-mkv_product, body.taxonomy-mkv_product_cat) :where(button, input, select, textarea):disabled,
+:where(.mkv-app-layout, body.mkv-admin-page, body.post-type-mkv_product, body.taxonomy-mkv_product_cat) .is-disabled {
+    opacity: 0.55 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+    box-shadow: none !important;
+}
+
+:where(.mkv-app-layout, body.mkv-admin-page, body.post-type-mkv_product, body.taxonomy-mkv_product_cat) :where(input, textarea)[readonly] {
+    background-color: var(--mkv-color-surface-muted) !important;
+    cursor: default !important;
+    color: var(--mkv-color-text-secondary) !important;
+}
+
+:where(.mkv-app-layout, body.mkv-admin-page, body.post-type-mkv_product, body.taxonomy-mkv_product_cat) .is-loading {
+    cursor: wait !important;
+    pointer-events: none !important;
+    opacity: 0.75 !important;
+}
+
+/* ==========================================================================
+   REDUCED MOTION FOUNDATION
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}

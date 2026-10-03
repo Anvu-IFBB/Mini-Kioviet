@@ -33,14 +33,14 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
             <span><?php echo esc_html(mkv__('Bán Hàng Tại Quầy (POS)')); ?></span>
         </h1>
         <div class="mkv-page-actions" style="display:flex; gap:10px; align-items:center;">
-            <button type="button" onclick="mkvTogglePosFullscreen()" id="mkv-pos-fullscreen-btn" class="mkv-btn mkv-btn-outline" style="display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border-radius:8px; font-weight:600; cursor:pointer;" title="<?php echo esc_attr(mkv__('Chế độ Thu Ngân (Toàn Màn Hình)')); ?>">
+            <button type="button" onclick="mkvTogglePosFullscreen()" id="mkv-pos-fullscreen-btn" class="mkv-btn mkv-btn-secondary" style="display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:var(--mkv-radius-sm); font-weight:600; cursor:pointer;" title="<?php echo esc_attr(mkv__('Chế độ Thu Ngân (Toàn Màn Hình)')); ?>">
                 <i class="hgi-stroke hgi-arrow-expand" id="mkv-pos-fullscreen-icon"></i>
                 <span id="mkv-pos-fullscreen-text"><?php echo esc_html(mkv__('Toàn màn hình')); ?></span>
             </button>
-            <button type="button" onclick="window.mkvOpenAIChat && window.mkvOpenAIChat()" class="mkv-btn mkv-btn-outline" style="display:inline-flex; align-items:center; gap:6px; padding: 8px 14px; border-radius: 8px; font-weight: 600; color: #8b5cf6; border-color: #8b5cf6; cursor:pointer;">
+            <button type="button" onclick="window.mkvOpenAIChat && window.mkvOpenAIChat()" class="mkv-btn mkv-btn-secondary" style="display:inline-flex; align-items:center; gap:6px; padding: 7px 14px; border-radius: var(--mkv-radius-sm); font-weight: 600; cursor:pointer;">
                 <i class="hgi-stroke hgi-ai-chat-02"></i> <?php echo esc_html(mkv__('Trợ lý AI')); ?>
             </button>
-            <a href="<?php echo admin_url('admin.php?page=mkv-orders'); ?>" class="mkv-btn mkv-btn-primary" style="display:inline-flex; align-items:center; gap:6px; padding: 8px 16px; border-radius: 8px; font-weight: 600; text-decoration:none;">
+            <a href="<?php echo admin_url('admin.php?page=mkv-orders'); ?>" class="mkv-btn mkv-btn-primary" style="display:inline-flex; align-items:center; gap:6px; padding: 7px 16px; border-radius: var(--mkv-radius-sm); font-weight: 600; text-decoration:none;">
                 <i class="hgi-stroke hgi-invoice-01"></i> <?php echo esc_html(mkv__('Danh sách đơn hàng')); ?>
             </a>
         </div>
@@ -65,7 +65,7 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
                 <div style="position:relative;">
                     <i class="hgi-stroke hgi-search-01" style="position:absolute; left:16px; top:50%; transform:translateY(-50%); color:#94a3b8; font-size:18px;"></i>
                     <input type="text" id="pos-search" class="mkv-input" placeholder="<?php echo esc_attr(mkv__('Tìm theo tên, SKU, mã vạch...')); ?>" 
-                           style="width:100%; font-size:15px; padding:12px 16px 12px 48px !important; border-radius:10px; border:1px solid #e2e8f0; outline:none; box-shadow:none;" onkeyup="filterProducts(this.value)">
+                           style="width:100%; font-size:14px; padding:10px 16px 10px 44px !important; border-radius:var(--mkv-radius-sm); border:1px solid var(--mkv-border); outline:none; box-shadow:var(--mkv-shadow-xs);" onkeyup="filterProducts(this.value)">
                 </div>
             </div>
 
@@ -82,7 +82,7 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
                     tabindex="0"
                     aria-disabled="<?php echo $stock <= 0 ? 'true' : 'false'; ?>"
                     aria-label="<?php echo esc_attr($p->post_title . ' - ' . number_format($price, 0, ',', '.') . ' ₫' . ($stock <= 0 ? ' - ' . mkv__('Hết hàng') : '')); ?>"
-                    style="padding: 16px; border: 1px solid #e2e8f0; border-radius: 12px; transition: all 0.2s; background: #fff;"
+                    style="padding: 14px; border: 1px solid var(--mkv-border); border-radius: var(--mkv-radius-md); transition: all 0.18s; background: var(--mkv-surface);"
                     data-id="<?php echo $p->ID; ?>"
                     data-name="<?php echo esc_attr($p->post_title); ?>"
                     data-price="<?php echo esc_attr($price); ?>"
@@ -164,7 +164,7 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
                 </div>
 
                 <!-- Khung trừ điểm (hiển thị khi khách có điểm) -->
-                <div id="pos-points-box" style="display:none; background:#f8fafc; padding:12px; border-radius:10px; margin-bottom:16px; border:1px solid #e2e8f0;">
+                <div id="pos-points-box" style="display:none; background:var(--mkv-color-surface-subtle); padding:12px; border-radius:var(--mkv-radius-sm); margin-bottom:16px; border:1px solid var(--mkv-border);">
                     <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:8px;">
                         <span style="color:#475569;"><?php echo esc_html(mkv__('Điểm hiện có: ')); ?><strong id="pos-cust-points" style="color:var(--mkv-green);">0</strong><?php echo esc_html(mkv__(' pts')); ?></span>
                         <span style="color:#475569;"><?php echo esc_html(mkv__('Giảm tối đa: ')); ?><strong id="pos-max-points-val">0</strong> ₫</span>
@@ -179,7 +179,7 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
                 </div>
 
                 <!-- Danh sách món trong giỏ -->
-                <div id="cart-container" style="min-height:120px; max-height:22vh; overflow-y:auto; border:1px solid #e2e8f0; border-radius:12px; padding:12px; margin-bottom:16px;">
+                <div id="cart-container" style="min-height:120px; max-height:22vh; overflow-y:auto; border:1px solid var(--mkv-border); border-radius:var(--mkv-radius-md); padding:12px; margin-bottom:16px; background:var(--mkv-surface);">
                     <p id="cart-empty" style="color:#94a3b8; text-align:center; padding:20px 0; margin:0;">
                         <i class="hgi-stroke hgi-shopping-cart-01" style="font-size:32px; display:block; margin-bottom:8px; opacity:.4;"></i>
                         <?php echo esc_html(mkv__('Chưa chọn sản phẩm')); ?>
@@ -189,7 +189,7 @@ require_once MKV_DIR . 'includes/views/header-kiotviet.php';
 
                 <!-- Tuỳ chọn Giao hàng (Nếu có bật trong cài đặt) -->
                 <?php if (get_option('mkv_shipping_enable', 0) == 1 || $default_sales_channel !== 'pos'): ?>
-                <div style="margin-bottom:16px; background:#f8fafc; padding:12px; border-radius:10px; border:1px solid #e2e8f0;">
+                <div style="margin-bottom:16px; background:var(--mkv-color-surface-subtle); padding:12px; border-radius:var(--mkv-radius-sm); border:1px solid var(--mkv-border);">
                     <label style="display:flex; align-items:center; gap:8px; font-weight:600; cursor:pointer; color:#1e293b; font-size:13px;">
                         <input type="checkbox" name="is_enable_shipping" value="1" id="pos-enable-shipping" onchange="toggleShippingFields()" <?php checked($default_sales_channel !== 'pos'); ?>>
                         <i class="hgi-stroke hgi-truck-delivery" style="color:var(--mkv-primary);"></i> <?php echo esc_html(mkv__('Giao hàng tận nơi')); ?>

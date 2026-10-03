@@ -157,74 +157,144 @@ $unread_count = class_exists('MKV_Notifications')
             };
             </script>
             <script>
-            window.mkvToggleHeaderDropdown = function(trigger) {
-                var owner = trigger.closest('.mkv-header-user-dropdown, .mkv-nav-dropdown');
-                if (!owner) return false;
-                var isOpen = owner.classList.toggle('is-open');
-                trigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-                document.querySelectorAll('.mkv-header-user-dropdown.is-open, .mkv-nav-dropdown.is-open').forEach(function(other) {
-                    if (other !== owner) {
-                        other.classList.remove('is-open');
-                        var otherTrigger = other.querySelector('.mkv-header-trigger, .mkv-nav-trigger');
-                        if (otherTrigger) otherTrigger.setAttribute('aria-expanded', 'false');
-                    }
-                });
-                return false;
-            };
-            document.addEventListener('click', function(event) {
-                if (event.defaultPrevented) return;
-                var trigger = (event.target && typeof event.target.closest === 'function') ? event.target.closest('.mkv-header-trigger, .mkv-nav-trigger') : null;
-                if (trigger) {
-                    var owner = trigger.closest('.mkv-header-user-dropdown, .mkv-nav-dropdown');
-                    if (!owner) return;
-                    var isOpen = owner.classList.toggle('is-open');
-                    trigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-                    if (isOpen) {
-                        document.querySelectorAll('.mkv-header-user-dropdown.is-open, .mkv-nav-dropdown.is-open').forEach(function(other) {
-                            if (other !== owner) {
-                                other.classList.remove('is-open');
-                                var otherTrigger = other.querySelector('.mkv-header-trigger, .mkv-nav-trigger');
-                                if (otherTrigger) otherTrigger.setAttribute('aria-expanded', 'false');
-                            }
-                        });
-                    }
-                    return;
-                }
-                document.querySelectorAll('.mkv-header-user-dropdown.is-open, .mkv-nav-dropdown.is-open').forEach(function(owner) {
-                    owner.classList.remove('is-open');
-                    var ownerTrigger = owner.querySelector('.mkv-header-trigger, .mkv-nav-trigger');
-                    if (ownerTrigger) ownerTrigger.setAttribute('aria-expanded', 'false');
-                });
-            });
-            document.addEventListener('keydown', function(event) {
-                if (event.key !== 'Escape') return;
+            window.mkvCloseAllHeaderDropdowns = function() {
                 document.querySelectorAll('.mkv-header-user-dropdown.is-open, .mkv-nav-dropdown.is-open').forEach(function(owner) {
                     owner.classList.remove('is-open');
                     var trigger = owner.querySelector('.mkv-header-trigger, .mkv-nav-trigger');
-                    if (trigger) {
-                        trigger.setAttribute('aria-expanded', 'false');
-                        trigger.focus();
+                    if (trigger) trigger.setAttribute('aria-expanded', 'false');
+                    var menu = owner.querySelector('.mkv-dropdown-menu');
+                    if (menu) {
+                        menu.style.removeProperty('top');
+                        menu.style.removeProperty('left');
+                        menu.style.removeProperty('right');
+                        menu.style.removeProperty('max-width');
+                        menu.style.removeProperty('max-height');
+                        menu.style.removeProperty('overflow-y');
                     }
                 });
+            };
+
+            window.__mkvOpenScrollState = null;
+
+            window.mkvToggleHeaderDropdown = function(trigger) {
+                var owner = trigger.closest('.mkv-header-user-dropdown, .mkv-nav-dropdown');
+                if (!owner) return false;
+                var wasOpen = owner.classList.contains('is-open');
+
+                // Close any other open dropdowns
+                window.mkvCloseAllHeaderDropdowns();
+
+                if (!wasOpen) {
+                    owner.classList.add('is-open');
+                    trigger.setAttribute('aria-expanded', 'true');
+                    var menu = owner.querySelector('.mkv-dropdown-menu');
+                    if (menu && window.innerWidth < 1024) {
+                        var rect = trigger.getBoundingClientRect();
+                        var winW = window.innerWidth;
+                        var winH = window.innerHeight;
+                        var menuW = menu.offsetWidth || 210;
+                        var maxAllowedW = winW - 16;
+                        if (menuW > maxAllowedW) {
+                            menuW = maxAllowedW;
+                            menu.style.maxWidth = maxAllowedW + 'px';
+                        }
+                        var left = Math.max(8, Math.min(rect.left, winW - menuW - 8));
+                        menu.style.top = (rect.bottom + 4) + 'px';
+                        menu.style.left = left + 'px';
+                        menu.style.right = 'auto';
+
+                        // Support landscape orientation: scroll if screen height is small
+                        var maxH = Math.max(160, winH - rect.bottom - 12);
+                        menu.style.maxHeight = maxH + 'px';
+                        menu.style.overflowY = 'auto';
+                    }
+
+                    var mainH = document.querySelector('.mkv-main-header');
+                    var pageS = document.querySelector('.mkv-page-scroll');
+                    window.__mkvOpenScrollState = {
+                        navX: mainH ? mainH.scrollLeft : 0,
+                        pageY: pageS ? pageS.scrollTop : 0,
+                        winY: window.scrollY || window.pageYOffset || 0
+                    };
+                } else {
+                    window.__mkvOpenScrollState = null;
+                }
+                return false;
+            };
+
+            function mkvHandleOutsideTap(event) {
+                if (event.defaultPrevented) return;
+                // Close dropdowns when clicking/tapping outside
+                if (!event.target.closest('.mkv-header-user-dropdown, .mkv-nav-dropdown')) {
+                    window.mkvCloseAllHeaderDropdowns();
+                    window.__mkvOpenScrollState = null;
+                }
+            }
+
+            document.addEventListener('click', mkvHandleOutsideTap);
+            document.addEventListener('pointerdown', function(e) {
+                if (!e.target.closest('.mkv-header-user-dropdown, .mkv-nav-dropdown')) {
+                    if (document.querySelector('.mkv-header-user-dropdown.is-open, .mkv-nav-dropdown.is-open')) {
+                        mkvHandleOutsideTap(e);
+                    }
+                }
+            });
+
+            document.addEventListener('keydown', function(event) {
+                if (event.key !== 'Escape') return;
+                window.mkvCloseAllHeaderDropdowns();
+                window.__mkvOpenScrollState = null;
+            });
+
+            // Thresholded auto-close when scrolling on mobile (prevents jitter / tap closing)
+            function mkvCheckScrollThreshold(dx, dy) {
+                if (window.innerWidth < 1024 && (Math.abs(dx) > 16 || Math.abs(dy) > 16)) {
+                    window.mkvCloseAllHeaderDropdowns();
+                    window.__mkvOpenScrollState = null;
+                }
+            }
+
+            window.addEventListener('scroll', function() {
+                if (!window.__mkvOpenScrollState) return;
+                var curY = window.scrollY || window.pageYOffset || 0;
+                mkvCheckScrollThreshold(0, curY - window.__mkvOpenScrollState.winY);
+            }, { passive: true });
+
+            document.addEventListener('DOMContentLoaded', function() {
+                var mainHeader = document.querySelector('.mkv-main-header');
+                if (mainHeader) {
+                    mainHeader.addEventListener('scroll', function() {
+                        if (!window.__mkvOpenScrollState) return;
+                        mkvCheckScrollThreshold(mainHeader.scrollLeft - window.__mkvOpenScrollState.navX, 0);
+                    }, { passive: true });
+                }
+                var pageScroll = document.querySelector('.mkv-page-scroll');
+                if (pageScroll) {
+                    pageScroll.addEventListener('scroll', function() {
+                        if (!window.__mkvOpenScrollState) return;
+                        mkvCheckScrollThreshold(0, pageScroll.scrollTop - window.__mkvOpenScrollState.pageY);
+                    }, { passive: true });
+                }
             });
             </script>
             <button type="button" id="mkv-dark-mode-toggle" class="mkv-header-icon mkv-header-action" title="<?php echo esc_attr(mkv__('Giao diện')); ?>" aria-label="<?php echo esc_attr(mkv__('Chuyển đổi giao diện')); ?>"><i class="hgi-stroke hgi-moon-02" aria-hidden="true"></i></button>
-            <button type="button" class="mkv-header-icon mkv-header-action" id="mkv-topbar-btn-support" title="<?php echo esc_attr(mkv__('Hỗ trợ')); ?>" aria-label="<?php echo esc_attr(mkv__('Mở trung tâm hỗ trợ')); ?>" onclick="if(typeof window.mkvOpenSupportModal === 'function'){ window.mkvOpenSupportModal(this); } else if(typeof window.mkvOpenAIChat === 'function'){ window.mkvOpenAIChat(); }"><i class="hgi-stroke hgi-help-circle" aria-hidden="true"></i> <?php echo esc_html(mkv__('Hỗ trợ')); ?></button>
-            <a href="#" class="mkv-header-icon" title="<?php echo esc_attr(mkv__('Góp ý')); ?>"><i class="hgi-stroke hgi-message-02"></i> <?php echo esc_html(mkv__('Góp ý')); ?></a>
+            <button type="button" class="mkv-header-icon mkv-header-action" id="mkv-topbar-btn-support" title="<?php echo esc_attr(mkv__('Hỗ trợ')); ?>" aria-label="<?php echo esc_attr(mkv__('Mở trung tâm hỗ trợ')); ?>" onclick="if(typeof window.mkvOpenSupportModal === 'function'){ window.mkvOpenSupportModal(this); } else if(typeof window.mkvOpenAIChat === 'function'){ window.mkvOpenAIChat(); }"><i class="hgi-stroke hgi-help-circle" aria-hidden="true"></i> <span class="mkv-header-btn-text"><?php echo esc_html(mkv__('Hỗ trợ')); ?></span></button>
+            <a href="#" class="mkv-header-icon mkv-header-feedback" title="<?php echo esc_attr(mkv__('Góp ý')); ?>" aria-label="<?php echo esc_attr(mkv__('Góp ý')); ?>"><i class="hgi-stroke hgi-message-02" aria-hidden="true"></i> <span class="mkv-header-btn-text"><?php echo esc_html(mkv__('Góp ý')); ?></span></a>
             
             <!-- Language Switcher -->
-            <div class="mkv-header-user-dropdown mkv-lang-switcher" style="margin-left: 10px; border-left: 1px solid #e2e8f0; padding-left: 15px;">
-                <button type="button" id="mkv-lang-btn" class="mkv-header-user mkv-header-trigger" aria-haspopup="true" aria-expanded="false" aria-controls="mkv-language-menu" onclick="return mkvToggleHeaderDropdown(this);" style="cursor: pointer; background: transparent; padding: 0;">
-                    <i class="hgi-stroke hgi-earth" style="font-size: 18px; margin-right: 6px; color: var(--mkv-primary);"></i>
-                    <span class="mkv-user-name" id="mkv-current-lang-text" style="font-weight: 500; color: #475569;"><?php echo mkv_get_current_lang() === 'en' ? 'English' : 'Tiếng Việt'; ?></span>
-                    <i class="hgi-stroke hgi-arrow-down-01 mkv-header-arrow" style="color: #94a3b8;" aria-hidden="true"></i>
+            <div class="mkv-header-user-dropdown mkv-lang-switcher">
+                <button type="button" id="mkv-lang-btn" class="mkv-header-user mkv-header-trigger mkv-lang-trigger" aria-haspopup="true" aria-expanded="false" aria-controls="mkv-language-menu" onclick="return mkvToggleHeaderDropdown(this);">
+                    <i class="hgi-stroke hgi-earth mkv-lang-icon" aria-hidden="true"></i>
+                    <span class="mkv-user-name mkv-lang-text" id="mkv-current-lang-text"><?php echo mkv_get_current_lang() === 'en' ? 'English' : 'Tiếng Việt'; ?></span>
+                    <span class="mkv-lang-short" aria-hidden="true"><?php echo strtoupper(mkv_get_current_lang()); ?></span>
+                    <i class="hgi-stroke hgi-arrow-down-01 mkv-header-arrow" aria-hidden="true"></i>
                 </button>
-                <div class="mkv-dropdown-menu right" id="mkv-language-menu" style="min-width: 140px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border-radius: 8px; border: 1px solid #e2e8f0; padding: 8px;">
-                    <a href="#" id="mkv-lang-opt-vi" onclick="mkvSetLang('vi', event)" style="display:flex; justify-content:space-between; align-items:center; padding: 8px 12px; border-radius: 6px; <?php echo mkv_get_current_lang() === 'vi' ? 'background: #f1f5f9; font-weight: 600;' : ''; ?>">
+                <div class="mkv-dropdown-menu right" id="mkv-language-menu">
+                    <a href="#" id="mkv-lang-opt-vi" onclick="mkvSetLang('vi', event)" style="display:flex; justify-content:space-between; align-items:center; padding: 12px 14px; border-radius: 6px; <?php echo mkv_get_current_lang() === 'vi' ? 'background: #f1f5f9; font-weight: 600;' : ''; ?>">
                         <span>Tiếng Việt</span>
                         <?php if(mkv_get_current_lang() === 'vi') echo '<i class="hgi-stroke hgi-tick-02" style="color:var(--mkv-primary); font-size: 16px;"></i>'; ?>
                     </a>
-                    <a href="#" id="mkv-lang-opt-en" onclick="mkvSetLang('en', event)" style="display:flex; justify-content:space-between; align-items:center; padding: 8px 12px; border-radius: 6px; <?php echo mkv_get_current_lang() === 'en' ? 'background: #f1f5f9; font-weight: 600;' : ''; ?>">
+                    <a href="#" id="mkv-lang-opt-en" onclick="mkvSetLang('en', event)" style="display:flex; justify-content:space-between; align-items:center; padding: 12px 14px; border-radius: 6px; <?php echo mkv_get_current_lang() === 'en' ? 'background: #f1f5f9; font-weight: 600;' : ''; ?>">
                         <span>English</span>
                         <?php if(mkv_get_current_lang() === 'en') echo '<i class="hgi-stroke hgi-tick-02" style="color:var(--mkv-primary); font-size: 16px;"></i>'; ?>
                     </a>
@@ -253,8 +323,10 @@ $unread_count = class_exists('MKV_Notifications')
 
             <!-- POS Button -->
             <?php if (current_user_can('mkv_manage_orders')): ?>
-            <a href="<?php echo admin_url('admin.php?page=mkv-pos'); ?>" class="mkv-btn-pos">
-                <i class="hgi-stroke hgi-shopping-cart-01"></i> <?php echo esc_html(mkv__('Bán Hàng (POS)')); ?>
+            <a href="<?php echo admin_url('admin.php?page=mkv-pos'); ?>" class="mkv-btn-pos" title="<?php echo esc_attr(mkv__('Bán Hàng (POS)')); ?>" aria-label="<?php echo esc_attr(mkv__('Bán Hàng (POS)')); ?>">
+                <i class="hgi-stroke hgi-shopping-cart-01" aria-hidden="true"></i>
+                <span class="mkv-pos-btn-full"><?php echo esc_html(mkv__('Bán Hàng (POS)')); ?></span>
+                <span class="mkv-pos-btn-short" aria-hidden="true">POS</span>
             </a>
             <?php endif; ?>
         </div>
@@ -335,13 +407,14 @@ $unread_count = class_exists('MKV_Notifications')
             <!-- Báo cáo -->
             <?php if (current_user_can('mkv_manage_reports')): ?>
             <div class="mkv-nav-dropdown <?php echo $is_reports ? 'active' : ''; ?>">
-                <a href="<?php echo admin_url('admin.php?page=mkv-reports'); ?>" class="mkv-nav-link">
+                <button type="button" class="mkv-nav-link mkv-nav-trigger" aria-haspopup="true" aria-expanded="false" aria-controls="mkv-reports-menu" onclick="return mkvToggleHeaderDropdown(this);">
                     <span class="mkv-nav-label"><?php echo esc_html(mkv__('Báo Cáo')); ?></span><i class="hgi-stroke hgi-arrow-down-01 mkv-nav-arrow" aria-hidden="true"></i>
-                </a>
-                <div class="mkv-dropdown-menu">
-                    <a href="<?php echo admin_url('admin.php?page=mkv-reports&tab=sales'); ?>"><?php echo esc_html(mkv__('Báo cáo bán hàng')); ?></a>
-                    <a href="<?php echo admin_url('admin.php?page=mkv-reports&tab=profit'); ?>"><?php echo esc_html(mkv__('Báo cáo lợi nhuận')); ?></a>
-                    <a href="<?php echo admin_url('admin.php?page=mkv-reports&tab=end_of_day'); ?>"><?php echo esc_html(mkv__('Sổ quỹ cuối ngày')); ?></a>
+                </button>
+                <div class="mkv-dropdown-menu" id="mkv-reports-menu">
+                    <a href="<?php echo admin_url('admin.php?page=mkv-reports'); ?>" class="<?php echo ($is_reports && empty($_GET['tab'])) ? 'active' : ''; ?>"><?php echo esc_html(mkv__('Tổng quan báo cáo')); ?></a>
+                    <a href="<?php echo admin_url('admin.php?page=mkv-reports&tab=sales'); ?>" class="<?php echo (isset($_GET['tab']) && $_GET['tab'] === 'sales') ? 'active' : ''; ?>"><?php echo esc_html(mkv__('Báo cáo bán hàng')); ?></a>
+                    <a href="<?php echo admin_url('admin.php?page=mkv-reports&tab=profit'); ?>" class="<?php echo (isset($_GET['tab']) && $_GET['tab'] === 'profit') ? 'active' : ''; ?>"><?php echo esc_html(mkv__('Báo cáo lợi nhuận')); ?></a>
+                    <a href="<?php echo admin_url('admin.php?page=mkv-reports&tab=end_of_day'); ?>" class="<?php echo (isset($_GET['tab']) && $_GET['tab'] === 'end_of_day') ? 'active' : ''; ?>"><?php echo esc_html(mkv__('Sổ quỹ cuối ngày')); ?></a>
                 </div>
             </div>
             <?php endif; ?>
@@ -349,12 +422,13 @@ $unread_count = class_exists('MKV_Notifications')
             <!-- Nhân viên -->
             <?php if (current_user_can('mkv_manage_employees')): ?>
             <div class="mkv-nav-dropdown <?php echo $is_employees ? 'active' : ''; ?>">
-                <a href="<?php echo admin_url('admin.php?page=mkv-employees'); ?>" class="mkv-nav-link">
+                <button type="button" class="mkv-nav-link mkv-nav-trigger" aria-haspopup="true" aria-expanded="false" aria-controls="mkv-employees-menu" onclick="return mkvToggleHeaderDropdown(this);">
                     <span class="mkv-nav-label"><?php echo esc_html(mkv__('Nhân Viên')); ?></span><i class="hgi-stroke hgi-arrow-down-01 mkv-nav-arrow" aria-hidden="true"></i>
-                </a>
-                <div class="mkv-dropdown-menu">
-                    <a href="<?php echo admin_url('admin.php?page=mkv-employees&tab=list'); ?>"><?php echo esc_html(mkv__('Danh sách nhân viên')); ?></a>
-                    <a href="<?php echo admin_url('admin.php?page=mkv-employees&tab=timesheets'); ?>"><?php echo esc_html(mkv__('Bảng chấm công')); ?></a>
+                </button>
+                <div class="mkv-dropdown-menu" id="mkv-employees-menu">
+                    <a href="<?php echo admin_url('admin.php?page=mkv-employees'); ?>" class="<?php echo ($is_employees && empty($_GET['tab'])) ? 'active' : ''; ?>"><?php echo esc_html(mkv__('Tổng quan nhân viên')); ?></a>
+                    <a href="<?php echo admin_url('admin.php?page=mkv-employees&tab=list'); ?>" class="<?php echo (isset($_GET['tab']) && $_GET['tab'] === 'list') ? 'active' : ''; ?>"><?php echo esc_html(mkv__('Danh sách nhân viên')); ?></a>
+                    <a href="<?php echo admin_url('admin.php?page=mkv-employees&tab=timesheets'); ?>" class="<?php echo (isset($_GET['tab']) && $_GET['tab'] === 'timesheets') ? 'active' : ''; ?>"><?php echo esc_html(mkv__('Bảng chấm công')); ?></a>
                 </div>
             </div>
             <?php endif; ?>
@@ -362,18 +436,18 @@ $unread_count = class_exists('MKV_Notifications')
             <?php if (current_user_can('mkv_manage_settings') || current_user_can('mkv_view_audit_logs')): ?>
             <!-- Thiết lập -->
             <div class="mkv-nav-dropdown <?php echo ($is_settings || $is_audit) ? 'active' : ''; ?>">
-                <a href="<?php echo admin_url('admin.php?page=mkv-settings'); ?>" class="mkv-nav-link">
+                <button type="button" class="mkv-nav-link mkv-nav-trigger" aria-haspopup="true" aria-expanded="false" aria-controls="mkv-settings-menu" onclick="return mkvToggleHeaderDropdown(this);">
                     <span class="mkv-nav-label"><?php echo esc_html(mkv__('Thiết Lập')); ?></span><i class="hgi-stroke hgi-arrow-down-01 mkv-nav-arrow" aria-hidden="true"></i>
-                </a>
-                <div class="mkv-dropdown-menu right">
+                </button>
+                <div class="mkv-dropdown-menu right" id="mkv-settings-menu">
                     <?php if (current_user_can('mkv_manage_settings')): ?>
-                    <a href="<?php echo admin_url('admin.php?page=mkv-settings'); ?>"><?php echo esc_html(mkv__('Cửa hàng & mẫu in')); ?></a>
+                    <a href="<?php echo admin_url('admin.php?page=mkv-settings'); ?>" class="<?php echo $is_settings ? 'active' : ''; ?>"><?php echo esc_html(mkv__('Cửa hàng & mẫu in')); ?></a>
                     <a href="<?php echo admin_url('admin.php?page=mkv-settings#payment'); ?>"><?php echo esc_html(mkv__('Thanh toán & VietQR')); ?></a>
                     <a href="<?php echo admin_url('admin.php?page=mkv-settings#shipping'); ?>"><?php echo esc_html(mkv__('Vận chuyển & Webhook')); ?></a>
                     <a href="<?php echo admin_url('admin.php?page=mkv-settings#ai'); ?>"><?php echo esc_html(mkv__('Trợ lý AI Copilot')); ?></a>
                     <?php endif; ?>
                     <?php if (current_user_can('mkv_view_audit_logs') || current_user_can('manage_options')): ?>
-                    <a href="<?php echo admin_url('admin.php?page=mkv-audit-logs'); ?>"><?php echo esc_html(mkv__('Nhật ký bảo mật')); ?></a>
+                    <a href="<?php echo admin_url('admin.php?page=mkv-audit-logs'); ?>" class="<?php echo $is_audit ? 'active' : ''; ?>"><?php echo esc_html(mkv__('Nhật ký bảo mật')); ?></a>
                     <?php endif; ?>
                 </div>
             </div>
